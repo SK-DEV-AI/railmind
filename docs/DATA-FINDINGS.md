@@ -75,14 +75,18 @@ under a second, with the network unplugged.
 
 `https://www.irctc.co.in/nget/train-search?fromStation=CSMT&toStation=PUNE&date=20261026`
 
-- URL shape: from the project's research on IRCTC's NGET client.
-- **Not yet verified in a browser.** The browser bridge was unavailable during
-  this session. This is a one-click manual check: open the link, see whether the
-  origin, destination and date fields are filled. If they are not, the parameter
-  names are wrong and `build_irctc_deeplink` must change.
-- Deliberately carries only those three values. Class, quota and passengers are
-  not invented as parameters, because a field that silently does not pre-fill is
-  worse than one that admits it cannot.
+**Verified 2026-10-24: IRCTC ignores these parameters.** The page loads (HTTP 200, no
+bot block), the form renders, and it is empty with today's date. Tested on the old
+site and on the new beta site (`/eticket/train-search`) with five parameter
+spellings. The results page `/eticket/booking/train-list` carries no query string, so
+it cannot be linked to either.
+
+Full experiment log and screenshots: `docs/IRCTC-DEEPLINK.md`, re-runnable with
+`uv run --with playwright python scripts/irctc_check.py`.
+
+So the link's job is "open the booking page", not "open it filled in". The handoff
+copy says exactly that, and a test asserts the wording so the old promise cannot
+sneak back.
 
 ## 6. Reproducing any of this
 
