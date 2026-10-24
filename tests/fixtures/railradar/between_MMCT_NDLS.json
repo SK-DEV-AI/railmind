@@ -1,0 +1,58 @@
+{
+  "success": true,
+  "data": {
+    "from": {
+      "code": "MMCT",
+      "name": "Mumbai Central"
+    },
+    "to": {
+      "code": "NDLS",
+      "name": "New Delhi"
+    },
+    "trains": [
+      {
+        "train": {
+          "number": "12951",
+          "name": "Mumbai Central - New Delhi Tejas Rajdhani Express",
+          "type": "Rajdhani Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "MMCT",
+          "name": "Mumbai Central",
+          "city": "Mumbai",
+          "departure": "17:00",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "NDLS",
+          "name": "New Delhi",
+          "city": "Delhi",
+          "arrival": "08:32",
+          "day": 2,
+          "sequence": 222
+        },
+        "distance": 1388.4,
+        "duration": 932,
+        "totalHaltsBetween": 6
+      }
+    ],
+    "count": 1
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:17:46+05:30",
+    "traceId": "8e956aac-1d37-4f1b-a969-80b6b4fec820",
+    "source": "database",
+    "executionTime": 59
+  }
+}

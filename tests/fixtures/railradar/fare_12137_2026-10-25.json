@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "classCode is required (alias: class)"
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:14:04+05:30",
+    "traceId": "8dafefc3-73cf-4ef5-aa07-ab7270473c54"
+  }
+}

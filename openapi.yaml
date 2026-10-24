@@ -428,7 +428,7 @@ components:
     Stop:
       type: object
       description: "A boardable or alightable point. Not necessarily a station: a bus stop and a metro station are both Stops."
-      required: [stop_id, name, country, geo, timezone]
+      required: [stop_id, name, country, timezone]
       properties:
         stop_id:
           type: string
@@ -450,6 +450,10 @@ components:
           example: IN
         geo:
           $ref: "#/components/schemas/GeoPoint"
+          description: |
+            Omitted when the provider does not publish coordinates. That is a
+            real case (a station directory without geodata, a bus stop), and a
+            map must skip such a stop rather than plot it at 0,0.
         timezone:
           type: string
           description: IANA zone name. Needed because depart times are local.
@@ -736,7 +740,11 @@ components:
           description: 1 is the recommendation. Ordering is by `score` descending.
         risk_band:
           type: string
-          enum: [low, medium, high]
+          enum: [low, medium, high, unknown]
+          description: |
+            `unknown` is a real value, not a placeholder: before the delay model is
+            trained, claiming a band would be a fabrication. A client must render
+            `unknown` as "no risk estimate yet", never as "safe".
         risk_reasons:
           type: array
           description: Plain sentences, rendered directly to the user.

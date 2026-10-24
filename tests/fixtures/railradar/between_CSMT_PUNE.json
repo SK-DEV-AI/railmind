@@ -1,0 +1,849 @@
+{
+  "success": true,
+  "data": {
+    "from": {
+      "code": "CSMT",
+      "name": "Mumbai CSMT"
+    },
+    "to": {
+      "code": "PUNE",
+      "name": "Pune Jn"
+    },
+    "trains": [
+      {
+        "train": {
+          "number": "01013",
+          "name": "Mumbai CSMT - SMVT Bengaluru Special",
+          "type": "Superfast Express",
+          "runDays": [
+            "sat"
+          ],
+          "runningDaysBitmap": 32
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "00:30",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "03:55",
+          "day": 1,
+          "sequence": 56
+        },
+        "distance": 190.6,
+        "duration": 205,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "01015",
+          "name": "Mumbai CSMT - Chennai Beach Special",
+          "type": "Superfast Express",
+          "runDays": [
+            "wed"
+          ],
+          "runningDaysBitmap": 4
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "00:35",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "04:05",
+          "day": 1,
+          "sequence": 56
+        },
+        "distance": 190.6,
+        "duration": 210,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "01105",
+          "name": "Mumbai CSMT - Latur Special",
+          "type": "Mail/Express",
+          "runDays": [
+            "tue",
+            "thu"
+          ],
+          "runningDaysBitmap": 10
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "00:35",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "04:00",
+          "day": 1,
+          "sequence": 56
+        },
+        "distance": 190.6,
+        "duration": 205,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "22105",
+          "name": "Indrayani SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "05:40",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "09:05",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 205,
+        "totalHaltsBetween": 6
+      },
+      {
+        "train": {
+          "number": "12127",
+          "name": "Pune Intercity SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "06:40",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "10:00",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 200,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "11007",
+          "name": "Deccan Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "07:00",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "11:05",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 245,
+        "totalHaltsBetween": 9
+      },
+      {
+        "train": {
+          "number": "11301",
+          "name": "Udyan Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "07:55",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "11:40",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 225,
+        "totalHaltsBetween": 3
+      },
+      {
+        "train": {
+          "number": "11029",
+          "name": "Koyna Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "08:40",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "12:35",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 235,
+        "totalHaltsBetween": 9
+      },
+      {
+        "train": {
+          "number": "01111",
+          "name": "Mumbai CSMT - Kolhapur Special",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon"
+          ],
+          "runningDaysBitmap": 1
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "11:30",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "16:30",
+          "day": 1,
+          "sequence": 55
+        },
+        "distance": 190.6,
+        "duration": 300,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "22159",
+          "name": "MGR Chennai Central SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "12:45",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "16:20",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 215,
+        "totalHaltsBetween": 6
+      },
+      {
+        "train": {
+          "number": "11019",
+          "name": "Konark Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "14:00",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "17:55",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 235,
+        "totalHaltsBetween": 5
+      },
+      {
+        "train": {
+          "number": "22732",
+          "name": "Hyderabad SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "14:10",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "18:05",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 235,
+        "totalHaltsBetween": 3
+      },
+      {
+        "train": {
+          "number": "01417",
+          "name": "Mumbai CSMT - Kolhapur Special",
+          "type": "Mail/Express",
+          "runDays": [
+            "thu"
+          ],
+          "runningDaysBitmap": 8
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "14:30",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "19:05",
+          "day": 1,
+          "sequence": 56
+        },
+        "distance": 190.6,
+        "duration": 275,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "22225",
+          "name": "Mumbai CSMT - Solapur Vande Bharat Express",
+          "type": "Vande Bharat Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 123
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "16:05",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "19:10",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 185,
+        "totalHaltsBetween": 3
+      },
+      {
+        "train": {
+          "number": "12125",
+          "name": "Pragati Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "16:25",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "19:50",
+          "day": 1,
+          "sequence": 55
+        },
+        "distance": 187.2,
+        "duration": 205,
+        "totalHaltsBetween": 6
+      },
+      {
+        "train": {
+          "number": "12123",
+          "name": "Deccan Queen",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "17:10",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "20:25",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 195,
+        "totalHaltsBetween": 3
+      },
+      {
+        "train": {
+          "number": "11009",
+          "name": "Sinhagad Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "17:50",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "21:50",
+          "day": 1,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 240,
+        "totalHaltsBetween": 9
+      },
+      {
+        "train": {
+          "number": "17411",
+          "name": "Mahalaxmi Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "20:15",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "00:10",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 235,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "22107",
+          "name": "Latur SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "thu",
+            "sun"
+          ],
+          "runningDaysBitmap": 75
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "21:00",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "00:30",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 210,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "22143",
+          "name": "Bidar SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "wed",
+            "fri",
+            "sat"
+          ],
+          "runningDaysBitmap": 52
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "21:00",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "00:30",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 210,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "11139",
+          "name": "Hosapete SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "21:20",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "01:05",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 225,
+        "totalHaltsBetween": 4
+      },
+      {
+        "train": {
+          "number": "12701",
+          "name": "Hussain Sagar SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "21:50",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "01:20",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 210,
+        "totalHaltsBetween": 1
+      },
+      {
+        "train": {
+          "number": "12115",
+          "name": "Siddheshwar SF Express",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "22:40",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "02:15",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 215,
+        "totalHaltsBetween": 3
+      },
+      {
+        "train": {
+          "number": "22157",
+          "name": "Chennai Egmore SF Mail",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "22:52",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "PUNE",
+          "name": "Pune Jn",
+          "city": "Pune",
+          "arrival": "02:50",
+          "day": 2,
+          "sequence": 58
+        },
+        "distance": 190.7,
+        "duration": 238,
+        "totalHaltsBetween": 4
+      }
+    ],
+    "count": 24
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:18:34+05:30",
+    "traceId": "7ec81b36-9277-402b-ab77-a5184ea5c61a",
+    "source": "database",
+    "executionTime": 64
+  }
+}

@@ -227,7 +227,12 @@ export interface components {
             city?: string;
             /** @example IN */
             country: string;
-            geo: components["schemas"]["GeoPoint"];
+            /**
+             * @description Omitted when the provider does not publish coordinates. That is a
+             *     real case (a station directory without geodata, a bus stop), and a
+             *     map must skip such a stop rather than plot it at 0,0.
+             */
+            geo?: components["schemas"]["GeoPoint"];
             /**
              * @description IANA zone name. Needed because depart times are local.
              * @example Asia/Kolkata
@@ -383,8 +388,13 @@ export interface components {
             score_breakdown: components["schemas"]["ScoreBreakdown"];
             /** @description 1 is the recommendation. Ordering is by `score` descending. */
             rank: number;
-            /** @enum {string} */
-            risk_band: "low" | "medium" | "high";
+            /**
+             * @description `unknown` is a real value, not a placeholder: before the delay model is
+             *     trained, claiming a band would be a fabrication. A client must render
+             *     `unknown` as "no risk estimate yet", never as "safe".
+             * @enum {string}
+             */
+            risk_band: "low" | "medium" | "high" | "unknown";
             /**
              * @description Plain sentences, rendered directly to the user.
              * @example [

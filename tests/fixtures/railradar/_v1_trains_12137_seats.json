@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "error": {
+    "code": "PLAN_UPGRADE_REQUIRED",
+    "message": "Live Seat Availability and PNR endpoints require an active Developer, Growth, or Scale subscription. Please upgrade your plan at /developers/plans to access."
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:11:52+05:30",
+    "traceId": "b3b3b9d2-e1d8-4048-bf06-7932afd7ae0b"
+  }
+}

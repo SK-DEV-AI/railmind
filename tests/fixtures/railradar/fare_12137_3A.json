@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "error": {
+    "code": "SYSTEM:UNKNOWN_ERROR",
+    "message": "The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:14:59+05:30",
+    "traceId": "35f98893-b167-411a-b386-8c7806e71175"
+  }
+}

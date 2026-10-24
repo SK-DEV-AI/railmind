@@ -1,0 +1,5579 @@
+{
+  "success": true,
+  "data": {
+    "train": {
+      "number": "12137",
+      "name": "Punjab Mail",
+      "type": "Superfast Express",
+      "category": "Express",
+      "source": {
+        "code": "CSMT",
+        "name": "Mumbai CSMT",
+        "lat": 18.94087,
+        "lng": 72.83606
+      },
+      "destination": {
+        "code": "FZR",
+        "name": "Firozpur Cantt",
+        "lat": 30.941881,
+        "lng": 74.617982
+      },
+      "runDays": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun"
+      ],
+      "distance": 1934.5,
+      "duration": 2020,
+      "avgSpeed": 57.5,
+      "maxSpeed": 101.5,
+      "totalHalts": 54,
+      "returnTrain": "12138",
+      "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR",
+      "classes": [
+        "1A",
+        "2A",
+        "3A",
+        "SL"
+      ],
+      "availableClasses": [
+        "1A",
+        "2A",
+        "3A",
+        "SL"
+      ],
+      "hasReversal": false,
+      "isPrsBookable": true
+    },
+    "route": [
+      {
+        "sequence": 1,
+        "station": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "lat": 18.94087,
+          "lng": 72.83606
+        },
+        "isHalt": true,
+        "platform": "11",
+        "speedToNextStationKmph": 41.1,
+        "departure": "19:35",
+        "departureDay": 1,
+        "distance": 0,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 2,
+        "station": {
+          "code": "MSD",
+          "name": "Masjid",
+          "lat": 18.95195,
+          "lng": 72.83834
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "19:37",
+        "arrivalDay": 1,
+        "departure": "19:37",
+        "departureDay": 1,
+        "distance": 1.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 3,
+        "station": {
+          "code": "SNRD",
+          "name": "Sandhurst Road",
+          "lat": 18.96182,
+          "lng": 72.83949
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "19:38",
+        "arrivalDay": 1,
+        "departure": "19:38",
+        "departureDay": 1,
+        "distance": 2.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 4,
+        "station": {
+          "code": "BY",
+          "name": "Byculla",
+          "lat": 18.97664,
+          "lng": 72.83287
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "19:41",
+        "arrivalDay": 1,
+        "departure": "19:41",
+        "departureDay": 1,
+        "distance": 4.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 5,
+        "station": {
+          "code": "CHG",
+          "name": "Chinchpokli",
+          "lat": 18.98692,
+          "lng": 72.83292
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "19:43",
+        "arrivalDay": 1,
+        "departure": "19:43",
+        "departureDay": 1,
+        "distance": 5.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 6,
+        "station": {
+          "code": "CRD",
+          "name": "Currey Road",
+          "lat": 18.994,
+          "lng": 72.833
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "19:44",
+        "arrivalDay": 1,
+        "departure": "19:44",
+        "departureDay": 1,
+        "distance": 6.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 7,
+        "station": {
+          "code": "PR",
+          "name": "Parel",
+          "lat": 19.00918,
+          "lng": 72.83758
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "19:47",
+        "arrivalDay": 1,
+        "departure": "19:47",
+        "departureDay": 1,
+        "distance": 7.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 8,
+        "station": {
+          "code": "DR",
+          "name": "Dadar",
+          "lat": 19.01705,
+          "lng": 72.84303
+        },
+        "isHalt": true,
+        "platform": "10",
+        "speedToNextStationKmph": 63.6,
+        "arrival": "19:48",
+        "arrivalDay": 1,
+        "departure": "19:50",
+        "departureDay": 1,
+        "distance": 8.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 9,
+        "station": {
+          "code": "MTN",
+          "name": "Matunga",
+          "lat": 19.02733,
+          "lng": 72.85026
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "19:51",
+        "arrivalDay": 1,
+        "departure": "19:51",
+        "departureDay": 1,
+        "distance": 10.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 10,
+        "station": {
+          "code": "SION",
+          "name": "Sion",
+          "lat": 19.04653,
+          "lng": 72.86332
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "19:54",
+        "arrivalDay": 1,
+        "departure": "19:54",
+        "departureDay": 1,
+        "distance": 12.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 11,
+        "station": {
+          "code": "CLA",
+          "name": "Kurla Jn",
+          "lat": 19.06515,
+          "lng": 72.8794
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "19:56",
+        "arrivalDay": 1,
+        "departure": "19:56",
+        "departureDay": 1,
+        "distance": 15.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 12,
+        "station": {
+          "code": "VVH",
+          "name": "Vidyavihar",
+          "lat": 19.079094,
+          "lng": 72.897263
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "19:58",
+        "arrivalDay": 1,
+        "departure": "19:58",
+        "departureDay": 1,
+        "distance": 17.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 13,
+        "station": {
+          "code": "GC",
+          "name": "Ghat Kopar",
+          "lat": 19.0856,
+          "lng": 72.90812
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:00",
+        "arrivalDay": 1,
+        "departure": "20:00",
+        "departureDay": 1,
+        "distance": 19.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 14,
+        "station": {
+          "code": "VK",
+          "name": "Vikhroli",
+          "lat": 19.11194,
+          "lng": 72.92847
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:03",
+        "arrivalDay": 1,
+        "departure": "20:03",
+        "departureDay": 1,
+        "distance": 23,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 15,
+        "station": {
+          "code": "KJRD",
+          "name": "Kanjur Marg",
+          "lat": 19.12815,
+          "lng": 72.92825
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:05",
+        "arrivalDay": 1,
+        "departure": "20:05",
+        "departureDay": 1,
+        "distance": 24.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 16,
+        "station": {
+          "code": "BND",
+          "name": "Bhandup",
+          "lat": 19.14228,
+          "lng": 72.93779
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:07",
+        "arrivalDay": 1,
+        "departure": "20:07",
+        "departureDay": 1,
+        "distance": 26.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 17,
+        "station": {
+          "code": "NHU",
+          "name": "Nahur",
+          "lat": 19.15452,
+          "lng": 72.94683
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:08",
+        "arrivalDay": 1,
+        "departure": "20:08",
+        "departureDay": 1,
+        "distance": 28.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 18,
+        "station": {
+          "code": "MLND",
+          "name": "Mulund",
+          "lat": 19.17173,
+          "lng": 72.95663
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:10",
+        "arrivalDay": 1,
+        "departure": "20:10",
+        "departureDay": 1,
+        "distance": 30.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 19,
+        "station": {
+          "code": "TNA",
+          "name": "Thane",
+          "lat": 19.186157,
+          "lng": 72.976186
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:13",
+        "arrivalDay": 1,
+        "departure": "20:13",
+        "departureDay": 1,
+        "distance": 33.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 20,
+        "station": {
+          "code": "KLVA",
+          "name": "Kalwa",
+          "lat": 19.19528,
+          "lng": 72.9967
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:15",
+        "arrivalDay": 1,
+        "departure": "20:15",
+        "departureDay": 1,
+        "distance": 35.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 21,
+        "station": {
+          "code": "MBQ",
+          "name": "Mumbra",
+          "lat": 19.19014,
+          "lng": 73.02314
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:20",
+        "arrivalDay": 1,
+        "departure": "20:20",
+        "departureDay": 1,
+        "distance": 40.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 22,
+        "station": {
+          "code": "DIVA",
+          "name": "Diva",
+          "lat": 19.18865,
+          "lng": 73.04244
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:22",
+        "arrivalDay": 1,
+        "departure": "20:22",
+        "departureDay": 1,
+        "distance": 42.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 23,
+        "station": {
+          "code": "KOPR",
+          "name": "Kopar",
+          "lat": 19.21089,
+          "lng": 73.07729
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:26",
+        "arrivalDay": 1,
+        "departure": "20:26",
+        "departureDay": 1,
+        "distance": 47.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 24,
+        "station": {
+          "code": "DI",
+          "name": "Dombivli",
+          "lat": 19.21812,
+          "lng": 73.08689
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:27",
+        "arrivalDay": 1,
+        "departure": "20:27",
+        "departureDay": 1,
+        "distance": 48.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 25,
+        "station": {
+          "code": "THK",
+          "name": "Thakurli",
+          "lat": 19.22616,
+          "lng": 73.0981
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 63.6,
+        "arrival": "20:29",
+        "arrivalDay": 1,
+        "departure": "20:29",
+        "departureDay": 1,
+        "distance": 49.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 26,
+        "station": {
+          "code": "KYN",
+          "name": "Kalyan Jn",
+          "lat": 19.23544,
+          "lng": 73.1311
+        },
+        "isHalt": true,
+        "platform": "4",
+        "speedToNextStationKmph": 60.4,
+        "arrival": "20:32",
+        "arrivalDay": 1,
+        "departure": "20:35",
+        "departureDay": 1,
+        "distance": 53.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 27,
+        "station": {
+          "code": "SHAD",
+          "name": "Shahad",
+          "lat": 19.24426,
+          "lng": 73.15828
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "20:38",
+        "arrivalDay": 1,
+        "departure": "20:38",
+        "departureDay": 1,
+        "distance": 56.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 28,
+        "station": {
+          "code": "ABY",
+          "name": "Ambivli",
+          "lat": 19.267548,
+          "lng": 73.172201
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "20:41",
+        "arrivalDay": 1,
+        "departure": "20:41",
+        "departureDay": 1,
+        "distance": 59.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 29,
+        "station": {
+          "code": "TLA",
+          "name": "Titwala",
+          "lat": 19.296395,
+          "lng": 73.203268
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "20:46",
+        "arrivalDay": 1,
+        "departure": "20:46",
+        "departureDay": 1,
+        "distance": 64.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 30,
+        "station": {
+          "code": "KDV",
+          "name": "Khadavli",
+          "lat": 19.356509,
+          "lng": 73.218941
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "20:53",
+        "arrivalDay": 1,
+        "departure": "20:53",
+        "departureDay": 1,
+        "distance": 72,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 31,
+        "station": {
+          "code": "VSD",
+          "name": "Vasind",
+          "lat": 19.406511,
+          "lng": 73.267471
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "21:01",
+        "arrivalDay": 1,
+        "departure": "21:01",
+        "departureDay": 1,
+        "distance": 79.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 32,
+        "station": {
+          "code": "ASO",
+          "name": "Asangaon",
+          "lat": 19.43921,
+          "lng": 73.30781
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "21:07",
+        "arrivalDay": 1,
+        "departure": "21:07",
+        "departureDay": 1,
+        "distance": 85.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 33,
+        "station": {
+          "code": "ATG",
+          "name": "Atgaon",
+          "lat": 19.50446,
+          "lng": 73.32816
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "21:17",
+        "arrivalDay": 1,
+        "departure": "21:17",
+        "departureDay": 1,
+        "distance": 95.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 34,
+        "station": {
+          "code": "THS",
+          "name": "Thansit",
+          "lat": 19.55008,
+          "lng": 73.35176
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "21:23",
+        "arrivalDay": 1,
+        "departure": "21:23",
+        "departureDay": 1,
+        "distance": 101.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 35,
+        "station": {
+          "code": "KE",
+          "name": "Khardi",
+          "lat": 19.58017,
+          "lng": 73.39407
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "21:29",
+        "arrivalDay": 1,
+        "departure": "21:29",
+        "departureDay": 1,
+        "distance": 107.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 36,
+        "station": {
+          "code": "OMB",
+          "name": "Umbermali",
+          "lat": 19.62835,
+          "lng": 73.42296
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 60.4,
+        "arrival": "21:35",
+        "arrivalDay": 1,
+        "departure": "21:35",
+        "departureDay": 1,
+        "distance": 113.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 37,
+        "station": {
+          "code": "KSRA",
+          "name": "Kasara",
+          "lat": 19.6483,
+          "lng": 73.47306
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 55.5,
+        "arrival": "21:42",
+        "arrivalDay": 1,
+        "departure": "21:45",
+        "departureDay": 1,
+        "distance": 120.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 38,
+        "station": {
+          "code": "X101",
+          "name": "Tgr Cabin No 1",
+          "lat": 19.699971,
+          "lng": 73.531494
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "21:56",
+        "arrivalDay": 1,
+        "departure": "21:56",
+        "departureDay": 1,
+        "distance": 131.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 39,
+        "station": {
+          "code": "IGP",
+          "name": "Igatpuri",
+          "lat": 19.69441,
+          "lng": 73.56323
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "22:00",
+        "arrivalDay": 1,
+        "departure": "22:00",
+        "departureDay": 1,
+        "distance": 134.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 40,
+        "station": {
+          "code": "GO",
+          "name": "Ghoti",
+          "lat": 19.723871,
+          "lng": 73.636434
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "22:10",
+        "arrivalDay": 1,
+        "departure": "22:10",
+        "departureDay": 1,
+        "distance": 144,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 41,
+        "station": {
+          "code": "PI",
+          "name": "Padli",
+          "lat": 19.78128,
+          "lng": 73.66216
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "22:18",
+        "arrivalDay": 1,
+        "departure": "22:18",
+        "departureDay": 1,
+        "distance": 151.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 42,
+        "station": {
+          "code": "AV",
+          "name": "Asvali",
+          "lat": 19.8228,
+          "lng": 73.71316
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "22:27",
+        "arrivalDay": 1,
+        "departure": "22:27",
+        "departureDay": 1,
+        "distance": 159.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 43,
+        "station": {
+          "code": "LT",
+          "name": "Lahavit",
+          "lat": 19.8227,
+          "lng": 73.78498
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "22:37",
+        "arrivalDay": 1,
+        "departure": "22:37",
+        "departureDay": 1,
+        "distance": 168.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 44,
+        "station": {
+          "code": "DVL",
+          "name": "Devlali",
+          "lat": 19.89721,
+          "lng": 73.83674
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.5,
+        "arrival": "22:49",
+        "arrivalDay": 1,
+        "departure": "22:49",
+        "departureDay": 1,
+        "distance": 179.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 45,
+        "station": {
+          "code": "NK",
+          "name": "Nasik Road",
+          "lat": 19.94719,
+          "lng": 73.84224
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 65.2,
+        "arrival": "22:55",
+        "arrivalDay": 1,
+        "departure": "23:00",
+        "departureDay": 1,
+        "distance": 185.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 46,
+        "station": {
+          "code": "ODHA",
+          "name": "Odha",
+          "lat": 20.01786,
+          "lng": 73.91379
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:11",
+        "arrivalDay": 1,
+        "departure": "23:11",
+        "departureDay": 1,
+        "distance": 197.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 47,
+        "station": {
+          "code": "KW",
+          "name": "Khervadi",
+          "lat": 20.04709,
+          "lng": 73.9747
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:17",
+        "arrivalDay": 1,
+        "departure": "23:17",
+        "departureDay": 1,
+        "distance": 204.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 48,
+        "station": {
+          "code": "KBSN",
+          "name": "Kasbe Sukene",
+          "lat": 20.07382,
+          "lng": 74.03084
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:23",
+        "arrivalDay": 1,
+        "departure": "23:23",
+        "departureDay": 1,
+        "distance": 210.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 49,
+        "station": {
+          "code": "NR",
+          "name": "Niphad",
+          "lat": 20.09684,
+          "lng": 74.08007
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:29",
+        "arrivalDay": 1,
+        "departure": "23:29",
+        "departureDay": 1,
+        "distance": 216.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 50,
+        "station": {
+          "code": "UGN",
+          "name": "Ugaon",
+          "lat": 20.12327,
+          "lng": 74.13946
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:35",
+        "arrivalDay": 1,
+        "departure": "23:35",
+        "departureDay": 1,
+        "distance": 223.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 51,
+        "station": {
+          "code": "LS",
+          "name": "Lasalgaon",
+          "lat": 20.1549,
+          "lng": 74.22586
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:44",
+        "arrivalDay": 1,
+        "departure": "23:44",
+        "departureDay": 1,
+        "distance": 233.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 52,
+        "station": {
+          "code": "SUM",
+          "name": "Summit",
+          "lat": 20.21117,
+          "lng": 74.34278
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 65.2,
+        "arrival": "23:57",
+        "arrivalDay": 1,
+        "departure": "23:57",
+        "departureDay": 1,
+        "distance": 247.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 53,
+        "station": {
+          "code": "MMR",
+          "name": "Manmad Jn",
+          "lat": 20.24942,
+          "lng": 74.43742
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:07",
+        "arrivalDay": 2,
+        "departure": "00:10",
+        "departureDay": 2,
+        "distance": 258.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 54,
+        "station": {
+          "code": "PNV",
+          "name": "Panevadi",
+          "lat": 20.26305,
+          "lng": 74.48497
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:13",
+        "arrivalDay": 2,
+        "departure": "00:13",
+        "departureDay": 2,
+        "distance": 263.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 55,
+        "station": {
+          "code": "HSL",
+          "name": "Hisvahal",
+          "lat": 20.28134,
+          "lng": 74.56039
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:19",
+        "arrivalDay": 2,
+        "departure": "00:19",
+        "departureDay": 2,
+        "distance": 271.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 56,
+        "station": {
+          "code": "PJN",
+          "name": "Panjhan",
+          "lat": 20.27515,
+          "lng": 74.61106
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:22",
+        "arrivalDay": 2,
+        "departure": "00:22",
+        "departureDay": 2,
+        "distance": 277.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 57,
+        "station": {
+          "code": "NGN",
+          "name": "Nandgaon",
+          "lat": 20.30934,
+          "lng": 74.66037
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:26",
+        "arrivalDay": 2,
+        "departure": "00:26",
+        "departureDay": 2,
+        "distance": 283.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 58,
+        "station": {
+          "code": "PKE",
+          "name": "Pimpar Khed",
+          "lat": 20.30763,
+          "lng": 74.75621
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:33",
+        "arrivalDay": 2,
+        "departure": "00:33",
+        "departureDay": 2,
+        "distance": 294.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 59,
+        "station": {
+          "code": "NI",
+          "name": "Naydongri",
+          "lat": 20.34866,
+          "lng": 74.8369
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:39",
+        "arrivalDay": 2,
+        "departure": "00:39",
+        "departureDay": 2,
+        "distance": 304.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 60,
+        "station": {
+          "code": "RHNE",
+          "name": "Rohini",
+          "lat": 20.3713,
+          "lng": 74.87458
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:42",
+        "arrivalDay": 2,
+        "departure": "00:42",
+        "departureDay": 2,
+        "distance": 308.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 61,
+        "station": {
+          "code": "HPR",
+          "name": "Hirapur",
+          "lat": 20.42443,
+          "lng": 74.93673
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 94.2,
+        "arrival": "00:48",
+        "arrivalDay": 2,
+        "departure": "00:48",
+        "departureDay": 2,
+        "distance": 317.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 62,
+        "station": {
+          "code": "CSN",
+          "name": "Chalisgaon Jn",
+          "lat": 20.46402,
+          "lng": 74.99885
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 81.8,
+        "arrival": "00:53",
+        "arrivalDay": 2,
+        "departure": "00:55",
+        "departureDay": 2,
+        "distance": 325.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 63,
+        "station": {
+          "code": "VGL",
+          "name": "Vaghli",
+          "lat": 20.51784,
+          "lng": 75.06819
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:02",
+        "arrivalDay": 2,
+        "departure": "01:02",
+        "departureDay": 2,
+        "distance": 335.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 64,
+        "station": {
+          "code": "KJ",
+          "name": "Kajgaon",
+          "lat": 20.57347,
+          "lng": 75.14063
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:09",
+        "arrivalDay": 2,
+        "departure": "01:09",
+        "departureDay": 2,
+        "distance": 344.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 65,
+        "station": {
+          "code": "NGD",
+          "name": "Nagardevla",
+          "lat": 20.60325,
+          "lng": 75.19853
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:14",
+        "arrivalDay": 2,
+        "departure": "01:14",
+        "departureDay": 2,
+        "distance": 351.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 66,
+        "station": {
+          "code": "GAA",
+          "name": "Galan",
+          "lat": 20.60962,
+          "lng": 75.2775
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:20",
+        "arrivalDay": 2,
+        "departure": "01:20",
+        "departureDay": 2,
+        "distance": 360.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 67,
+        "station": {
+          "code": "PC",
+          "name": "Pachora Jn",
+          "lat": 20.66873,
+          "lng": 75.3492
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:28",
+        "arrivalDay": 2,
+        "departure": "01:28",
+        "departureDay": 2,
+        "distance": 370.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 68,
+        "station": {
+          "code": "PHQ",
+          "name": "Pardhande",
+          "lat": 20.729318,
+          "lng": 75.377211
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:33",
+        "arrivalDay": 2,
+        "departure": "01:33",
+        "departureDay": 2,
+        "distance": 378.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 69,
+        "station": {
+          "code": "MYJ",
+          "name": "Maheji",
+          "lat": 20.76882,
+          "lng": 75.42461
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:39",
+        "arrivalDay": 2,
+        "departure": "01:39",
+        "departureDay": 2,
+        "distance": 385.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 70,
+        "station": {
+          "code": "MWD",
+          "name": "Mhasavad",
+          "lat": 20.87057,
+          "lng": 75.45876
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:48",
+        "arrivalDay": 2,
+        "departure": "01:48",
+        "departureDay": 2,
+        "distance": 397.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 71,
+        "station": {
+          "code": "SS",
+          "name": "Shirsoli",
+          "lat": 20.933457,
+          "lng": 75.508339
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.8,
+        "arrival": "01:54",
+        "arrivalDay": 2,
+        "departure": "01:54",
+        "departureDay": 2,
+        "distance": 406.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 72,
+        "station": {
+          "code": "JL",
+          "name": "Jalgaon Jn",
+          "lat": 21.018297,
+          "lng": 75.562928
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 41.1,
+        "arrival": "02:03",
+        "arrivalDay": 2,
+        "departure": "02:05",
+        "departureDay": 2,
+        "distance": 418.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 73,
+        "station": {
+          "code": "TRW",
+          "name": "Tarsod",
+          "lat": 21.02557,
+          "lng": 75.634234
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "02:16",
+        "arrivalDay": 2,
+        "departure": "02:16",
+        "departureDay": 2,
+        "distance": 426,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 74,
+        "station": {
+          "code": "BDI",
+          "name": "Bhadli",
+          "lat": 21.023067,
+          "lng": 75.675148
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 41.1,
+        "arrival": "02:22",
+        "arrivalDay": 2,
+        "departure": "02:22",
+        "departureDay": 2,
+        "distance": 430.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 75,
+        "station": {
+          "code": "BSL",
+          "name": "Bhusaval Jn",
+          "lat": 21.047441,
+          "lng": 75.788318
+        },
+        "isHalt": true,
+        "platform": "5",
+        "speedToNextStationKmph": 76.2,
+        "arrival": "02:40",
+        "arrivalDay": 2,
+        "departure": "02:45",
+        "departureDay": 2,
+        "distance": 442.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 76,
+        "station": {
+          "code": "DSK",
+          "name": "Duskheda",
+          "lat": 21.07352,
+          "lng": 75.839347
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.2,
+        "arrival": "02:50",
+        "arrivalDay": 2,
+        "departure": "02:50",
+        "departureDay": 2,
+        "distance": 449.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 77,
+        "station": {
+          "code": "SAV",
+          "name": "Savda",
+          "lat": 21.11062,
+          "lng": 75.91042
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.2,
+        "arrival": "02:57",
+        "arrivalDay": 2,
+        "departure": "02:57",
+        "departureDay": 2,
+        "distance": 458,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 78,
+        "station": {
+          "code": "NB",
+          "name": "Nimbhora",
+          "lat": 21.16043,
+          "lng": 75.97479
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.2,
+        "arrival": "03:04",
+        "arrivalDay": 2,
+        "departure": "03:04",
+        "departureDay": 2,
+        "distance": 466.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 79,
+        "station": {
+          "code": "RV",
+          "name": "Raver",
+          "lat": 21.22213,
+          "lng": 76.04454
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.2,
+        "arrival": "03:12",
+        "arrivalDay": 2,
+        "departure": "03:12",
+        "departureDay": 2,
+        "distance": 476.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 80,
+        "station": {
+          "code": "WGA",
+          "name": "Waghoda",
+          "lat": 21.27948,
+          "lng": 76.12049
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.2,
+        "arrival": "03:20",
+        "arrivalDay": 2,
+        "departure": "03:20",
+        "departureDay": 2,
+        "distance": 486.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 81,
+        "station": {
+          "code": "BAU",
+          "name": "Burhanpur",
+          "lat": 21.33481,
+          "lng": 76.19925
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 50.5,
+        "arrival": "03:28",
+        "arrivalDay": 2,
+        "departure": "03:30",
+        "departureDay": 2,
+        "distance": 497.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 82,
+        "station": {
+          "code": "AGQ",
+          "name": "Asirgarh Road",
+          "lat": 21.37813,
+          "lng": 76.26782
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "03:41",
+        "arrivalDay": 2,
+        "departure": "03:41",
+        "departureDay": 2,
+        "distance": 506,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 83,
+        "station": {
+          "code": "CDI",
+          "name": "Chandni",
+          "lat": 21.42595,
+          "lng": 76.34877
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "03:53",
+        "arrivalDay": 2,
+        "departure": "03:53",
+        "departureDay": 2,
+        "distance": 516.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 84,
+        "station": {
+          "code": "NPNR",
+          "name": "Nepanagar",
+          "lat": 21.46399,
+          "lng": 76.39708
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:01",
+        "arrivalDay": 2,
+        "departure": "04:01",
+        "departureDay": 2,
+        "distance": 523.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 85,
+        "station": {
+          "code": "MWA",
+          "name": "Mandwa",
+          "lat": 21.51575,
+          "lng": 76.39162
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:08",
+        "arrivalDay": 2,
+        "departure": "04:08",
+        "departureDay": 2,
+        "distance": 529.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 86,
+        "station": {
+          "code": "SXA",
+          "name": "Sagphata",
+          "lat": 21.55669,
+          "lng": 76.39251
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:15",
+        "arrivalDay": 2,
+        "departure": "04:15",
+        "departureDay": 2,
+        "distance": 535.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 87,
+        "station": {
+          "code": "DGN",
+          "name": "Dongargaon",
+          "lat": 21.62018,
+          "lng": 76.37094
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:24",
+        "arrivalDay": 2,
+        "departure": "04:24",
+        "departureDay": 2,
+        "distance": 542.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 88,
+        "station": {
+          "code": "KDK",
+          "name": "Kohdad",
+          "lat": 21.68463,
+          "lng": 76.36461
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:33",
+        "arrivalDay": 2,
+        "departure": "04:33",
+        "departureDay": 2,
+        "distance": 550.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 89,
+        "station": {
+          "code": "BMA",
+          "name": "Bagmar",
+          "lat": 21.72526,
+          "lng": 76.36345
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:39",
+        "arrivalDay": 2,
+        "departure": "04:39",
+        "departureDay": 2,
+        "distance": 555,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 90,
+        "station": {
+          "code": "BRGJ",
+          "name": "Bargaon Gujar",
+          "lat": 21.77699,
+          "lng": 76.35558
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.5,
+        "arrival": "04:46",
+        "arrivalDay": 2,
+        "departure": "04:46",
+        "departureDay": 2,
+        "distance": 560.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 91,
+        "station": {
+          "code": "KNW",
+          "name": "Khandwa Jn",
+          "lat": 21.823838,
+          "lng": 76.353016
+        },
+        "isHalt": true,
+        "platform": "4",
+        "speedToNextStationKmph": 101.5,
+        "arrival": "04:52",
+        "arrivalDay": 2,
+        "departure": "04:55",
+        "departureDay": 2,
+        "distance": 566.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 92,
+        "station": {
+          "code": "MTA",
+          "name": "Mathela",
+          "lat": 21.879047,
+          "lng": 76.389336
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "04:59",
+        "arrivalDay": 2,
+        "departure": "04:59",
+        "departureDay": 2,
+        "distance": 573.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 93,
+        "station": {
+          "code": "TLV",
+          "name": "Talvadya Jn",
+          "lat": 21.92783,
+          "lng": 76.44463
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "05:04",
+        "arrivalDay": 2,
+        "departure": "05:04",
+        "departureDay": 2,
+        "distance": 581.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 94,
+        "station": {
+          "code": "SGBJ",
+          "name": "Surgaon Banjari",
+          "lat": 21.94688,
+          "lng": 76.54423
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "05:11",
+        "arrivalDay": 2,
+        "departure": "05:11",
+        "departureDay": 2,
+        "distance": 593.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 95,
+        "station": {
+          "code": "CKKD",
+          "name": "Charkhera Khurd",
+          "lat": 21.93849,
+          "lng": 76.64154
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "05:17",
+        "arrivalDay": 2,
+        "departure": "05:17",
+        "departureDay": 2,
+        "distance": 604,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 96,
+        "station": {
+          "code": "CAER",
+          "name": "Chhanera",
+          "lat": 21.9635,
+          "lng": 76.70761
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "05:22",
+        "arrivalDay": 2,
+        "departure": "05:22",
+        "departureDay": 2,
+        "distance": 611.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 97,
+        "station": {
+          "code": "BRUD",
+          "name": "Barud",
+          "lat": 22.02794,
+          "lng": 76.76351
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "05:28",
+        "arrivalDay": 2,
+        "departure": "05:28",
+        "departureDay": 2,
+        "distance": 621.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 98,
+        "station": {
+          "code": "DRHI",
+          "name": "Dagar Khedi",
+          "lat": 22.08162,
+          "lng": 76.82679
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 101.5,
+        "arrival": "05:34",
+        "arrivalDay": 2,
+        "departure": "05:34",
+        "departureDay": 2,
+        "distance": 631.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 99,
+        "station": {
+          "code": "KKN",
+          "name": "Khirkiya",
+          "lat": 22.1659,
+          "lng": 76.85905
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 100.1,
+        "arrival": "05:40",
+        "arrivalDay": 2,
+        "departure": "05:42",
+        "departureDay": 2,
+        "distance": 642.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 100,
+        "station": {
+          "code": "KRO",
+          "name": "Kurawan",
+          "lat": 22.20522,
+          "lng": 76.90477
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 100.1,
+        "arrival": "05:46",
+        "arrivalDay": 2,
+        "departure": "05:46",
+        "departureDay": 2,
+        "distance": 648.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 101,
+        "station": {
+          "code": "BRI",
+          "name": "Bhiringi",
+          "lat": 22.25129,
+          "lng": 76.9748
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 100.1,
+        "arrival": "05:51",
+        "arrivalDay": 2,
+        "departure": "05:51",
+        "departureDay": 2,
+        "distance": 657.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 102,
+        "station": {
+          "code": "MUO",
+          "name": "Masangaon",
+          "lat": 22.26726,
+          "lng": 76.99746
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 100.1,
+        "arrival": "05:53",
+        "arrivalDay": 2,
+        "departure": "05:53",
+        "departureDay": 2,
+        "distance": 660.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 103,
+        "station": {
+          "code": "PAL",
+          "name": "Palasner",
+          "lat": 22.29872,
+          "lng": 77.04242
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 100.1,
+        "arrival": "05:56",
+        "arrivalDay": 2,
+        "departure": "05:56",
+        "departureDay": 2,
+        "distance": 666.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 104,
+        "station": {
+          "code": "HD",
+          "name": "Harda",
+          "lat": 22.33839,
+          "lng": 77.10122
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 90.4,
+        "arrival": "06:01",
+        "arrivalDay": 2,
+        "departure": "06:03",
+        "departureDay": 2,
+        "distance": 673.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 105,
+        "station": {
+          "code": "CRK",
+          "name": "Charkhera",
+          "lat": 22.36625,
+          "lng": 77.16035
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.4,
+        "arrival": "06:08",
+        "arrivalDay": 2,
+        "departure": "06:08",
+        "departureDay": 2,
+        "distance": 680.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 106,
+        "station": {
+          "code": "TBN",
+          "name": "Timarni",
+          "lat": 22.37626,
+          "lng": 77.22994
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.4,
+        "arrival": "06:12",
+        "arrivalDay": 2,
+        "departure": "06:12",
+        "departureDay": 2,
+        "distance": 688.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 107,
+        "station": {
+          "code": "CGO",
+          "name": "Chhidgaon",
+          "lat": 22.40666,
+          "lng": 77.31381
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.4,
+        "arrival": "06:19",
+        "arrivalDay": 2,
+        "departure": "06:19",
+        "departureDay": 2,
+        "distance": 697.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 108,
+        "station": {
+          "code": "PGL",
+          "name": "Pagdhal",
+          "lat": 22.42043,
+          "lng": 77.35142
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.4,
+        "arrival": "06:21",
+        "arrivalDay": 2,
+        "departure": "06:21",
+        "departureDay": 2,
+        "distance": 701.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 109,
+        "station": {
+          "code": "BIF",
+          "name": "Bhaironpur",
+          "lat": 22.44053,
+          "lng": 77.4187
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.4,
+        "arrival": "06:26",
+        "arrivalDay": 2,
+        "departure": "06:26",
+        "departureDay": 2,
+        "distance": 708.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 110,
+        "station": {
+          "code": "BPF",
+          "name": "Banapura",
+          "lat": 22.47034,
+          "lng": 77.4812
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 35.2,
+        "arrival": "06:31",
+        "arrivalDay": 2,
+        "departure": "06:33",
+        "departureDay": 2,
+        "distance": 716.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 111,
+        "station": {
+          "code": "DKI",
+          "name": "Dharmkundi",
+          "lat": 22.51039,
+          "lng": 77.5486
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 35.2,
+        "arrival": "06:47",
+        "arrivalDay": 2,
+        "departure": "06:47",
+        "departureDay": 2,
+        "distance": 724.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 112,
+        "station": {
+          "code": "KTZ",
+          "name": "Khutwansa",
+          "lat": 22.54833,
+          "lng": 77.60741
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 35.2,
+        "arrival": "07:00",
+        "arrivalDay": 2,
+        "departure": "07:00",
+        "departureDay": 2,
+        "distance": 731.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 113,
+        "station": {
+          "code": "DRA",
+          "name": "Dularia",
+          "lat": 22.57531,
+          "lng": 77.65379
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 35.2,
+        "arrival": "07:09",
+        "arrivalDay": 2,
+        "departure": "07:09",
+        "departureDay": 2,
+        "distance": 737.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 114,
+        "station": {
+          "code": "ETBC",
+          "name": "Itarsi B Cabin",
+          "lat": 22.602994,
+          "lng": 77.749342
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 35.2,
+        "arrival": "07:27",
+        "arrivalDay": 2,
+        "departure": "07:27",
+        "departureDay": 2,
+        "distance": 747.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 115,
+        "station": {
+          "code": "ET",
+          "name": "Itarsi Jn",
+          "lat": 22.608,
+          "lng": 77.76676
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 53.4,
+        "arrival": "07:30",
+        "arrivalDay": 2,
+        "departure": "07:40",
+        "departureDay": 2,
+        "distance": 749.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 116,
+        "station": {
+          "code": "PRKD",
+          "name": "Powerkheda",
+          "lat": 22.67353,
+          "lng": 77.74787
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 53.4,
+        "arrival": "07:49",
+        "arrivalDay": 2,
+        "departure": "07:49",
+        "departureDay": 2,
+        "distance": 757.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 117,
+        "station": {
+          "code": "NDPM",
+          "name": "Narmadapuram",
+          "lat": 22.75291,
+          "lng": 77.7168
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 44.9,
+        "arrival": "08:00",
+        "arrivalDay": 2,
+        "departure": "08:00",
+        "departureDay": 2,
+        "distance": 767.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 118,
+        "station": {
+          "code": "BNI",
+          "name": "Budni",
+          "lat": 22.788265,
+          "lng": 77.681452
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "08:09",
+        "arrivalDay": 2,
+        "departure": "08:09",
+        "departureDay": 2,
+        "distance": 774.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 119,
+        "station": {
+          "code": "MIG",
+          "name": "Midghat",
+          "lat": 22.82512,
+          "lng": 77.65034
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "08:19",
+        "arrivalDay": 2,
+        "departure": "08:19",
+        "departureDay": 2,
+        "distance": 781.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 120,
+        "station": {
+          "code": "CHQ",
+          "name": "Choka",
+          "lat": 22.8638,
+          "lng": 77.63807
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "08:26",
+        "arrivalDay": 2,
+        "departure": "08:26",
+        "departureDay": 2,
+        "distance": 787.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 121,
+        "station": {
+          "code": "BKA",
+          "name": "Barkhera",
+          "lat": 22.91768,
+          "lng": 77.64979
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "08:35",
+        "arrivalDay": 2,
+        "departure": "08:35",
+        "departureDay": 2,
+        "distance": 793.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 122,
+        "station": {
+          "code": "ODG",
+          "name": "Obaidulla Ganj",
+          "lat": 22.99501,
+          "lng": 77.58727
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "08:50",
+        "arrivalDay": 2,
+        "departure": "08:50",
+        "departureDay": 2,
+        "distance": 805.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 123,
+        "station": {
+          "code": "ITKL",
+          "name": "Itaya Kalan",
+          "lat": 23.05521,
+          "lng": 77.54087
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "09:02",
+        "arrivalDay": 2,
+        "departure": "09:02",
+        "departureDay": 2,
+        "distance": 813.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 124,
+        "station": {
+          "code": "MDDP",
+          "name": "Mandi Dip",
+          "lat": 23.0938,
+          "lng": 77.51125
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "09:09",
+        "arrivalDay": 2,
+        "departure": "09:09",
+        "departureDay": 2,
+        "distance": 818.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 125,
+        "station": {
+          "code": "MSO",
+          "name": "Misrod",
+          "lat": 23.169,
+          "lng": 77.45795
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 44.9,
+        "arrival": "09:22",
+        "arrivalDay": 2,
+        "departure": "09:22",
+        "departureDay": 2,
+        "distance": 828.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 126,
+        "station": {
+          "code": "RKMP",
+          "name": "Rani Kamalapati",
+          "lat": 23.22175,
+          "lng": 77.43992
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 24.4,
+        "arrival": "09:30",
+        "arrivalDay": 2,
+        "departure": "09:30",
+        "departureDay": 2,
+        "distance": 834.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 127,
+        "station": {
+          "code": "BPL",
+          "name": "Bhopal Jn",
+          "lat": 23.267936,
+          "lng": 77.413526
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 86.6,
+        "arrival": "09:45",
+        "arrivalDay": 2,
+        "departure": "09:50",
+        "departureDay": 2,
+        "distance": 840.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 128,
+        "station": {
+          "code": "NSZ",
+          "name": "Nishatpura",
+          "lat": 23.281619,
+          "lng": 77.421186
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.6,
+        "arrival": "09:52",
+        "arrivalDay": 2,
+        "departure": "09:52",
+        "departureDay": 2,
+        "distance": 843.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 129,
+        "station": {
+          "code": "SUW",
+          "name": "Sukhisewaniyan",
+          "lat": 23.34023,
+          "lng": 77.48556
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.6,
+        "arrival": "09:58",
+        "arrivalDay": 2,
+        "departure": "09:58",
+        "departureDay": 2,
+        "distance": 852,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 130,
+        "station": {
+          "code": "BVB",
+          "name": "Bhadbhadaghat",
+          "lat": 23.37473,
+          "lng": 77.53554
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.6,
+        "arrival": "10:03",
+        "arrivalDay": 2,
+        "departure": "10:03",
+        "departureDay": 2,
+        "distance": 859.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 131,
+        "station": {
+          "code": "DWG",
+          "name": "Dewanganj",
+          "lat": 23.42884,
+          "lng": 77.59265
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.6,
+        "arrival": "10:09",
+        "arrivalDay": 2,
+        "departure": "10:09",
+        "departureDay": 2,
+        "distance": 868.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 132,
+        "station": {
+          "code": "SMT",
+          "name": "Salamatpur",
+          "lat": 23.46128,
+          "lng": 77.67303
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.6,
+        "arrival": "10:15",
+        "arrivalDay": 2,
+        "departure": "10:15",
+        "departureDay": 2,
+        "distance": 877.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 133,
+        "station": {
+          "code": "SCI",
+          "name": "Sanchi",
+          "lat": 23.48781,
+          "lng": 77.73578
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.6,
+        "arrival": "10:21",
+        "arrivalDay": 2,
+        "departure": "10:21",
+        "departureDay": 2,
+        "distance": 884.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 134,
+        "station": {
+          "code": "BHS",
+          "name": "Vidisha",
+          "lat": 23.5224,
+          "lng": 77.81491
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 99,
+        "arrival": "10:27",
+        "arrivalDay": 2,
+        "departure": "10:27",
+        "departureDay": 2,
+        "distance": 894.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 135,
+        "station": {
+          "code": "SORI",
+          "name": "Sorai",
+          "lat": 23.55654,
+          "lng": 77.85036
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 99,
+        "arrival": "10:30",
+        "arrivalDay": 2,
+        "departure": "10:30",
+        "departureDay": 2,
+        "distance": 899.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 136,
+        "station": {
+          "code": "SUMR",
+          "name": "Sumer",
+          "lat": 23.62525,
+          "lng": 77.88001
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 99,
+        "arrival": "10:35",
+        "arrivalDay": 2,
+        "departure": "10:35",
+        "departureDay": 2,
+        "distance": 907.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 137,
+        "station": {
+          "code": "GLG",
+          "name": "Gulabhganj",
+          "lat": 23.68369,
+          "lng": 77.91203
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 99,
+        "arrival": "10:40",
+        "arrivalDay": 2,
+        "departure": "10:40",
+        "departureDay": 2,
+        "distance": 915.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 138,
+        "station": {
+          "code": "PAI",
+          "name": "Pabai",
+          "lat": 23.76786,
+          "lng": 77.93184
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 99,
+        "arrival": "10:46",
+        "arrivalDay": 2,
+        "departure": "10:46",
+        "departureDay": 2,
+        "distance": 924.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 139,
+        "station": {
+          "code": "BAQ",
+          "name": "Ganj Basoda",
+          "lat": 23.84542,
+          "lng": 77.94462
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 40.9,
+        "arrival": "10:51",
+        "arrivalDay": 2,
+        "departure": "10:53",
+        "departureDay": 2,
+        "distance": 933.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 140,
+        "station": {
+          "code": "RKDI",
+          "name": "Raukheri",
+          "lat": 23.86234,
+          "lng": 77.967473
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 40.9,
+        "arrival": "10:59",
+        "arrivalDay": 2,
+        "departure": "10:59",
+        "departureDay": 2,
+        "distance": 938.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 141,
+        "station": {
+          "code": "BET",
+          "name": "Bareth",
+          "lat": 23.915487,
+          "lng": 77.999851
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 40.9,
+        "arrival": "11:07",
+        "arrivalDay": 2,
+        "departure": "11:07",
+        "departureDay": 2,
+        "distance": 943.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 142,
+        "station": {
+          "code": "CLHT",
+          "name": "Chulheta",
+          "lat": 23.949809,
+          "lng": 78.020825
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 40.9,
+        "arrival": "11:14",
+        "arrivalDay": 2,
+        "departure": "11:14",
+        "departureDay": 2,
+        "distance": 947.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 143,
+        "station": {
+          "code": "KAH",
+          "name": "Kalhar",
+          "lat": 23.977088,
+          "lng": 78.057355
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 40.9,
+        "arrival": "11:22",
+        "arrivalDay": 2,
+        "departure": "11:22",
+        "departureDay": 2,
+        "distance": 953.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 144,
+        "station": {
+          "code": "MABA",
+          "name": "Mandi Bamora",
+          "lat": 24.053451,
+          "lng": 78.082504
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 40.9,
+        "arrival": "11:34",
+        "arrivalDay": 2,
+        "departure": "11:34",
+        "departureDay": 2,
+        "distance": 962.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 145,
+        "station": {
+          "code": "KIKA",
+          "name": "Kurwai Kethora",
+          "lat": 24.118131,
+          "lng": 78.115771
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 40.9,
+        "arrival": "11:46",
+        "arrivalDay": 2,
+        "departure": "11:46",
+        "departureDay": 2,
+        "distance": 970.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 146,
+        "station": {
+          "code": "BINA",
+          "name": "Bina Jn",
+          "lat": 24.17184,
+          "lng": 78.18501
+        },
+        "isHalt": true,
+        "platform": "5",
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:00",
+        "arrivalDay": 2,
+        "departure": "12:05",
+        "departureDay": 2,
+        "distance": 979.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 147,
+        "station": {
+          "code": "AGD",
+          "name": "Agasod",
+          "lat": 24.23413,
+          "lng": 78.21711
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:11",
+        "arrivalDay": 2,
+        "departure": "12:11",
+        "departureDay": 2,
+        "distance": 987.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 148,
+        "station": {
+          "code": "KOA",
+          "name": "Karonda",
+          "lat": 24.32983,
+          "lng": 78.2651
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:20",
+        "arrivalDay": 2,
+        "departure": "12:20",
+        "departureDay": 2,
+        "distance": 999.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 149,
+        "station": {
+          "code": "MXS",
+          "name": "Mohasa",
+          "lat": 24.37556,
+          "lng": 78.28808
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:24",
+        "arrivalDay": 2,
+        "departure": "12:24",
+        "departureDay": 2,
+        "distance": 1004.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 150,
+        "station": {
+          "code": "DUA",
+          "name": "Dhaura",
+          "lat": 24.45054,
+          "lng": 78.32162
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:31",
+        "arrivalDay": 2,
+        "departure": "12:31",
+        "departureDay": 2,
+        "distance": 1014.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 151,
+        "station": {
+          "code": "JLN",
+          "name": "Jakhalaun",
+          "lat": 24.54737,
+          "lng": 78.34213
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:40",
+        "arrivalDay": 2,
+        "departure": "12:40",
+        "departureDay": 2,
+        "distance": 1025.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 152,
+        "station": {
+          "code": "JRO",
+          "name": "Jiron",
+          "lat": 24.60775,
+          "lng": 78.36128
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 80.2,
+        "arrival": "12:45",
+        "arrivalDay": 2,
+        "departure": "12:45",
+        "departureDay": 2,
+        "distance": 1032.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 153,
+        "station": {
+          "code": "LAR",
+          "name": "Lalitpur",
+          "lat": 24.68841,
+          "lng": 78.39564
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 90.7,
+        "arrival": "12:52",
+        "arrivalDay": 2,
+        "departure": "12:52",
+        "departureDay": 2,
+        "distance": 1042.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 154,
+        "station": {
+          "code": "DWA",
+          "name": "Dailwara",
+          "lat": 24.78052,
+          "lng": 78.3931
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "12:59",
+        "arrivalDay": 2,
+        "departure": "12:59",
+        "departureDay": 2,
+        "distance": 1052.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 155,
+        "station": {
+          "code": "JHA",
+          "name": "Jakhaura",
+          "lat": 24.87079,
+          "lng": 78.40022
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:06",
+        "arrivalDay": 2,
+        "departure": "13:06",
+        "departureDay": 2,
+        "distance": 1062.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 156,
+        "station": {
+          "code": "BJA",
+          "name": "Bijrotha",
+          "lat": 24.94679,
+          "lng": 78.42088
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:11",
+        "arrivalDay": 2,
+        "departure": "13:11",
+        "departureDay": 2,
+        "distance": 1071.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 157,
+        "station": {
+          "code": "DLA",
+          "name": "Doulta",
+          "lat": 24.99496,
+          "lng": 78.42901
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:15",
+        "arrivalDay": 2,
+        "departure": "13:15",
+        "departureDay": 2,
+        "distance": 1077.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 158,
+        "station": {
+          "code": "TBT",
+          "name": "Talbahat",
+          "lat": 25.0392,
+          "lng": 78.41434
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:18",
+        "arrivalDay": 2,
+        "departure": "13:18",
+        "departureDay": 2,
+        "distance": 1082.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 159,
+        "station": {
+          "code": "MZX",
+          "name": "Matatila",
+          "lat": 25.08346,
+          "lng": 78.40275
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:22",
+        "arrivalDay": 2,
+        "departure": "13:22",
+        "departureDay": 2,
+        "distance": 1087.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 160,
+        "station": {
+          "code": "BZY",
+          "name": "Basai",
+          "lat": 25.14269,
+          "lng": 78.39407
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:27",
+        "arrivalDay": 2,
+        "departure": "13:27",
+        "departureDay": 2,
+        "distance": 1095,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 161,
+        "station": {
+          "code": "BPW",
+          "name": "Burhpura",
+          "lat": 25.19948,
+          "lng": 78.42353
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 90.7,
+        "arrival": "13:31",
+        "arrivalDay": 2,
+        "departure": "13:31",
+        "departureDay": 2,
+        "distance": 1102,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 162,
+        "station": {
+          "code": "BAB",
+          "name": "Babina",
+          "lat": 25.24003,
+          "lng": 78.45429
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 39.9,
+        "arrival": "13:35",
+        "arrivalDay": 2,
+        "departure": "13:37",
+        "departureDay": 2,
+        "distance": 1107.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 163,
+        "station": {
+          "code": "KHJ",
+          "name": "Khajraha",
+          "lat": 25.30407,
+          "lng": 78.47819
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 39.9,
+        "arrival": "13:49",
+        "arrivalDay": 2,
+        "departure": "13:49",
+        "departureDay": 2,
+        "distance": 1115.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 164,
+        "station": {
+          "code": "BJI",
+          "name": "Bijauli",
+          "lat": 25.37638,
+          "lng": 78.51733
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 39.9,
+        "arrival": "14:02",
+        "arrivalDay": 2,
+        "departure": "14:02",
+        "departureDay": 2,
+        "distance": 1124.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 165,
+        "station": {
+          "code": "VGLJ",
+          "name": "Veerangana Lakshmibai Jhansi",
+          "lat": 25.44411,
+          "lng": 78.55296
+        },
+        "isHalt": true,
+        "platform": "4",
+        "speedToNextStationKmph": 70.9,
+        "arrival": "14:15",
+        "arrivalDay": 2,
+        "departure": "14:23",
+        "departureDay": 2,
+        "distance": 1132.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 166,
+        "station": {
+          "code": "KRQ",
+          "name": "Karari",
+          "lat": 25.53056,
+          "lng": 78.50879
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.9,
+        "arrival": "14:33",
+        "arrivalDay": 2,
+        "departure": "14:33",
+        "departureDay": 2,
+        "distance": 1144,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 167,
+        "station": {
+          "code": "CIRL",
+          "name": "Chirula",
+          "lat": 25.58379,
+          "lng": 78.48371
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.9,
+        "arrival": "14:38",
+        "arrivalDay": 2,
+        "departure": "14:38",
+        "departureDay": 2,
+        "distance": 1150.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 168,
+        "station": {
+          "code": "DAA",
+          "name": "Datia",
+          "lat": 25.64107,
+          "lng": 78.45601
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 79.6,
+        "arrival": "14:44",
+        "arrivalDay": 2,
+        "departure": "14:46",
+        "departureDay": 2,
+        "distance": 1157.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 169,
+        "station": {
+          "code": "SOR",
+          "name": "Sonagir",
+          "lat": 25.72989,
+          "lng": 78.40931
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 79.6,
+        "arrival": "14:55",
+        "arrivalDay": 2,
+        "departure": "14:55",
+        "departureDay": 2,
+        "distance": 1168.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 170,
+        "station": {
+          "code": "KTRA",
+          "name": "Kotra",
+          "lat": 25.8109,
+          "lng": 78.38141
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 79.6,
+        "arrival": "15:02",
+        "arrivalDay": 2,
+        "departure": "15:02",
+        "departureDay": 2,
+        "distance": 1178.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 171,
+        "station": {
+          "code": "DBA",
+          "name": "Dabra",
+          "lat": 25.88138,
+          "lng": 78.33098
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 76.9,
+        "arrival": "15:09",
+        "arrivalDay": 2,
+        "departure": "15:09",
+        "departureDay": 2,
+        "distance": 1187.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 172,
+        "station": {
+          "code": "SMTL",
+          "name": "Simariatal",
+          "lat": 25.9218,
+          "lng": 78.30408
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.9,
+        "arrival": "15:13",
+        "arrivalDay": 2,
+        "departure": "15:13",
+        "departureDay": 2,
+        "distance": 1193.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 173,
+        "station": {
+          "code": "AEH",
+          "name": "Anant Paith",
+          "lat": 25.9554,
+          "lng": 78.27661
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.9,
+        "arrival": "15:17",
+        "arrivalDay": 2,
+        "departure": "15:17",
+        "departureDay": 2,
+        "distance": 1197.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 174,
+        "station": {
+          "code": "ARI",
+          "name": "Antri",
+          "lat": 26.03561,
+          "lng": 78.22711
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.9,
+        "arrival": "15:25",
+        "arrivalDay": 2,
+        "departure": "15:25",
+        "departureDay": 2,
+        "distance": 1208,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 175,
+        "station": {
+          "code": "SLV",
+          "name": "Sandalpur",
+          "lat": 26.08287,
+          "lng": 78.20359
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.9,
+        "arrival": "15:29",
+        "arrivalDay": 2,
+        "departure": "15:29",
+        "departureDay": 2,
+        "distance": 1214.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 176,
+        "station": {
+          "code": "STLI",
+          "name": "Sithouli",
+          "lat": 26.14661,
+          "lng": 78.18699
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 76.9,
+        "arrival": "15:35",
+        "arrivalDay": 2,
+        "departure": "15:35",
+        "departureDay": 2,
+        "distance": 1221.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 177,
+        "station": {
+          "code": "GWL",
+          "name": "Gwalior Jn",
+          "lat": 26.21579,
+          "lng": 78.18199
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 70.2,
+        "arrival": "15:42",
+        "arrivalDay": 2,
+        "departure": "15:42",
+        "departureDay": 2,
+        "distance": 1230.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 178,
+        "station": {
+          "code": "BLNR",
+          "name": "Birlanagar",
+          "lat": 26.23773,
+          "lng": 78.19521
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.2,
+        "arrival": "15:44",
+        "arrivalDay": 2,
+        "departure": "15:44",
+        "departureDay": 2,
+        "distance": 1232.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 179,
+        "station": {
+          "code": "RRU",
+          "name": "Rayaru",
+          "lat": 26.30608,
+          "lng": 78.13025
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.2,
+        "arrival": "15:53",
+        "arrivalDay": 2,
+        "departure": "15:53",
+        "departureDay": 2,
+        "distance": 1243.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 180,
+        "station": {
+          "code": "BAO",
+          "name": "Banmor",
+          "lat": 26.355757,
+          "lng": 78.098769
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.2,
+        "arrival": "15:59",
+        "arrivalDay": 2,
+        "departure": "15:59",
+        "departureDay": 2,
+        "distance": 1249.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 181,
+        "station": {
+          "code": "NUB",
+          "name": "Nurabad",
+          "lat": 26.405406,
+          "lng": 78.07772
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.2,
+        "arrival": "16:04",
+        "arrivalDay": 2,
+        "departure": "16:04",
+        "departureDay": 2,
+        "distance": 1255.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 182,
+        "station": {
+          "code": "SANK",
+          "name": "Sank",
+          "lat": 26.4306,
+          "lng": 78.05985
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70.2,
+        "arrival": "16:07",
+        "arrivalDay": 2,
+        "departure": "16:07",
+        "departureDay": 2,
+        "distance": 1259,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 183,
+        "station": {
+          "code": "MRA",
+          "name": "Morena",
+          "lat": 26.501084,
+          "lng": 78.003742
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 25.4,
+        "arrival": "16:15",
+        "arrivalDay": 2,
+        "departure": "16:17",
+        "departureDay": 2,
+        "distance": 1268.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 184,
+        "station": {
+          "code": "SIKD",
+          "name": "Sikroda Kwanri",
+          "lat": 26.562924,
+          "lng": 77.966382
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 25.4,
+        "arrival": "16:38",
+        "arrivalDay": 2,
+        "departure": "16:38",
+        "departureDay": 2,
+        "distance": 1277.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 185,
+        "station": {
+          "code": "HET",
+          "name": "Hetampur",
+          "lat": 26.610736,
+          "lng": 77.944004
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 25.4,
+        "arrival": "16:50",
+        "arrivalDay": 2,
+        "departure": "16:50",
+        "departureDay": 2,
+        "distance": 1282.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 186,
+        "station": {
+          "code": "GHER",
+          "name": "Gher",
+          "lat": 26.67211,
+          "lng": 77.94938
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 25.4,
+        "arrival": "17:07",
+        "arrivalDay": 2,
+        "departure": "17:07",
+        "departureDay": 2,
+        "distance": 1290,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 187,
+        "station": {
+          "code": "DHO",
+          "name": "Dhaulpur",
+          "lat": 26.69705,
+          "lng": 77.90595
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 83.4,
+        "arrival": "17:20",
+        "arrivalDay": 2,
+        "departure": "17:22",
+        "departureDay": 2,
+        "distance": 1295.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 188,
+        "station": {
+          "code": "MIA",
+          "name": "Mania",
+          "lat": 26.806052,
+          "lng": 77.919936
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 83.4,
+        "arrival": "17:31",
+        "arrivalDay": 2,
+        "departure": "17:31",
+        "departureDay": 2,
+        "distance": 1308,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 189,
+        "station": {
+          "code": "JJ",
+          "name": "Jajau",
+          "lat": 26.934282,
+          "lng": 77.93644
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 83.4,
+        "arrival": "17:41",
+        "arrivalDay": 2,
+        "departure": "17:41",
+        "departureDay": 2,
+        "distance": 1322.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 190,
+        "station": {
+          "code": "BHA",
+          "name": "Bhandai Jn",
+          "lat": 27.068525,
+          "lng": 77.966302
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 83.4,
+        "arrival": "17:53",
+        "arrivalDay": 2,
+        "departure": "17:53",
+        "departureDay": 2,
+        "distance": 1338,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 191,
+        "station": {
+          "code": "AGC",
+          "name": "Agra Cantt Jn",
+          "lat": 27.157991,
+          "lng": 77.989635
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 30,
+        "arrival": "18:00",
+        "arrivalDay": 2,
+        "departure": "18:05",
+        "departureDay": 2,
+        "distance": 1348.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 192,
+        "station": {
+          "code": "RKM",
+          "name": "Raja ki Mandi Jn",
+          "lat": 27.192879,
+          "lng": 77.997074
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 96,
+        "arrival": "18:13",
+        "arrivalDay": 2,
+        "departure": "18:15",
+        "departureDay": 2,
+        "distance": 1352.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 193,
+        "station": {
+          "code": "BFP",
+          "name": "Bilochpura",
+          "lat": 27.20215,
+          "lng": 77.98684
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 96,
+        "arrival": "18:16",
+        "arrivalDay": 2,
+        "departure": "18:16",
+        "departureDay": 2,
+        "distance": 1353.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 194,
+        "station": {
+          "code": "RNKA",
+          "name": "Runkuta",
+          "lat": 27.2231,
+          "lng": 77.89868
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 96,
+        "arrival": "18:22",
+        "arrivalDay": 2,
+        "departure": "18:22",
+        "departureDay": 2,
+        "distance": 1362.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 195,
+        "station": {
+          "code": "KXM",
+          "name": "Kitham",
+          "lat": 27.25329,
+          "lng": 77.81835
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 96,
+        "arrival": "18:27",
+        "arrivalDay": 2,
+        "departure": "18:27",
+        "departureDay": 2,
+        "distance": 1371.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 196,
+        "station": {
+          "code": "DDDM",
+          "name": "Deen Dayal Dham",
+          "lat": 27.31846,
+          "lng": 77.7583
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 96,
+        "arrival": "18:33",
+        "arrivalDay": 2,
+        "departure": "18:33",
+        "departureDay": 2,
+        "distance": 1381,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 197,
+        "station": {
+          "code": "FAR",
+          "name": "Farah",
+          "lat": 27.33465,
+          "lng": 77.74433
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 96,
+        "arrival": "18:34",
+        "arrivalDay": 2,
+        "departure": "18:34",
+        "departureDay": 2,
+        "distance": 1383.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 198,
+        "station": {
+          "code": "BAD",
+          "name": "Bad",
+          "lat": 27.39608,
+          "lng": 77.68946
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 96,
+        "arrival": "18:40",
+        "arrivalDay": 2,
+        "departure": "18:40",
+        "departureDay": 2,
+        "distance": 1392.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 199,
+        "station": {
+          "code": "MTJ",
+          "name": "Mathura Jn",
+          "lat": 27.47938,
+          "lng": 77.67404
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 88.7,
+        "arrival": "18:46",
+        "arrivalDay": 2,
+        "departure": "18:50",
+        "departureDay": 2,
+        "distance": 1401.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 200,
+        "station": {
+          "code": "BTSR",
+          "name": "Bhuteshwar",
+          "lat": 27.50142,
+          "lng": 77.66776
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 88.7,
+        "arrival": "18:52",
+        "arrivalDay": 2,
+        "departure": "18:52",
+        "departureDay": 2,
+        "distance": 1404.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 201,
+        "station": {
+          "code": "VRBD",
+          "name": "Vrindaban Road",
+          "lat": 27.55592,
+          "lng": 77.62331
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 88.7,
+        "arrival": "18:57",
+        "arrivalDay": 2,
+        "departure": "18:57",
+        "departureDay": 2,
+        "distance": 1411.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 202,
+        "station": {
+          "code": "AJH",
+          "name": "Ajhai",
+          "lat": 27.63618,
+          "lng": 77.55788
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 88.7,
+        "arrival": "19:04",
+        "arrivalDay": 2,
+        "departure": "19:04",
+        "departureDay": 2,
+        "distance": 1422.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 203,
+        "station": {
+          "code": "CHJ",
+          "name": "Chata",
+          "lat": 27.71193,
+          "lng": 77.5027
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 88.7,
+        "arrival": "19:11",
+        "arrivalDay": 2,
+        "departure": "19:11",
+        "departureDay": 2,
+        "distance": 1433,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 204,
+        "station": {
+          "code": "KSV",
+          "name": "Kosi Kalan",
+          "lat": 27.78805,
+          "lng": 77.4461
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 55.7,
+        "arrival": "19:18",
+        "arrivalDay": 2,
+        "departure": "19:18",
+        "departureDay": 2,
+        "distance": 1443.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 205,
+        "station": {
+          "code": "HDL",
+          "name": "Hodal",
+          "lat": 27.88607,
+          "lng": 77.38802
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "19:31",
+        "arrivalDay": 2,
+        "departure": "19:31",
+        "departureDay": 2,
+        "distance": 1455.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 206,
+        "station": {
+          "code": "BNCR",
+          "name": "Banchari",
+          "lat": 27.94527,
+          "lng": 77.36331
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "19:39",
+        "arrivalDay": 2,
+        "departure": "19:39",
+        "departureDay": 2,
+        "distance": 1462.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 207,
+        "station": {
+          "code": "SHLK",
+          "name": "Sholaka",
+          "lat": 27.97372,
+          "lng": 77.36058
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "19:42",
+        "arrivalDay": 2,
+        "departure": "19:42",
+        "departureDay": 2,
+        "distance": 1466,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 208,
+        "station": {
+          "code": "RDE",
+          "name": "Rundhi",
+          "lat": 28.06737,
+          "lng": 77.35138
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "19:54",
+        "arrivalDay": 2,
+        "departure": "19:54",
+        "departureDay": 2,
+        "distance": 1476.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 209,
+        "station": {
+          "code": "PWL",
+          "name": "Palwal",
+          "lat": 28.15112,
+          "lng": 77.34199
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "20:04",
+        "arrivalDay": 2,
+        "departure": "20:04",
+        "departureDay": 2,
+        "distance": 1485.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 210,
+        "station": {
+          "code": "AST",
+          "name": "Asaoti",
+          "lat": 28.25174,
+          "lng": 77.32437
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "20:16",
+        "arrivalDay": 2,
+        "departure": "20:16",
+        "departureDay": 2,
+        "distance": 1497.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 211,
+        "station": {
+          "code": "BVH",
+          "name": "Ballabgarh",
+          "lat": 28.34046,
+          "lng": 77.31233
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "20:27",
+        "arrivalDay": 2,
+        "departure": "20:27",
+        "departureDay": 2,
+        "distance": 1507,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 212,
+        "station": {
+          "code": "FDN",
+          "name": "Faridabad Nw Tn",
+          "lat": 28.37657,
+          "lng": 77.30952
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 55.7,
+        "arrival": "20:31",
+        "arrivalDay": 2,
+        "departure": "20:31",
+        "departureDay": 2,
+        "distance": 1511.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 213,
+        "station": {
+          "code": "FDB",
+          "name": "Faridabad",
+          "lat": 28.41074,
+          "lng": 77.307246
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 70,
+        "arrival": "20:35",
+        "arrivalDay": 2,
+        "departure": "20:37",
+        "departureDay": 2,
+        "distance": 1514.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 214,
+        "station": {
+          "code": "TKDC",
+          "name": "Tuglakabad Jn Cabin",
+          "lat": 28.451694,
+          "lng": 77.304196
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70,
+        "arrival": "20:41",
+        "arrivalDay": 2,
+        "departure": "20:41",
+        "departureDay": 2,
+        "distance": 1519.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 215,
+        "station": {
+          "code": "TKD",
+          "name": "Tuglakabad",
+          "lat": 28.503,
+          "lng": 77.29716
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70,
+        "arrival": "20:46",
+        "arrivalDay": 2,
+        "departure": "20:46",
+        "departureDay": 2,
+        "distance": 1525.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 216,
+        "station": {
+          "code": "OKA",
+          "name": "Okhla",
+          "lat": 28.55941,
+          "lng": 77.265493
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 70,
+        "arrival": "20:52",
+        "arrivalDay": 2,
+        "departure": "20:52",
+        "departureDay": 2,
+        "distance": 1532.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 217,
+        "station": {
+          "code": "NZM",
+          "name": "Hazrat Nizamuddin Jn",
+          "lat": 28.58848,
+          "lng": 77.25413
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 15.4,
+        "arrival": "20:55",
+        "arrivalDay": 2,
+        "departure": "20:57",
+        "departureDay": 2,
+        "distance": 1535.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 218,
+        "station": {
+          "code": "PGMD",
+          "name": "Pragati Maidan",
+          "lat": 28.61609,
+          "lng": 77.24732
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 15.4,
+        "arrival": "21:09",
+        "arrivalDay": 2,
+        "departure": "21:09",
+        "departureDay": 2,
+        "distance": 1538.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 219,
+        "station": {
+          "code": "TKJ",
+          "name": "Tilak Bridge",
+          "lat": 28.62796,
+          "lng": 77.23745
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 15.4,
+        "arrival": "21:16",
+        "arrivalDay": 2,
+        "departure": "21:16",
+        "departureDay": 2,
+        "distance": 1540.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 220,
+        "station": {
+          "code": "CSB",
+          "name": "Shivaji Bridge",
+          "lat": 28.63359,
+          "lng": 77.2262
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 15.4,
+        "arrival": "21:21",
+        "arrivalDay": 2,
+        "departure": "21:21",
+        "departureDay": 2,
+        "distance": 1541.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 221,
+        "station": {
+          "code": "NDLS",
+          "name": "New Delhi",
+          "lat": 28.64177,
+          "lng": 77.22027
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 18.4,
+        "arrival": "21:25",
+        "arrivalDay": 2,
+        "departure": "21:40",
+        "departureDay": 2,
+        "distance": 1543,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 222,
+        "station": {
+          "code": "DSB",
+          "name": "Sadar Bazar",
+          "lat": 28.65854,
+          "lng": 77.217
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 18.4,
+        "arrival": "21:46",
+        "arrivalDay": 2,
+        "departure": "21:46",
+        "departureDay": 2,
+        "distance": 1544.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 223,
+        "station": {
+          "code": "DKZ",
+          "name": "Delhi Kishan Ganj",
+          "lat": 28.66394,
+          "lng": 77.20113
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 36,
+        "arrival": "21:54",
+        "arrivalDay": 2,
+        "departure": "21:56",
+        "departureDay": 2,
+        "distance": 1547.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 224,
+        "station": {
+          "code": "VVKP",
+          "name": "Vivekanand Puri Halt",
+          "lat": 28.6644,
+          "lng": 77.18379
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 36,
+        "arrival": "21:58",
+        "arrivalDay": 2,
+        "departure": "21:58",
+        "departureDay": 2,
+        "distance": 1548.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 225,
+        "station": {
+          "code": "DBSI",
+          "name": "Dayabasti",
+          "lat": 28.666781,
+          "lng": 77.173192
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 36,
+        "arrival": "22:00",
+        "arrivalDay": 2,
+        "departure": "22:00",
+        "departureDay": 2,
+        "distance": 1549.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 226,
+        "station": {
+          "code": "SSB",
+          "name": "Shakurbasti",
+          "lat": 28.68048,
+          "lng": 77.12768
+        },
+        "isHalt": true,
+        "platform": "5",
+        "speedToNextStationKmph": 72.8,
+        "arrival": "22:08",
+        "arrivalDay": 2,
+        "departure": "22:10",
+        "departureDay": 2,
+        "distance": 1554.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 227,
+        "station": {
+          "code": "MGLP",
+          "name": "Mangolpuri",
+          "lat": 28.68366,
+          "lng": 77.09031
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 72.8,
+        "arrival": "22:13",
+        "arrivalDay": 2,
+        "departure": "22:13",
+        "departureDay": 2,
+        "distance": 1558,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 228,
+        "station": {
+          "code": "NNO",
+          "name": "Nangloi",
+          "lat": 28.68637,
+          "lng": 77.05735
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 72.8,
+        "arrival": "22:16",
+        "arrivalDay": 2,
+        "departure": "22:16",
+        "departureDay": 2,
+        "distance": 1561.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 229,
+        "station": {
+          "code": "MQC",
+          "name": "Mundka",
+          "lat": 28.68894,
+          "lng": 77.02903
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 72.8,
+        "arrival": "22:18",
+        "arrivalDay": 2,
+        "departure": "22:18",
+        "departureDay": 2,
+        "distance": 1564.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 230,
+        "station": {
+          "code": "GHE",
+          "name": "Ghevra",
+          "lat": 28.69158,
+          "lng": 76.99755
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 72.8,
+        "arrival": "22:20",
+        "arrivalDay": 2,
+        "departure": "22:20",
+        "departureDay": 2,
+        "distance": 1567.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 231,
+        "station": {
+          "code": "BGZ",
+          "name": "Bahadurgarh",
+          "lat": 28.701394,
+          "lng": 76.930388
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:26",
+        "arrivalDay": 2,
+        "departure": "22:28",
+        "departureDay": 2,
+        "distance": 1573.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 232,
+        "station": {
+          "code": "ASE",
+          "name": "Asaudah",
+          "lat": 28.736608,
+          "lng": 76.859557
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:34",
+        "arrivalDay": 2,
+        "departure": "22:34",
+        "departureDay": 2,
+        "distance": 1581.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 233,
+        "station": {
+          "code": "ROHN",
+          "name": "Rohednagar Halt",
+          "lat": 28.760887,
+          "lng": 76.813899
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:37",
+        "arrivalDay": 2,
+        "departure": "22:37",
+        "departureDay": 2,
+        "distance": 1587.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 234,
+        "station": {
+          "code": "SPZ",
+          "name": "Sampla",
+          "lat": 28.783,
+          "lng": 76.77227
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:40",
+        "arrivalDay": 2,
+        "departure": "22:40",
+        "departureDay": 2,
+        "distance": 1591.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 235,
+        "station": {
+          "code": "ISM",
+          "name": "Ismaila Haryana",
+          "lat": 28.79997,
+          "lng": 76.7399
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:43",
+        "arrivalDay": 2,
+        "departure": "22:43",
+        "departureDay": 2,
+        "distance": 1595.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 236,
+        "station": {
+          "code": "KRZ",
+          "name": "Kharawar",
+          "lat": 28.831123,
+          "lng": 76.681104
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:48",
+        "arrivalDay": 2,
+        "departure": "22:48",
+        "departureDay": 2,
+        "distance": 1602.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 237,
+        "station": {
+          "code": "ABO",
+          "name": "Asthal Bohar",
+          "lat": 28.858396,
+          "lng": 76.629296
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 86.1,
+        "arrival": "22:52",
+        "arrivalDay": 2,
+        "departure": "22:52",
+        "departureDay": 2,
+        "distance": 1608.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 238,
+        "station": {
+          "code": "ROK",
+          "name": "Rohtak Jn",
+          "lat": 28.890316,
+          "lng": 76.579912
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 74.6,
+        "arrival": "22:56",
+        "arrivalDay": 2,
+        "departure": "22:58",
+        "departureDay": 2,
+        "distance": 1614.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 239,
+        "station": {
+          "code": "SMF",
+          "name": "Samar Gopalpur",
+          "lat": 28.960441,
+          "lng": 76.518121
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:06",
+        "arrivalDay": 2,
+        "departure": "23:06",
+        "departureDay": 2,
+        "distance": 1624,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 240,
+        "station": {
+          "code": "KHV",
+          "name": "Karainthi",
+          "lat": 29.014189,
+          "lng": 76.482157
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:12",
+        "arrivalDay": 2,
+        "departure": "23:12",
+        "departureDay": 2,
+        "distance": 1631,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 241,
+        "station": {
+          "code": "LNMA",
+          "name": "Lakhan Majra Halt",
+          "lat": 29.04073,
+          "lng": 76.46447
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:14",
+        "arrivalDay": 2,
+        "departure": "23:14",
+        "departureDay": 2,
+        "distance": 1634.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 242,
+        "station": {
+          "code": "KZH",
+          "name": "Kila Zafargarh",
+          "lat": 29.080393,
+          "lng": 76.42877
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:19",
+        "arrivalDay": 2,
+        "departure": "23:19",
+        "departureDay": 2,
+        "distance": 1640.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 243,
+        "station": {
+          "code": "JNA",
+          "name": "Julana",
+          "lat": 29.121226,
+          "lng": 76.395287
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:23",
+        "arrivalDay": 2,
+        "departure": "23:23",
+        "departureDay": 2,
+        "distance": 1645.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 244,
+        "station": {
+          "code": "JJT",
+          "name": "Jai Jai Wanti",
+          "lat": 29.168692,
+          "lng": 76.368508
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:28",
+        "arrivalDay": 2,
+        "departure": "23:28",
+        "departureDay": 2,
+        "distance": 1651.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 245,
+        "station": {
+          "code": "KIU",
+          "name": "Kinana",
+          "lat": 29.227557,
+          "lng": 76.335415
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:34",
+        "arrivalDay": 2,
+        "departure": "23:34",
+        "departureDay": 2,
+        "distance": 1658.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 246,
+        "station": {
+          "code": "BSPH",
+          "name": "Bishanpur Hryna",
+          "lat": 29.273873,
+          "lng": 76.323954
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 74.6,
+        "arrival": "23:38",
+        "arrivalDay": 2,
+        "departure": "23:38",
+        "departureDay": 2,
+        "distance": 1664.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 247,
+        "station": {
+          "code": "JIND",
+          "name": "Jind Jn",
+          "lat": 29.329258,
+          "lng": 76.289774
+        },
+        "isHalt": true,
+        "platform": "4",
+        "speedToNextStationKmph": 81.1,
+        "arrival": "23:44",
+        "arrivalDay": 2,
+        "departure": "23:46",
+        "departureDay": 2,
+        "distance": 1671.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 248,
+        "station": {
+          "code": "BZO",
+          "name": "Barsola",
+          "lat": 29.3866,
+          "lng": 76.23838
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.1,
+        "arrival": "23:52",
+        "arrivalDay": 2,
+        "departure": "23:52",
+        "departureDay": 2,
+        "distance": 1679.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 249,
+        "station": {
+          "code": "GNBA",
+          "name": "Gaon Baroda",
+          "lat": 29.430761,
+          "lng": 76.205591
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.1,
+        "arrival": "23:56",
+        "arrivalDay": 2,
+        "departure": "23:56",
+        "departureDay": 2,
+        "distance": 1685.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 250,
+        "station": {
+          "code": "UCA",
+          "name": "Uchana",
+          "lat": 29.46651,
+          "lng": 76.17891
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.1,
+        "arrival": "00:00",
+        "arrivalDay": 3,
+        "departure": "00:00",
+        "departureDay": 3,
+        "distance": 1690,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 251,
+        "station": {
+          "code": "GSO",
+          "name": "Ghaso",
+          "lat": 29.53132,
+          "lng": 76.14339
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.1,
+        "arrival": "00:06",
+        "arrivalDay": 3,
+        "departure": "00:06",
+        "departureDay": 3,
+        "distance": 1697.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 252,
+        "station": {
+          "code": "NRW",
+          "name": "Narwana Jn",
+          "lat": 29.589,
+          "lng": 76.10938
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 82.1,
+        "arrival": "00:11",
+        "arrivalDay": 3,
+        "departure": "00:13",
+        "departureDay": 3,
+        "distance": 1705.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 253,
+        "station": {
+          "code": "DHY",
+          "name": "Dharodi",
+          "lat": 29.639688,
+          "lng": 76.056155
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 82.1,
+        "arrival": "00:19",
+        "arrivalDay": 3,
+        "departure": "00:19",
+        "departureDay": 3,
+        "distance": 1712.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 254,
+        "station": {
+          "code": "DTN",
+          "name": "Dhamtan Sahib",
+          "lat": 29.687318,
+          "lng": 76.006009
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 82.1,
+        "arrival": "00:24",
+        "arrivalDay": 3,
+        "departure": "00:24",
+        "departureDay": 3,
+        "distance": 1719.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 255,
+        "station": {
+          "code": "KLWN",
+          "name": "Kalwan",
+          "lat": 29.699339,
+          "lng": 75.966131
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 82.1,
+        "arrival": "00:27",
+        "arrivalDay": 3,
+        "departure": "00:27",
+        "departureDay": 3,
+        "distance": 1724.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 256,
+        "station": {
+          "code": "TUN",
+          "name": "Tohana",
+          "lat": 29.726755,
+          "lng": 75.902641
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 38.5,
+        "arrival": "00:32",
+        "arrivalDay": 3,
+        "departure": "00:34",
+        "departureDay": 3,
+        "distance": 1731.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 257,
+        "station": {
+          "code": "HMQ",
+          "name": "Himmatpura",
+          "lat": 29.747958,
+          "lng": 75.864865
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 38.5,
+        "arrival": "00:41",
+        "arrivalDay": 3,
+        "departure": "00:41",
+        "departureDay": 3,
+        "distance": 1735.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 258,
+        "station": {
+          "code": "JHL",
+          "name": "Jakhal Jn",
+          "lat": 29.803229,
+          "lng": 75.820883
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 75.8,
+        "arrival": "00:53",
+        "arrivalDay": 3,
+        "departure": "00:55",
+        "departureDay": 3,
+        "distance": 1743.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 259,
+        "station": {
+          "code": "KAGR",
+          "name": "Kagangarh",
+          "lat": 29.83611,
+          "lng": 75.74579
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 75.8,
+        "arrival": "01:01",
+        "arrivalDay": 3,
+        "departure": "01:01",
+        "departureDay": 3,
+        "distance": 1751.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 260,
+        "station": {
+          "code": "BRZ",
+          "name": "Bareta",
+          "lat": 29.85963,
+          "lng": 75.69207
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 77,
+        "arrival": "01:06",
+        "arrivalDay": 3,
+        "departure": "01:08",
+        "departureDay": 3,
+        "distance": 1757.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 261,
+        "station": {
+          "code": "DTW",
+          "name": "Datewas",
+          "lat": 29.8905,
+          "lng": 75.62117
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 77,
+        "arrival": "01:14",
+        "arrivalDay": 3,
+        "departure": "01:14",
+        "departureDay": 3,
+        "distance": 1764.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 262,
+        "station": {
+          "code": "BLZ",
+          "name": "Budhlada",
+          "lat": 29.92173,
+          "lng": 75.5496
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 72.9,
+        "arrival": "01:20",
+        "arrivalDay": 3,
+        "departure": "01:22",
+        "departureDay": 3,
+        "distance": 1772.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 263,
+        "station": {
+          "code": "NPX",
+          "name": "Narindarpura",
+          "lat": 29.95232,
+          "lng": 75.47734
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 72.9,
+        "arrival": "01:28",
+        "arrivalDay": 3,
+        "departure": "01:28",
+        "departureDay": 3,
+        "distance": 1780.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 264,
+        "station": {
+          "code": "MSZ",
+          "name": "Mansa",
+          "lat": 29.98949,
+          "lng": 75.4021
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 81.4,
+        "arrival": "01:35",
+        "arrivalDay": 3,
+        "departure": "01:37",
+        "departureDay": 3,
+        "distance": 1788.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 265,
+        "station": {
+          "code": "SSZ",
+          "name": "Sadda Singhwala",
+          "lat": 30.027637,
+          "lng": 75.324618
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.4,
+        "arrival": "01:44",
+        "arrivalDay": 3,
+        "departure": "01:44",
+        "departureDay": 3,
+        "distance": 1797.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 266,
+        "station": {
+          "code": "KTKL",
+          "name": "Kotli Kalan",
+          "lat": 30.04084,
+          "lng": 75.297639
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 81.4,
+        "arrival": "01:46",
+        "arrivalDay": 3,
+        "departure": "01:46",
+        "departureDay": 3,
+        "distance": 1800.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 267,
+        "station": {
+          "code": "MAUR",
+          "name": "Maur",
+          "lat": 30.06275,
+          "lng": 75.22817
+        },
+        "isHalt": true,
+        "platform": "2",
+        "speedToNextStationKmph": 38.4,
+        "arrival": "01:51",
+        "arrivalDay": 3,
+        "departure": "01:53",
+        "departureDay": 3,
+        "distance": 1807.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 268,
+        "station": {
+          "code": "MASK",
+          "name": "Maisar Khana",
+          "lat": 30.09434,
+          "lng": 75.15026
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 38.4,
+        "arrival": "02:06",
+        "arrivalDay": 3,
+        "departure": "02:06",
+        "departureDay": 3,
+        "distance": 1815.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 269,
+        "station": {
+          "code": "KTF",
+          "name": "Kot Fatteh",
+          "lat": 30.1234,
+          "lng": 75.08264
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 38.4,
+        "arrival": "02:17",
+        "arrivalDay": 3,
+        "departure": "02:17",
+        "departureDay": 3,
+        "distance": 1822.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 270,
+        "station": {
+          "code": "KZW",
+          "name": "Katar Singhwala",
+          "lat": 30.1543,
+          "lng": 75.011
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 38.4,
+        "arrival": "02:31",
+        "arrivalDay": 3,
+        "departure": "02:31",
+        "departureDay": 3,
+        "distance": 1831.8,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 271,
+        "station": {
+          "code": "BTIC",
+          "name": "Batinda Cantt",
+          "lat": 30.19791,
+          "lng": 75.00458
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 38.4,
+        "arrival": "02:42",
+        "arrivalDay": 3,
+        "departure": "02:42",
+        "departureDay": 3,
+        "distance": 1838.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 272,
+        "station": {
+          "code": "BTI",
+          "name": "Bathinda",
+          "lat": 30.212486,
+          "lng": 74.932554
+        },
+        "isHalt": true,
+        "platform": "4",
+        "speedToNextStationKmph": 60,
+        "arrival": "02:55",
+        "arrivalDay": 3,
+        "departure": "03:05",
+        "departureDay": 3,
+        "distance": 1847.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 273,
+        "station": {
+          "code": "GNA",
+          "name": "Goneana",
+          "lat": 30.31875,
+          "lng": 74.90947
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 66.5,
+        "arrival": "03:17",
+        "arrivalDay": 3,
+        "departure": "03:19",
+        "departureDay": 3,
+        "distance": 1859.1,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 274,
+        "station": {
+          "code": "CBX",
+          "name": "Chand Bhan",
+          "lat": 30.38409,
+          "lng": 74.89354
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 66.5,
+        "arrival": "03:26",
+        "arrivalDay": 3,
+        "departure": "03:26",
+        "departureDay": 3,
+        "distance": 1866.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 275,
+        "station": {
+          "code": "GJUT",
+          "name": "Gangsar Jaitu",
+          "lat": 30.44523,
+          "lng": 74.87872
+        },
+        "isHalt": true,
+        "platform": "3",
+        "speedToNextStationKmph": 69,
+        "arrival": "03:32",
+        "arrivalDay": 3,
+        "departure": "03:34",
+        "departureDay": 3,
+        "distance": 1873.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 276,
+        "station": {
+          "code": "AJTM",
+          "name": "Ajitgill Matta",
+          "lat": 30.48265,
+          "lng": 74.86401
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 69,
+        "arrival": "03:38",
+        "arrivalDay": 3,
+        "departure": "03:38",
+        "departureDay": 3,
+        "distance": 1877.9,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 277,
+        "station": {
+          "code": "RLS",
+          "name": "Rmna Albel Sngh",
+          "lat": 30.51129,
+          "lng": 74.85001
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 69,
+        "arrival": "03:41",
+        "arrivalDay": 3,
+        "departure": "03:41",
+        "departureDay": 3,
+        "distance": 1881.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 278,
+        "station": {
+          "code": "KKP",
+          "name": "Kot Kapura",
+          "lat": 30.58041,
+          "lng": 74.81741
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 50.8,
+        "arrival": "03:48",
+        "arrivalDay": 3,
+        "departure": "03:50",
+        "departureDay": 3,
+        "distance": 1889.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 279,
+        "station": {
+          "code": "GZS",
+          "name": "Gz Sandhwan",
+          "lat": 30.61358,
+          "lng": 74.801494
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.8,
+        "arrival": "03:55",
+        "arrivalDay": 3,
+        "departure": "03:55",
+        "departureDay": 3,
+        "distance": 1893.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 280,
+        "station": {
+          "code": "FNG",
+          "name": "Faridnagar",
+          "lat": 30.67069,
+          "lng": 74.76963
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 50.8,
+        "arrival": "04:03",
+        "arrivalDay": 3,
+        "departure": "04:03",
+        "departureDay": 3,
+        "distance": 1900.7,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 281,
+        "station": {
+          "code": "FDK",
+          "name": "Faridkot",
+          "lat": 30.683325,
+          "lng": 74.762003
+        },
+        "isHalt": true,
+        "platform": "1",
+        "speedToNextStationKmph": 28.4,
+        "arrival": "04:05",
+        "arrivalDay": 3,
+        "departure": "04:07",
+        "departureDay": 3,
+        "distance": 1902.3,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      },
+      {
+        "sequence": 282,
+        "station": {
+          "code": "PKZ",
+          "name": "Ppli Pkhi Kalan",
+          "lat": 30.731118,
+          "lng": 74.733481
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 28.4,
+        "arrival": "04:19",
+        "arrivalDay": 3,
+        "departure": "04:19",
+        "departureDay": 3,
+        "distance": 1908.2,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 283,
+        "station": {
+          "code": "GHA",
+          "name": "Golehwala",
+          "lat": 30.792198,
+          "lng": 74.703484
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 28.4,
+        "arrival": "04:35",
+        "arrivalDay": 3,
+        "departure": "04:35",
+        "departureDay": 3,
+        "distance": 1915.6,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 284,
+        "station": {
+          "code": "KBU",
+          "name": "Kasu Begu",
+          "lat": 30.856968,
+          "lng": 74.671995
+        },
+        "isHalt": false,
+        "speedToNextStationKmph": 28.4,
+        "arrival": "04:52",
+        "arrivalDay": 3,
+        "departure": "04:52",
+        "departureDay": 3,
+        "distance": 1923.4,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0
+      },
+      {
+        "sequence": 285,
+        "station": {
+          "code": "FZR",
+          "name": "Firozpur Cantt",
+          "lat": 30.941881,
+          "lng": 74.617982
+        },
+        "isHalt": true,
+        "platform": "1",
+        "arrival": "05:15",
+        "arrivalDay": 3,
+        "distance": 1934.5,
+        "isReversal": false,
+        "isReversed": false,
+        "legIndex": 0,
+        "coachPosition": "ENG-SLRD-GEN-GEN-S6-S5-S4-S3-S2-S1-PC-B6-B5-B4-B3-B2-B1-A2-A1-HA1-GEN-GEN-LPR"
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:16:13+05:30",
+    "traceId": "d6a6d694-dd09-4462-9451-4a3e95f513e2",
+    "source": "database",
+    "executionTime": 6
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "success": true,
+  "data": {
+    "from": {
+      "code": "CSMT",
+      "name": "Mumbai CSMT"
+    },
+    "to": {
+      "code": "NDLS",
+      "name": "New Delhi"
+    },
+    "trains": [
+      {
+        "train": {
+          "number": "12137",
+          "name": "Punjab Mail",
+          "type": "Superfast Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "19:35",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "NDLS",
+          "name": "New Delhi",
+          "city": "Delhi",
+          "arrival": "21:25",
+          "day": 2,
+          "sequence": 221
+        },
+        "distance": 1543,
+        "duration": 1550,
+        "totalHaltsBetween": 34
+      },
+      {
+        "train": {
+          "number": "11057",
+          "name": "Amritsar Express",
+          "type": "Mail/Express",
+          "runDays": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ],
+          "runningDaysBitmap": 127
+        },
+        "from": {
+          "code": "CSMT",
+          "name": "Mumbai CSMT",
+          "city": "Mumbai",
+          "departure": "23:30",
+          "day": 1,
+          "sequence": 1
+        },
+        "to": {
+          "code": "NDLS",
+          "name": "New Delhi",
+          "city": "Delhi",
+          "arrival": "03:30",
+          "day": 3,
+          "sequence": 221
+        },
+        "distance": 1543,
+        "duration": 1680,
+        "totalHaltsBetween": 51
+      }
+    ],
+    "count": 2
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:10:13+05:30",
+    "traceId": "9679b6bb-cd17-435c-af05-a8ec06e0f1ee",
+    "source": "database",
+    "executionTime": 60
+  }
+}

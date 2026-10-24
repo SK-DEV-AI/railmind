@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "journeyDate is required (YYYY-MM-DD), aliases: date, startDate"
+  },
+  "meta": {
+    "timestamp": "2026-10-24T17:11:11+05:30",
+    "traceId": "3d1d2fcd-f609-4366-85a9-4f25c7c3282c"
+  }
+}

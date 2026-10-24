@@ -79,7 +79,10 @@ class Stop(BaseModel):
     )
     city: str | None = Field(None, examples=['Mumbai'])
     country: constr(pattern=r'^[A-Z]{2}$') = Field(..., examples=['IN'])
-    geo: GeoPoint
+    geo: GeoPoint | None = Field(
+        None,
+        description='Omitted when the provider does not publish coordinates. That is a\nreal case (a station directory without geodata, a bus stop), and a\nmap must skip such a stop rather than plot it at 0,0.\n',
+    )
     timezone: str = Field(
         ...,
         description='IANA zone name. Needed because depart times are local.',
@@ -264,6 +267,7 @@ class RiskBand(StrEnum):
     low = 'low'
     medium = 'medium'
     high = 'high'
+    unknown = 'unknown'
 
 
 class Itinerary(BaseModel):
@@ -285,7 +289,10 @@ class Itinerary(BaseModel):
     rank: conint(ge=1) = Field(
         ..., description='1 is the recommendation. Ordering is by `score` descending.'
     )
-    risk_band: RiskBand
+    risk_band: RiskBand = Field(
+        ...,
+        description='`unknown` is a real value, not a placeholder: before the delay model is\ntrained, claiming a band would be a fabrication. A client must render\n`unknown` as "no risk estimate yet", never as "safe".\n',
+    )
     risk_reasons: list[str] | None = Field(
         None,
         description='Plain sentences, rendered directly to the user.',
