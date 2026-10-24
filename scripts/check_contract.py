@@ -36,9 +36,7 @@ def _no_duplicate_keys(loader: yaml.Loader, node: yaml.Node, deep: bool = False)
     return mapping
 
 
-StrictLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicate_keys
-)
+StrictLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicate_keys)
 
 
 def collect_refs(node: object, out: list[str]) -> None:

@@ -27,19 +27,20 @@ mkdir -p packages/contract/src
 npx --yes openapi-typescript@7 openapi.yaml -o packages/contract/src/api-types.ts
 
 echo "==> python (pydantic v2)"
-mkdir -p generated/python
+mkdir -p railmind/wire
 if [ -x .venv/bin/datamodel-codegen ]; then
   .venv/bin/datamodel-codegen \
     --input openapi.yaml \
     --input-file-type openapi \
-    --output generated/python/models.py \
+    --output railmind/wire/models.py \
     --output-model-type pydantic_v2.BaseModel \
     --target-python-version 3.12 \
     --use-standard-collections \
-    --use-union-operator
+    --use-union-operator \
+    --disable-timestamp
 else
   echo "SKIP datamodel-codegen missing in .venv"
 fi
 
 echo "==> done"
-wc -l packages/contract/src/api-types.ts generated/python/models.py 2>/dev/null || true
+wc -l packages/contract/src/api-types.ts railmind/wire/models.py 2>/dev/null || true

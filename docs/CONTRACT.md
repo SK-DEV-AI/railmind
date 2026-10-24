@@ -135,22 +135,44 @@ Two rules that keep this mapping cheap:
 ## 6. How to prove the contract is real
 
 ```bash
-# structure + refs + duplicate keys
-python3 scripts/check_contract.py
+./scripts/check.sh          # every gate, in order
+```
 
-# official OpenAPI 3.1 validation
-.venv/bin/python -c "from openapi_spec_validator import validate; from openapi_spec_validator.readers import read_from_filename; s,_=read_from_filename('openapi.yaml'); validate(s); print('PASS')"
+Individually:
 
-# typed clients, both stacks
-./scripts/generate-clients.sh
+```bash
+python3 scripts/check_contract.py   # structure, duplicate keys, broken refs
+./scripts/generate-clients.sh       # spec conformance + regenerate both clients
+.venv/bin/pytest                    # 143 tests, no network, no sleeps
 ```
 
 Step 0's acceptance test from BUILD-ORDER is: *both client devs can generate a
 typed client from the spec.* Both do today:
 
 - `packages/contract/src/api-types.ts` — `openapi-typescript` 7.13, 1047 lines
-- `generated/python/models.py` — `datamodel-codegen`, Pydantic v2, 811 lines,
+- `railmind/wire/models.py` — `datamodel-codegen`, Pydantic v2, 811 lines,
   `extra='forbid'`, `AwareDatetime`, `constr(max_length=...)` all correct
+
+The generated Python models are imported by the application, not copied. That is
+why there is exactly one definition of `Leg` in this codebase: the contract's.
+`scripts/check.sh` regenerates them and fails if the result differs from what is
+committed, so a stale or hand-edited generated file cannot survive a gate.
 
 If a future edit makes either generator fail, that edit is a contract break and
 gets reverted, not worked around.
+
+## 7. What the core implements from this contract
+
+| Contract idea | Where it lives |
+|---|---|
+| derivable ids | `railmind/core/ids.py` |
+| the ten `Problem.code` values | `railmind/core/errors.py` |
+| `Capabilities` / `ProviderInfo` | `railmind/core/capabilities.py`, exposed by `GET /providers` |
+| five provider verbs | `railmind/core/provider.py` |
+| `Query`, money arithmetic | `railmind/core/types.py` |
+| route-keyed caching, stale-serve | `railmind/providers/cache.py` |
+| provider lookup by capability | `railmind/providers/registry.py` |
+
+Two guarantees are enforced by tests rather than by intention: no provider-type
+branch may appear in source (a tokenizer strips comments and docstrings, then the
+code is scanned), and `railmind/core/` may not import a concrete adapter.

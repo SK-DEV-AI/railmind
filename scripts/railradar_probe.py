@@ -19,7 +19,7 @@ Why this exists
 Usage
 -----
     python3 scripts/railradar_probe.py /v1/trains/12951
-    python3 scripts/railradar_probe.py /v1/trains/12951 --out tests/fixtures/railradar/train_12951.json
+    python3 scripts/railradar_probe.py /v1/trains/12951 --out tests/fixtures/rr.json
     python3 scripts/railradar_probe.py /v1/trains/12951 --dry-run    # show, do not call
 
 Environment
@@ -68,7 +68,7 @@ def connect(host: str, port: int, timeout: float) -> tuple[ssl.SSLSocket, str]:
             raw.connect(sockaddr)
             tls = ctx.wrap_socket(raw, server_hostname=host)
             return tls, ("ipv6" if family is socket.AF_INET6 else "ipv4")
-        except Exception as exc:  # noqa: BLE001 - we try the next family
+        except Exception as exc:
             last = exc
             continue
     raise RuntimeError(f"no usable address for {host}: {last}")
@@ -134,7 +134,7 @@ def https_get(path: str, api_key: str, timeout: float = 20.0) -> tuple[int, dict
 
 
 def month_key(now: dt.datetime | None = None) -> str:
-    now = now or dt.datetime.now(dt.timezone.utc)
+    now = now or dt.datetime.now(dt.UTC)
     return now.strftime("%Y-%m")
 
 
@@ -158,7 +158,7 @@ def record_use(path: Path, status: int, path_called: str) -> int:
     bucket["count"] = int(bucket.get("count", 0)) + 1
     bucket.setdefault("calls", []).append(
         {
-            "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+            "at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
             "path": path_called,
             "status": status,
         }
@@ -172,8 +172,12 @@ def record_use(path: Path, status: int, path_called: str) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("endpoint", nargs="?", default="/v1/trains/12951", help="path beginning with /v1/")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "endpoint", nargs="?", default="/v1/trains/12951", help="path beginning with /v1/"
+    )
     parser.add_argument("--out", type=Path, help="write the JSON body here")
     parser.add_argument("--query", action="append", default=[], help="key=value, repeatable")
     parser.add_argument("--ledger", type=Path, default=DEFAULT_LEDGER)
@@ -195,7 +199,7 @@ def main() -> int:
 
     if used >= args.budget:
         print(
-            f"REFUSED monthly budget reached. Raise --budget deliberately, or wait for reset.",
+            "REFUSED monthly budget reached. Raise --budget deliberately, or wait for reset.",
             file=sys.stderr,
         )
         return 3
@@ -206,7 +210,7 @@ def main() -> int:
 
     try:
         status, headers, payload, family = https_get(endpoint, key)
-    except Exception as exc:  # noqa: BLE001 - the probe reports, never crashes
+    except Exception as exc:
         print(f"FAIL {type(exc).__name__}: {exc}", file=sys.stderr)
         print("note: a connection failure does not consume quota", file=sys.stderr)
         return 1
@@ -214,7 +218,14 @@ def main() -> int:
     count = record_use(args.ledger, status, endpoint)
     print(f"HTTP {status} via {family} · {count}/{args.budget} used this month")
 
-    for header in ("ratelimit-limit", "ratelimit-remaining", "x-ratelimit-limit", "x-ratelimit-remaining", "retry-after", "cf-ray"):
+    for header in (
+        "ratelimit-limit",
+        "ratelimit-remaining",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "retry-after",
+        "cf-ray",
+    ):
         if header in headers:
             print(f"  {header}: {headers[header]}")
 

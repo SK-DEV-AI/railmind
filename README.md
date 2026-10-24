@@ -18,13 +18,13 @@ The full reasoning, the evidence with sources, and the legal analysis live in
 
 ## Status
 
-Contract complete and validated. No implementation yet.
+Contract and core complete and tested. No network adapter yet.
 
 | Step | State |
 |---|---|
 | 0. API contract | **done** — `openapi.yaml`, validated, both clients generate |
-| 1. Core domain + provider layer | next |
-| 2. One real provider end to end | |
+| 1. Core domain + provider layer | **done** — ids, errors, capabilities, registry, cache, 143 tests |
+| 2. One real provider end to end | next |
 | 3. Engine + delay model | |
 | 4. Web client | |
 | 5. PWA | |
@@ -35,26 +35,65 @@ Contract complete and validated. No implementation yet.
 ```
 openapi.yaml                 the product; everything else implements it
 docs/CONTRACT.md             why the contract looks like this
+
+railmind/core/
+  ids.py                     derivable ids: IN:CSMT, provider:service:date:seq
+  errors.py                  the closed error set, and no upstream text on the wire
+  capabilities.py            Feature enum; providers answer by data, not by type
+  provider.py                TransportProvider protocol: five verbs
+  types.py                   Query, money arithmetic, re-exported wire models
+railmind/providers/
+  cache.py                   route-keyed TTL, stale-serve, single-flight
+  registry.py                capability lookup, GET /providers payload
+  fake.py                    fake, timetable-only, and deliberately broken providers
+railmind/wire/models.py      GENERATED from openapi.yaml, never hand-edited
+
+packages/contract/src/       GENERATED TypeScript types
+scripts/check.sh             one command, all gates
 scripts/check_contract.py    duplicate keys, broken refs, missing operationIds
 scripts/generate-clients.sh  validate + regenerate both typed clients
-packages/contract/src/       generated TypeScript types
-generated/python/            generated Pydantic v2 models
+scripts/railradar_probe.py   IPv6-first probe with a hard monthly budget ledger
+tests/                       143 tests, no network, no sleeps
 ```
 
-## Verify the contract
+## Verify everything
 
 ```bash
-python3 scripts/check_contract.py     # structure
-./scripts/generate-clients.sh         # structure + spec conformance + both clients
+./scripts/check.sh      # contract, generated-code sync, lint, format, tests
 ```
 
-`generate-clients.sh` needs a `.venv` with `openapi-spec-validator` and
-`datamodel-code-generator`, plus Node for `openapi-typescript`.
+Individual gates:
+
+```bash
+python3 scripts/check_contract.py     # contract structure
+./scripts/generate-clients.sh         # spec conformance + both clients
+.venv/bin/ruff check .                # lint
+.venv/bin/pytest                      # tests
+```
+
+Setup, once:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install openapi-spec-validator datamodel-code-generator
+.venv/bin/pip install pydantic pytest pytest-asyncio ruff \
+    openapi-spec-validator datamodel-code-generator
 ```
+
+## What the core guarantees
+
+1. **Ids are derivable.** `IN:CSMT`, `rail_india:12951:2026-10-25:1`, itinerary =
+   hash of its leg ids. Nothing is a random token that dies with the process.
+2. **One closed error set.** A provider may raise only a `ProviderError`
+   subclass. An accidental exception becomes `internal` with no detail attached.
+   `cause_detail` is for logs and never serialises.
+3. **Capabilities, not classes.** `registry.find(Feature.LIVE, mode=Mode.metro)`
+   is the whole interface. A test scans the code for provider-type branches and
+   fails the build if one appears.
+4. **The cache key is the route, not the user.** `(from, to, date, class)` plus
+   single-flight, so a burst of ten requests is one upstream call worth 1% of a
+   monthly budget.
+5. **Stale beats broken, up to a limit.** Availability serves stale for an hour;
+   a live position stops at five minutes, because an old position is a lie.
 
 ## The three layers
 

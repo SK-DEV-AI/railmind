@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "railmind"
+version = "0.1.0"
+description = "Conversational travel agent that decides fast and hands off to a human"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.9"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6"]
+
+[tool.setuptools.packages.find]
+include = ["railmind*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Generated from openapi.yaml; reformatting it would be undone on every regen.
+extend-exclude = ["railmind/wire/models.py", "packages", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "RUF"]
+# RUF012: mutable class attrs would need ClassVar; our protocol/registry use
+# plain attributes deliberately and are not instantiated as data classes.
+ignore = ["RUF012"]
