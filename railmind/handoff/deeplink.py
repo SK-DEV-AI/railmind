@@ -1,23 +1,22 @@
-"""The IRCTC handoff: a real, pre-filled link and an honest checklist.
+"""The IRCTC handoff: a real link, an honest checklist, no automation.
 
 This is the product's last step and the reason the whole design is legal. We do
-not submit anything. We open the operator's own page with the journey already
-filled in, and we tell the human exactly which steps only they can do.
+not submit anything. We open the operator's own booking page and we tell the human
+exactly which steps only they can do.
 
-What is verified and what is not:
+What is verified and what is not — **verified 2026-10-24, and it is not good news**:
 
-- The URL shape `.../nget/train-search?fromStation=X&toStation=Y&date=YYYYMMDD`
-  comes from the project's research on IRCTC's NGET client (`PROJECT-OPTIONS.md`
-  §1, Handoff A). It is the documented query-parameter form.
-- It has **not** been verified in a browser against the live site by this code.
-  IRCTC sits behind Akamai and the check is a manual demo step. Until someone
-  confirms it, the function is honest about carrying only these three values and
-  puts everything else in `prefill` and `steps` rather than inventing parameters
-  that the site may silently ignore.
+- IRCTC does **not** read `fromStation`, `toStation` or `date` from the URL on load.
+  Tested on the old site (`/nget/train-search`) and the new beta site
+  (`/eticket/train-search`), five parameter spellings, with rendered screenshots as
+  evidence. The form opens empty every time.
+- The results page (`/eticket/booking/train-list`) carries no query string at all, so
+  it cannot be linked to either.
+- Therefore this URL's job is **"open the booking page"**, not "open it filled in".
+  The copy in `warnings` says so, because promising a prefill and delivering an empty
+  form is worse than promising nothing.
 
-That distinction matters: a link that claims to pre-fill a class but does not is
-worse than one that admits it cannot, because the user only discovers the
-difference at the payment screen.
+See `docs/IRCTC-DEEPLINK.md` for the three experiments and the screenshots.
 """
 
 from __future__ import annotations
@@ -51,9 +50,12 @@ def build_irctc_deeplink(
     to_code: str,
     service_date: dt.date | dt.datetime | str,
 ) -> str:
-    """Build the pre-filled search URL.
+    """Build the booking-page URL.
 
-    `date` is `YYYYMMDD` because that is what the NGET client reads, not ISO.
+    The parameters are kept because they cost nothing and the site may start reading
+    them one day, but do not describe the result as pre-filled: measured on
+    2026-10-24, the form opens empty. `date` is `YYYYMMDD` because that is the shape
+    the site's own client uses, not ISO.
     """
     origin = _check_code(from_code)
     destination = _check_code(to_code)

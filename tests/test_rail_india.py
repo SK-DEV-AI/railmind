@@ -298,8 +298,10 @@ class TestHandoff:
         itinerary = (await provider.search(make_query()))[0]
         handoff = await provider.handoff(itinerary, [])
 
-        assert any("does not accept them in the URL" in w for w in handoff.warnings)
+        assert any("enter the journey yourself" in w for w in handoff.warnings)
+        assert "prefill could not be" in " ".join(handoff.warnings)
         assert handoff.prefill["train_number"]
+        # The URL never claims to carry a class, because the site ignores it.
         assert "class" not in str(handoff.url).lower().replace("classcode", "")
 
 

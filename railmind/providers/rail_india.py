@@ -448,10 +448,14 @@ class RailIndiaProvider(BaseProvider):
         steps = [
             HandoffStep(
                 order=1,
-                title="Open IRCTC and log in yourself",
-                detail="RailMind holds no credentials and never logs in for you.",
+                title="Open the booking page and type your journey",
+                detail=(
+                    "IRCTC ignores journey details passed in a link (verified 2026-10-24), "
+                    "so enter from, to and date yourself, then log in. RailMind holds no "
+                    "credentials and never logs in for you."
+                ),
                 requires="human",
-                est_seconds=8,
+                est_seconds=14,
                 url=url,
             ),
             HandoffStep(
@@ -502,7 +506,8 @@ class RailIndiaProvider(BaseProvider):
             expires_at=dt.datetime.now(IST) + dt.timedelta(minutes=15),
             legal_notice=LEGAL_NOTICE,
             warnings=[
-                "The link pre-fills the journey only. Class, passengers and quota are "
-                "entered on IRCTC, which does not accept them in the URL.",
+                "This link opens IRCTC's search page. Journey prefill could not be "
+                "confirmed on the live site (verified 2026-10-24: the form opened empty), "
+                "so enter the journey yourself. It takes a few seconds.",
             ],
         )
