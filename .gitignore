@@ -26,3 +26,6 @@ data/*.onnx
 
 # os
 .DS_Store
+
+# local state (per-machine, not source)
+data/railradar-usage.json
