@@ -23,12 +23,35 @@ Contract and core complete and tested. No network adapter yet.
 | Step | State |
 |---|---|
 | 0. API contract | **done** — `openapi.yaml`, validated, both clients generate |
-| 1. Core domain + provider layer | **done** — ids, errors, capabilities, registry, cache, 143 tests |
-| 2. One real provider end to end | next |
-| 3. Engine + delay model | |
+| 1. Core domain + provider layer | **done** — ids, errors, capabilities, registry, cache |
+| 2. One real provider end to end | **done** — 5 real trains, 13,010 stations, live IRCTC link, offline DB |
+| 3. Engine + delay model | next |
 | 4. Web client | |
 | 5. PWA | |
 | 6. Second provider (proof of agnosticism) | |
+
+## What is real today
+
+```
+$ python3 scripts/rail_query.py CSMT PUNE 2026-10-26 --handoff
+CSMT -> PUNE  2026-10-26 (Mon)
+3 train(s) from the local timetable
+
+ 1. 12127 Pune Intercity SF Express   06:40 -> 10:00 (+0d)   3h20m  190.7 km
+    book yourself: https://www.irctc.co.in/nget/train-search?fromStation=CSMT&toStation=PUNE&date=20261026
+ 2. 22105 Indrayani SF Express        05:40 -> 09:05 (+0d)   3h25m  190.7 km
+ 3. 11007 Deccan Express              07:00 -> 11:05 (+0d)   4h05m  190.7 km
+```
+
+Three vendor walls, each turned into design rather than a lie:
+
+| Wall | Design answer |
+|---|---|
+| Seat availability is paid-plan only | `capabilities.availability = False`, `NotSupported`, card says check IRCTC |
+| Fare needs date+from+to+class, and their upstream is broken | Fare optional, absent when unconfirmed, unknown shape raises |
+| Site needs a human (captcha, Aadhaar OTP, login) | Handoff carries a 5-step checklist with `requires` per step |
+
+Full detail: `docs/DATA-FINDINGS.md` in the repo.
 
 ## Layout
 
@@ -53,7 +76,9 @@ scripts/check.sh             one command, all gates
 scripts/check_contract.py    duplicate keys, broken refs, missing operationIds
 scripts/generate-clients.sh  validate + regenerate both typed clients
 scripts/railradar_probe.py   IPv6-first probe with a hard monthly budget ledger
-tests/                       143 tests, no network, no sleeps
+scripts/seed_timetable.py    rebuild data/timetable.db from fixtures, no network
+scripts/rail_query.py        ask the real agent from a shell
+tests/                      188 tests, no network, no sleeps
 ```
 
 ## Verify everything
