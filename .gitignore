@@ -1,0 +1,28 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# node
+node_modules/
+.next/
+out/
+.turbo/
+
+# env + secrets
+.env
+.env.*
+!.env.example
+
+# data (large, rebuildable, never commit)
+data/raw/
+data/*.db
+data/*.db-journal
+data/*.pkl
+data/*.onnx
+
+# os
+.DS_Store

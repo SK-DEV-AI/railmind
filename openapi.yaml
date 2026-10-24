@@ -1,0 +1,1374 @@
+openapi: 3.1.0
+
+info:
+  title: RailMind API
+  version: 0.1.0
+  summary: Conversational intercity travel agent. Decides fast, hands off to a human.
+  description: |
+    RailMind turns a free-text travel request into a priced, risk-assessed,
+    one-tap booking handoff. It does not book. The human completes payment on
+    the provider's own site.
+
+    **Contract conventions**
+
+    - **Absent, not null.** A field is omitted when its value is unknown. No
+      `null` is ever sent for an optional field. Clients must treat "missing" as
+      "unknown", never as zero or false.
+    - **Money is integer minor units.** `amount_minor` is paise for INR. Never a
+      float, never a string.
+    - **Times are RFC 3339 with offset.** `service_date` is the local date of
+      departure at the origin stop, `format: date`.
+    - **IDs are stable and derivable.**
+      - stop: `{country}:{code}` e.g. `IN:CSMT`
+      - leg: `{provider_id}:{service_id}:{service_date}:{sequence}`
+      - itinerary: content hash of its legs
+      - intent: opaque uuid
+    - **Errors are RFC 9457 problem documents** with a stable machine `code`.
+      Clients switch on `code`, never on `title` or HTTP status alone.
+    - **Every response carries `X-Request-Id`.** Echo it in bug reports.
+    - **Beckn alignment.** `BookingIntent` corresponds to Beckn `Intent`,
+      `Itinerary` to `Fulfillment` + `Quote`, `Leg` to `Item`, `Handoff` to
+      `Order` init. Field names are chosen so a future ONDC adapter is a
+      mapping layer, not a rewrite. See `docs/CONTRACT.md`.
+
+    **Latency contract.** `POST /search` must return within the deadline
+    declared in `meta.deadline_ms` (default 1800 ms). If upstream providers
+    miss it, the response is still `200` with `meta.degraded: true` and cached
+    or partial itineraries. A timeout is never a 500.
+  contact:
+    name: RailMind
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development
+  - url: https://railmind-api.fly.dev
+    description: Demo deployment
+
+tags:
+  - name: intent
+    description: Layer 1. Slow, deliberate, allowed to call an LLM. Runs ahead of time.
+  - name: search
+    description: Layer 2. Deterministic, deadline-bound, no LLM on the hot path.
+  - name: handoff
+    description: Layer 3. Produces the deep link a human taps.
+  - name: live
+    description: Running-train position and delay.
+  - name: ops
+    description: Health and measured metrics.
+
+paths:
+  /health:
+    get:
+      tags: [ops]
+      operationId: getHealth
+      summary: Liveness and dependency state
+      responses:
+        "200":
+          description: Service state. Always 200 when the process is up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /intent:
+    post:
+      tags: [intent]
+      operationId: createIntent
+      summary: Parse free text into a structured BookingIntent
+      description: |
+        Layer 1. May use an LLM. Not on the rush-hour hot path: normally called
+        the night before, or once at conversation start. The result is frozen and
+        reused; `expires_at` says for how long.
+
+        If the request is under-specified, this still returns `200` with
+        `ambiguities` populated and `confidence` below 1. The client asks the
+        human to resolve them. Ambiguity is a valid outcome, not an error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntentRequest"
+      responses:
+        "200":
+          description: Parsed intent, possibly with ambiguities.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntentResponse"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "422":
+          description: Structurally valid JSON but semantically unusable (for example, no free-text content).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/UpstreamDown"
+
+  /search:
+    post:
+      tags: [search]
+      operationId: searchItineraries
+      summary: Ranked, priced, risk-assessed options for an intent
+      description: |
+        Layer 2. Deterministic. No LLM. Fans out to providers in parallel under a
+        hard deadline, diffs availability against the precomputed decision table,
+        scores, and returns ranked itineraries.
+
+        Idempotent for a given body within the cache TTL. Safe to retry.
+
+        A degraded response is a success: `meta.degraded` is true, `meta.notes`
+        explains why, and any itinerary whose data is older than its TTL carries
+        `availability.stale: true`.
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "200":
+          description: Ranked itineraries, possibly degraded.
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/XRequestId"
+            X-Cache:
+              description: Aggregate cache outcome for the fan-out.
+              schema:
+                type: string
+                enum: [hit, partial, miss]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          description: The referenced intent_id does not exist or has expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "504":
+          description: Deadline exceeded with no usable cached data. The fallback of last resort.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /itinerary/{itinerary_id}:
+    get:
+      tags: [search]
+      operationId: getItinerary
+      summary: One itinerary in full
+      parameters:
+        - name: itinerary_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: refresh
+          in: query
+          description: Bypass the availability cache and re-check upstream.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: The itinerary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Itinerary"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /handoff:
+    post:
+      tags: [handoff]
+      operationId: createHandoff
+      summary: Build the human's one-tap path to a real booking
+      description: |
+        Returns a provider deep link with as much pre-fill as the provider allows,
+        plus an ordered checklist of the steps the human must complete himself
+        (CAPTCHA, Aadhaar OTP, payment). RailMind never submits a booking.
+
+        `expires_at` is short. A stale link can land the human on a dead session,
+        which is worse than no link at all.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HandoffRequest"
+      responses:
+        "200":
+          description: Handoff instructions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Handoff"
+        "400":
+          $ref: "#/components/responses/InvalidQuery"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Availability changed since the itinerary was priced.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "422":
+          description: This provider cannot hand off for this itinerary (capability or policy), for example Tatkal on opening day.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /live/{leg_id}:
+    get:
+      tags: [live]
+      operationId: getLiveStatus
+      summary: Live position and delay for one leg
+      description: |
+        Short TTL (60 s default). Served stale on upstream error with
+        `stale: true` rather than failing: a 90-second-old position is still
+        useful, an error is not.
+      parameters:
+        - name: leg_id
+          in: path
+          required: true
+          description: "`{provider_id}:{service_id}:{service_date}:{sequence}`"
+          schema:
+            type: string
+            example: rail_india:12951:2026-10-25:1
+      responses:
+        "200":
+          description: Live state, possibly stale.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /providers:
+    get:
+      tags: [ops]
+      operationId: listProviders
+      summary: Registered providers and what each can do
+      description: |
+        The capability registry, exposed. The UI renders from this rather than
+        from assumptions about provider types, and the report can show the exact
+        diff that adding a second provider costs.
+      responses:
+        "200":
+          description: Registered providers.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [providers]
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProviderInfo"
+                additionalProperties: false
+
+  /metrics:
+    get:
+      tags: [ops]
+      operationId: getMetrics
+      summary: Measured latency and provider health
+      description: |
+        Every number here is computed from the request log, never typed by hand.
+        `counted_from` names the source. `t90_ms` is the headline metric: time to
+        a priced, risk-assessed card, 90th percentile.
+      parameters:
+        - name: window_seconds
+          in: query
+          schema:
+            type: integer
+            minimum: 60
+            maximum: 604800
+            default: 3600
+      responses:
+        "200":
+          description: Aggregated metrics for the window.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metrics"
+
+components:
+  parameters:
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: Client-supplied correlation id. Generated when absent.
+      schema:
+        type: string
+        maxLength: 128
+
+  headers:
+    XRequestId:
+      description: Correlation id for this request.
+      schema:
+        type: string
+
+  responses:
+    InvalidQuery:
+      description: The request is malformed or fails validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: No such resource, or it expired.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RateLimited:
+      description: Client-side rate limit. Respect `Retry-After`.
+      headers:
+        Retry-After:
+          description: Seconds to wait.
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    UpstreamDown:
+      description: A dependency required for this operation is unavailable.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    # ---------- primitives ----------
+
+    Money:
+      type: object
+      description: Integer minor units. 125050 with currency INR means 1250 rupees 50 paise.
+      required: [amount_minor, currency]
+      properties:
+        amount_minor:
+          type: integer
+          minimum: 0
+          example: 125050
+        currency:
+          type: string
+          enum: [INR]
+      additionalProperties: false
+
+    GeoPoint:
+      type: object
+      required: [lat, lon]
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+        lon:
+          type: number
+          minimum: -180
+          maximum: 180
+      additionalProperties: false
+
+    LineString:
+      type: object
+      description: GeoJSON LineString. Coordinates are [lon, lat] pairs.
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          const: LineString
+        coordinates:
+          type: array
+          minItems: 2
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+      additionalProperties: false
+
+    Mode:
+      type: string
+      description: Transport mode. Only `rail` is implemented in v0.1; the rest exist so the contract does not change later.
+      enum: [rail, metro, bus, cab, walk, ferry, flight]
+
+    # ---------- domain ----------
+
+    Stop:
+      type: object
+      description: "A boardable or alightable point. Not necessarily a station: a bus stop and a metro station are both Stops."
+      required: [stop_id, name, country, geo, timezone]
+      properties:
+        stop_id:
+          type: string
+          description: "`{ISO-3166-alpha-2}:{code}`, e.g. `IN:CSMT`."
+          example: IN:CSMT
+        name:
+          type: string
+          example: Chhatrapati Shivaji Maharaj Terminus
+        code:
+          type: string
+          description: Provider-local code, kept for display and deep links.
+          example: CSMT
+        city:
+          type: string
+          example: Mumbai
+        country:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: IN
+        geo:
+          $ref: "#/components/schemas/GeoPoint"
+        timezone:
+          type: string
+          description: IANA zone name. Needed because depart times are local.
+          example: Asia/Kolkata
+        modes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mode"
+      additionalProperties: false
+
+    ServiceRef:
+      type: object
+      description: The vehicle or service operating a leg.
+      required: [provider_id, service_id, name]
+      properties:
+        provider_id:
+          type: string
+          example: rail_india
+        service_id:
+          type: string
+          example: "12951"
+        name:
+          type: string
+          example: Mumbai Central - New Delhi Rajdhani Express
+        operator:
+          type: string
+          example: Western Railway
+        vehicle_class:
+          type: string
+          description: Provider-specific rolling stock or class descriptor.
+          example: LHB
+      additionalProperties: false
+
+    Availability:
+      type: object
+      description: Seat state for one leg and fare class at a point in time.
+      required: [status, checked_at, source, stale]
+      properties:
+        status:
+          type: string
+          enum: [available, waitlist, regret, sold_out, not_open, unknown]
+        class_code:
+          type: string
+          description: Provider class code, e.g. IRCTC travel class.
+          example: 3A
+        seats_available:
+          type: integer
+          minimum: 0
+        waitlist_position:
+          type: integer
+          minimum: 1
+        confirm_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Our estimate that a waitlisted booking confirms. Model-derived, not provider-supplied.
+        checked_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+          description: Provider or cache layer that produced this value.
+          example: railradar
+        stale:
+          type: boolean
+          description: True when past its TTL and served because upstream failed.
+      additionalProperties: false
+
+    Risk:
+      type: object
+      description: Delay risk from our own model, not the operator's promise.
+      required: [delay_probability, model_version]
+      properties:
+        delay_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Probability of arriving 15 or more minutes late.
+        expected_delay_min:
+          type: number
+          minimum: 0
+        p90_delay_min:
+          type: number
+          minimum: 0
+        model_version:
+          type: string
+          example: gbm-2026.10.1
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        top_features:
+          type: array
+          description: Why the model said this. Shown to the user, so keep it human-readable.
+          items:
+            type: object
+            required: [name, contribution]
+            properties:
+              name:
+                type: string
+                example: monsoon_season
+              contribution:
+                type: number
+                description: Signed contribution to delay probability.
+            additionalProperties: false
+      additionalProperties: false
+
+    FareComponent:
+      type: object
+      required: [title, amount]
+      properties:
+        title:
+          type: string
+          enum: [base_fare, reservation_charge, superfast_charge, gst, catering, tatkal_premium, convenience_fee, discount, other]
+        amount:
+          $ref: "#/components/schemas/Money"
+        note:
+          type: string
+      additionalProperties: false
+
+    BookingChannel:
+      type: string
+      description: |
+        How the final transaction happens for this leg. `human` and `deeplink`
+        both mean a person completes it; `api` would mean a machine does, which
+        requires an authorised partnership and is not implemented for rail.
+        Present in the model so a provider that legitimately supports API booking
+        (a metro card, an ONDC seller) needs no new field.
+      enum: [api, deeplink, human, none]
+
+    Leg:
+      type: object
+      description: One continuous ride on one service. The atom of the model.
+      required: [leg_id, mode, origin, destination, depart_at, arrive_at, service_date, duration_s, live_available, booking_channel]
+      properties:
+        leg_id:
+          type: string
+          description: "`{provider_id}:{service_id}:{service_date}:{sequence}`. Stable across requests, so it is safe to cache and link."
+          example: rail_india:12951:2026-10-25:1
+        mode:
+          $ref: "#/components/schemas/Mode"
+        origin:
+          $ref: "#/components/schemas/Stop"
+        destination:
+          $ref: "#/components/schemas/Stop"
+        depart_at:
+          type: string
+          format: date-time
+          description: Local time at `origin`, with offset.
+          example: "2026-10-25T17:00:00+05:30"
+        arrive_at:
+          type: string
+          format: date-time
+          description: Local time at `destination`, with offset.
+          example: "2026-10-26T08:32:00+05:30"
+        service_date:
+          type: string
+          format: date
+          description: Local departure date at `origin`. The booking date.
+          example: "2026-10-25"
+        booking_channel:
+          $ref: "#/components/schemas/BookingChannel"
+        duration_s:
+          type: integer
+          minimum: 0
+        service:
+          $ref: "#/components/schemas/ServiceRef"
+        distance_km:
+          type: number
+          minimum: 0
+        price:
+          $ref: "#/components/schemas/Money"
+        availability:
+          $ref: "#/components/schemas/Availability"
+        risk:
+          $ref: "#/components/schemas/Risk"
+        live_available:
+          type: boolean
+          description: Whether `GET /live/{leg_id}` can return anything for this leg.
+        geometry:
+          $ref: "#/components/schemas/LineString"
+      additionalProperties: false
+
+    ScoreBreakdown:
+      type: object
+      description: Normalised 0..1 sub-scores after weighting. Exposed so the UI can explain the ranking instead of asserting it.
+      required: [price, duration, delay_risk, comfort, transfers]
+      properties:
+        price:
+          type: number
+          minimum: 0
+          maximum: 1
+        duration:
+          type: number
+          minimum: 0
+          maximum: 1
+        delay_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        comfort:
+          type: number
+          minimum: 0
+          maximum: 1
+        transfers:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+
+    HandoffSummary:
+      type: object
+      description: Just enough for a list row to know whether one tap is possible.
+      required: [available, provider_id]
+      properties:
+        available:
+          type: boolean
+        provider_id:
+          type: string
+          example: rail_india
+        expires_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          description: Present when `available` is false.
+          example: tatkal_opening_day_blocked
+      additionalProperties: false
+
+    Itinerary:
+      type: object
+      description: A complete, bookable-by-a-human option, already scored and ranked.
+      required:
+        - itinerary_id
+        - legs
+        - depart_at
+        - arrive_at
+        - total_duration_s
+        - modes
+        - score
+        - score_breakdown
+        - rank
+        - risk_band
+        - confidence
+        - handoff
+      properties:
+        itinerary_id:
+          type: string
+          description: Content hash over the ordered leg ids. Same trip, same id.
+        legs:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Leg"
+        depart_at:
+          type: string
+          format: date-time
+        arrive_at:
+          type: string
+          format: date-time
+        total_duration_s:
+          type: integer
+          minimum: 0
+        modes:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Mode"
+        total_price:
+          $ref: "#/components/schemas/Money"
+        price_breakup:
+          type: array
+          items:
+            $ref: "#/components/schemas/FareComponent"
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        score_breakdown:
+          $ref: "#/components/schemas/ScoreBreakdown"
+        rank:
+          type: integer
+          minimum: 1
+          description: 1 is the recommendation. Ordering is by `score` descending.
+        risk_band:
+          type: string
+          enum: [low, medium, high]
+        risk_reasons:
+          type: array
+          description: Plain sentences, rendered directly to the user.
+          items:
+            type: string
+          example: ["Runs through the Kanpur monsoon corridor in October"]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: How much we trust the underlying data, not how good the option is.
+        handoff:
+          $ref: "#/components/schemas/HandoffSummary"
+        tags:
+          type: array
+          description: Short labels for the UI, e.g. cheapest, fewest_changes, most_reliable.
+          items:
+            type: string
+        warnings:
+          type: array
+          description: Anything the human must know before tapping. Never hide an availability caveat.
+          items:
+            type: string
+      additionalProperties: false
+
+    Passenger:
+      type: object
+      description: |
+        A passenger, minimised. Full government ID numbers are never accepted by
+        this API and never stored. Only `id_last4` and `id_type`, which is what the
+        rest of the flow needs to pre-fill a form.
+      required: [name, age]
+      properties:
+        passenger_id:
+          type: string
+        name:
+          type: string
+          maxLength: 64
+        age:
+          type: integer
+          minimum: 1
+          maximum: 120
+        gender:
+          type: string
+          enum: [male, female, other]
+        berth_preference:
+          type: string
+          enum: [lower, middle, upper, side_lower, side_upper, no_preference]
+        id_type:
+          type: string
+          enum: [aadhaar, passport, driving_licence, voter_id, student, none]
+        id_last4:
+          type: string
+          pattern: "^[0-9A-Za-z]{4}$"
+      additionalProperties: false
+
+    TimeWindow:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        flexibility_minutes:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+
+    Ambiguity:
+      type: object
+      description: A field the agent could not resolve with confidence. The UI asks the human.
+      required: [field, question]
+      properties:
+        field:
+          type: string
+          example: origin
+        question:
+          type: string
+          example: "Did you mean Mumbai CSMT or Mumbai LTT?"
+        options:
+          type: array
+          items:
+            type: string
+          example: ["IN:CSMT", "IN:LTT"]
+      additionalProperties: false
+
+    BookingIntent:
+      type: object
+      description: Beckn `Intent` in spirit. Frozen once created; validity bounded by `expires_at`.
+      required: [intent_id, created_at, raw_text, modes, optimise, confidence, expires_at, parsed_by]
+      properties:
+        intent_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        raw_text:
+          type: string
+          maxLength: 2000
+          example: Mumbai to Delhi this Friday 3AC under 3000, I cannot afford to arrive late
+        locale:
+          type: string
+          example: en-IN
+        origin:
+          $ref: "#/components/schemas/Stop"
+        destination:
+          $ref: "#/components/schemas/Stop"
+        depart_window:
+          $ref: "#/components/schemas/TimeWindow"
+        arrive_by:
+          type: string
+          format: date-time
+        modes:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Mode"
+        passengers:
+          type: array
+          description: Maximum 6 per booking, 4 on Tatkal. Enforced by guardrails, not by hope.
+          maxItems: 6
+          items:
+            $ref: "#/components/schemas/Passenger"
+        class_preferences:
+          type: array
+          description: Ordered by preference. Provider codes, not display names.
+          items:
+            type: string
+          example: ["3A", "2A"]
+        quota:
+          type: string
+          description: |
+            Booking quota. `tatkal` changes everything downstream: a shorter
+            advance-reservation window, a premium, a 4-passenger cap, an Aadhaar
+            OTP the human must answer, and the 30-minute agent blackout.
+            Values are IRCTC quota codes in lower case; the list is enumerable
+            on purpose so a new quota is a deliberate contract change.
+          enum: [general, tatkal, ladies, lower_berth, duty_pass, student]
+          default: general
+        budget:
+          $ref: "#/components/schemas/Money"
+        optimise:
+          type: string
+          enum: [cheapest, fastest, least_delay, most_comfortable, balanced]
+        constraints:
+          type: array
+          description: Normalised machine-readable constraints derived from prose.
+          items:
+            type: string
+          example: ["max_transfers:1", "no_arrival_before:06:00"]
+        ambiguities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ambiguity"
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        parsed_by:
+          type: string
+          enum: [llm, rules, user]
+          description: Transparency field. Shown in the UI so nobody thinks a model is guessing silently.
+      additionalProperties: false
+
+    # ---------- request / response bodies ----------
+
+    IntentRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 3
+          maxLength: 2000
+        locale:
+          type: string
+          default: en-IN
+        now:
+          type: string
+          format: date-time
+          description: Reference time for relative expressions like "this Friday". Defaults to server time. Supplied for deterministic tests.
+        passengers:
+          type: array
+          maxItems: 6
+          items:
+            $ref: "#/components/schemas/Passenger"
+        use_llm:
+          type: boolean
+          default: true
+          description: Set false to force the rule-based parser. Used by tests and by the rush-hour fallback path.
+      additionalProperties: false
+
+    IntentResponse:
+      type: object
+      required: [intent]
+      properties:
+        intent:
+          $ref: "#/components/schemas/BookingIntent"
+        meta:
+          type: object
+          properties:
+            elapsed_ms:
+              type: number
+            parser:
+              type: string
+              example: llm
+            cached:
+              type: boolean
+          additionalProperties: false
+
+    SearchRequest:
+      type: object
+      description: Supply exactly one of `intent_id` or `intent`.
+      properties:
+        intent_id:
+          type: string
+        intent:
+          $ref: "#/components/schemas/BookingIntent"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        deadline_ms:
+          type: integer
+          minimum: 200
+          maximum: 8000
+          default: 1800
+        include_stale:
+          type: boolean
+          default: true
+          description: Allow cached availability past its TTL when upstream misses the deadline.
+        modes:
+          type: array
+          description: Override `intent.modes` for this search only.
+          items:
+            $ref: "#/components/schemas/Mode"
+      additionalProperties: false
+
+    SearchMeta:
+      type: object
+      required: [elapsed_ms, deadline_ms, degraded]
+      properties:
+        elapsed_ms:
+          type: number
+          example: 742
+        deadline_ms:
+          type: integer
+        degraded:
+          type: boolean
+          description: True when any input was stale, partial, or missing.
+        notes:
+          type: array
+          description: Human-readable reasons for degradation. Surfaced in the UI.
+          items:
+            type: string
+          example: ["availability for 12951 served from cache, 14 min old"]
+        providers_used:
+          type: array
+          items:
+            type: string
+        providers_failed:
+          type: array
+          items:
+            type: string
+        cache:
+          type: object
+          properties:
+            hit:
+              type: boolean
+            stale_entries:
+              type: integer
+          additionalProperties: false
+      additionalProperties: false
+
+    SearchResponse:
+      type: object
+      required: [search_id, itineraries, meta]
+      properties:
+        search_id:
+          type: string
+        intent_id:
+          type: string
+        itineraries:
+          type: array
+          items:
+            $ref: "#/components/schemas/Itinerary"
+        meta:
+          $ref: "#/components/schemas/SearchMeta"
+      additionalProperties: false
+
+    HandoffRequest:
+      type: object
+      required: [itinerary_id]
+      properties:
+        itinerary_id:
+          type: string
+        passengers:
+          type: array
+          description: Overrides the intent's passengers. Last chance to fix a name before the form is pre-filled.
+          items:
+            $ref: "#/components/schemas/Passenger"
+        provider_preference:
+          type: array
+          description: Ordered provider ids to try. Defaults to the itinerary's provider.
+          items:
+            type: string
+      additionalProperties: false
+
+    HandoffStep:
+      type: object
+      required: [order, title, requires, est_seconds]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          example: Type the CAPTCHA on the IRCTC login page
+        detail:
+          type: string
+        requires:
+          type: string
+          enum: [human, otp, captcha, payment, aadhaar]
+          description: Why a machine cannot do this step. This field is the legal argument, in data.
+        est_seconds:
+          type: integer
+          minimum: 1
+        url:
+          type: string
+      additionalProperties: false
+
+    Handoff:
+      type: object
+      required: [handoff_id, itinerary_id, provider_id, method, steps, expires_at, legal_notice]
+      properties:
+        handoff_id:
+          type: string
+        itinerary_id:
+          type: string
+        provider_id:
+          type: string
+        method:
+          type: string
+          enum: [deeplink, assisted, api]
+          description: Only `deeplink` is implemented. `api` requires an authorised partnership and is out of scope.
+        url:
+          type: string
+          format: uri
+          description: The provider page to open, as pre-filled as the provider permits.
+        prefill:
+          type: object
+          description: Field values to apply on the provider page where the link cannot carry them. Keys are a stable vocabulary owned by our provider adapter.
+          additionalProperties:
+            type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/HandoffStep"
+        expires_at:
+          type: string
+          format: date-time
+        legal_notice:
+          type: string
+          description: Shown verbatim to the user. Explains that RailMind is not the booking party and never submits a booking.
+        warnings:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+
+    LiveStatus:
+      type: object
+      required: [leg_id, status, stale]
+      properties:
+        leg_id:
+          type: string
+        status:
+          type: string
+          enum: [on_time, delayed, early, not_started, completed, unknown]
+        delay_min:
+          type: integer
+          description: Negative means early.
+        position:
+          $ref: "#/components/schemas/GeoPoint"
+        next_stop:
+          type: object
+          properties:
+            stop:
+              $ref: "#/components/schemas/Stop"
+            eta:
+              type: string
+              format: date-time
+          additionalProperties: false
+        geometry:
+          $ref: "#/components/schemas/LineString"
+        last_reported_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+        stale:
+          type: boolean
+      additionalProperties: false
+
+    # ---------- ops ----------
+
+    StageMetrics:
+      type: object
+      description: Latency distribution for one pipeline stage, computed from the request log.
+      required: [n, p50_ms, p95_ms, p99_ms, max_ms]
+      properties:
+        n:
+          type: integer
+          minimum: 0
+        p50_ms:
+          type: number
+        p95_ms:
+          type: number
+        p99_ms:
+          type: number
+        max_ms:
+          type: number
+      additionalProperties: false
+
+    BreakerState:
+      type: object
+      required: [provider_id, state]
+      properties:
+        provider_id:
+          type: string
+        state:
+          type: string
+          enum: [closed, open, half_open]
+        failures:
+          type: integer
+        opened_at:
+          type: string
+          format: date-time
+      additionalProperties: false
+
+    Metrics:
+      type: object
+      required: [window_seconds, counted_from, sample_size, stages]
+      properties:
+        window_seconds:
+          type: integer
+        counted_from:
+          type: string
+          description: Where these numbers came from. Always a real source, never memory.
+          example: request_log
+        sample_size:
+          type: integer
+        t90_ms:
+          type: number
+          description: Headline metric. Time from window open to a priced, risk-assessed, one-tap card, 90th percentile.
+        t_tap_ms:
+          type: number
+          description: Decision shown to payment confirmed. The human gate, measured separately so it is never confused with our own latency.
+        provider_calls:
+          type: integer
+          description: Outbound upstream requests in the window. The number that must stay small on a free tier.
+        cache_hits:
+          type: integer
+        requests:
+          type: object
+          properties:
+            total:
+              type: integer
+            errors:
+              type: integer
+            degraded:
+              type: integer
+          additionalProperties: false
+        stages:
+          type: object
+          required: [intent, search, handoff, live]
+          properties:
+            intent:
+              $ref: "#/components/schemas/StageMetrics"
+            search:
+              $ref: "#/components/schemas/StageMetrics"
+            handoff:
+              $ref: "#/components/schemas/StageMetrics"
+            live:
+              $ref: "#/components/schemas/StageMetrics"
+          additionalProperties: false
+        cache_hit_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Fraction of availability lookups served without an upstream call.
+        breakers:
+          type: array
+          items:
+            $ref: "#/components/schemas/BreakerState"
+      additionalProperties: false
+
+    Health:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+          example: 0.1.0
+        uptime_s:
+          type: number
+        dependencies:
+          type: array
+          items:
+            type: object
+            required: [name, state]
+            properties:
+              name:
+                type: string
+                example: railradar
+              state:
+                type: string
+                enum: [ok, degraded, down, disabled]
+              latency_ms:
+                type: number
+            additionalProperties: false
+      additionalProperties: false
+
+    Capabilities:
+      type: object
+      description: |
+        What a provider can actually do. The engine and the UI read this instead
+        of asking "what type is this provider". Adding a mode means registering
+        capabilities, not editing an if-chain.
+      required: [search, availability, price, live, booking]
+      properties:
+        search:
+          type: boolean
+        availability:
+          type: boolean
+        price:
+          type: boolean
+        live:
+          type: boolean
+        booking:
+          type: string
+          enum: [api, deeplink, none]
+        seat_map:
+          type: boolean
+        seat_select:
+          type: boolean
+        cancel:
+          type: string
+          enum: [api, deeplink, none]
+      additionalProperties: false
+
+    ProviderInfo:
+      type: object
+      required: [provider_id, display_name, modes, capabilities, enabled]
+      properties:
+        provider_id:
+          type: string
+          example: rail_india
+        display_name:
+          type: string
+          example: Indian Railways (IRCTC)
+        modes:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Mode"
+        capabilities:
+          $ref: "#/components/schemas/Capabilities"
+        regions:
+          type: array
+          description: ISO-3166 alpha-2 codes this provider serves.
+          items:
+            type: string
+          example: ["IN"]
+        enabled:
+          type: boolean
+        attribution:
+          type: string
+          description: Required attribution text, shown in the UI. Some data sources are free only if credited.
+        notes:
+          type: string
+      additionalProperties: false
+
+    Problem:
+      type: object
+      description: RFC 9457 problem document with a stable machine code.
+      required: [type, title, status, code, retryable]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://railmind.dev/errors/rate-limited
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          enum:
+            - invalid_query
+            - not_supported
+            - rate_limited
+            - upstream_down
+            - sold_out
+            - deadline_exceeded
+            - not_found
+            - ambiguous_intent
+            - internal
+            - conflict
+          description: |
+            Normalised error code. Provider adapters map their own failures
+            onto this set; a provider's raw error text never reaches a client.
+        retryable:
+          type: boolean
+        retry_after_s:
+          type: integer
+        provider_id:
+          type: string
+        request_id:
+          type: string
+      additionalProperties: false
