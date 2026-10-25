@@ -473,7 +473,11 @@ class TimetableRepo:
             -- the destination. Without this the query offered the reverse direction
             -- of a train as if it were a real option, and one such row rejected the
             -- whole corridor downstream.
+            -- A station is also not its own destination: some crawled schedules list
+            -- the same code twice (train 16345 at CNO, sequences 14 and 63), which
+            -- produced a corridor from a place to itself that no query accepts.
             WHERE a.station_code = ? AND b.station_code = ?
+              AND a.station_code <> b.station_code
               AND a.departure IS NOT NULL AND a.departure <> ''
               AND b.arrival IS NOT NULL AND b.arrival <> ''
             ORDER BY a.departure

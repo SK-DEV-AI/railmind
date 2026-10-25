@@ -455,3 +455,15 @@ class TestNoQuotaOnSeededCorridors:
 
         assert itineraries == []
         assert len(transport.calls) == calls_before
+
+
+def test_a_station_is_not_its_own_destination(repo):
+    """Some schedules list the same code twice; that is not a journey."""
+    payload = load("train_12951.json")["data"]
+    route = payload["route"]
+    # Duplicate the second stop at the end, which is what the real crawl data does.
+    route.append(dict(route[1]))
+    route[-1]["sequence"] = len(route)
+    repo.upsert_schedule(payload)
+
+    assert repo.trains_between("MX", "MX") == []
