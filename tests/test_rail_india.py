@@ -101,14 +101,20 @@ def make_query(origin: str = "CSMT", destination: str = "PUNE") -> Query:
     )
 
 
+def train(itineraries, number: str):
+    """Pick a train by number. Provider order is departure order, not rank order,
+    and a test that depends on position breaks the moment ordering changes."""
+    return next(item for item in itineraries if item.legs[0].service.service_id == number)
+
+
 class TestSeededSearch:
     async def test_returns_real_trains_without_any_request(self, provider, transport):
         itineraries = await provider.search(make_query())
 
-        assert [item.legs[0].service.service_id for item in itineraries] == [
+        assert sorted(item.legs[0].service.service_id for item in itineraries) == [
+            "11007",
             "12127",
             "22105",
-            "11007",
         ]
         assert transport.calls == []  # zero network for a seeded corridor
 
@@ -120,8 +126,12 @@ class TestSeededSearch:
         assert indrayani.arrive_at.strftime("%H:%M") == "09:05"
         assert indrayani.total_duration_s == 3 * 3600 + 25 * 60
 
-    async def test_ranked_by_duration_with_ranks_assigned(self, provider):
-        itineraries = await provider.search(make_query())
+    async def test_the_engine_ranks_seeded_trains_by_duration(self, provider):
+        from railmind.engine.ranking import rank
+
+        raw = await provider.search(make_query())
+        itineraries = rank(raw).itineraries
+
         durations = [item.total_duration_s for item in itineraries]
         assert durations == sorted(durations)
         assert [item.rank for item in itineraries] == [1, 2, 3]
@@ -132,9 +142,14 @@ class TestSeededSearch:
         assert all(item.risk_reasons == [] for item in itineraries)
 
     async def test_price_is_absent_because_it_was_not_fetched(self, provider):
-        itineraries = await provider.search(make_query())
-        assert all(item.total_price is None for item in itineraries)
-        assert any("Fare not checked" in w for w in itineraries[0].warnings)
+        from railmind.engine.ranking import rank
+
+        raw = await provider.search(make_query())
+        assert all(item.total_price is None for item in raw)
+        # The absence is announced by the engine, once, for every provider.
+        assert all(
+            any("No fare available" in w for w in item.warnings) for item in rank(raw).itineraries
+        )
 
     async def test_leg_ids_are_derivable_and_stable(self, provider):
         from railmind.core.ids import parse_leg_id
@@ -207,7 +222,7 @@ class TestAvailabilityHonesty:
         assert provider.capabilities.supports("availability") is False
 
     async def test_asking_for_availability_raises_not_supported(self, provider):
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         with pytest.raises(NotSupported):
             await provider.availability(itinerary)
 
@@ -222,7 +237,7 @@ class TestAvailabilityHonesty:
 class TestFare:
     async def test_fetches_once_and_returns_exact_paise(self, provider, transport):
         transport.routes["/v1/trains/12127/fare"] = {"success": True, "data": {"total": 2605.5}}
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         price = await provider.price(itinerary)
         await provider.price(itinerary)
 
@@ -236,7 +251,7 @@ class TestFare:
 
     async def test_unknown_fare_shape_is_refused_not_guessed(self, provider, transport):
         transport.routes["/v1/trains/12127/fare"] = {"success": True, "data": {"mystery": 1}}
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         with pytest.raises(NotSupported, match="did not contain a total"):
             await provider.price(itinerary)
 
@@ -258,7 +273,7 @@ class TestLive:
             "success": True,
             "data": {"delayMinutes": 12, "currentLocation": {"lat": 22.31, "lng": 74.11}},
         }
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         status = await provider.live(itinerary.legs[0])
 
         assert status.status == "delayed"
@@ -268,7 +283,7 @@ class TestLive:
 
     async def test_live_is_cached_within_its_ttl(self, provider, transport):
         transport.routes["/v1/trains/12127/live"] = {"success": True, "data": {"delayMinutes": 0}}
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         await provider.live(itinerary.legs[0])
         await provider.live(itinerary.legs[0])
         assert len(transport.calls) == 1
@@ -276,7 +291,7 @@ class TestLive:
 
 class TestHandoff:
     async def test_builds_a_real_irctc_link_without_network(self, provider, transport):
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         handoff = await provider.handoff(itinerary, [])
 
         assert str(handoff.url).startswith("https://www.irctc.co.in/nget/train-search?")
@@ -286,7 +301,7 @@ class TestHandoff:
         assert transport.calls == []
 
     async def test_never_claims_to_book(self, provider):
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         handoff = await provider.handoff(itinerary, [])
 
         assert handoff.method == "deeplink"
@@ -295,7 +310,7 @@ class TestHandoff:
         assert {"human", "captcha", "aadhaar", "payment"} <= requires
 
     async def test_prefill_is_honest_about_what_the_url_cannot_carry(self, provider):
-        itinerary = (await provider.search(make_query()))[0]
+        itinerary = train(await provider.search(make_query()), "12127")
         handoff = await provider.handoff(itinerary, [])
 
         assert any("enter the journey yourself" in w for w in handoff.warnings)

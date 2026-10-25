@@ -153,10 +153,7 @@ class RailIndiaProvider(BaseProvider):
                 await self._vendor_between(origin_code, destination_code)
             )
 
-        return self._rank(
-            [self._to_itinerary(option, query) for option in options],
-            query,
-        )
+        return self._order_by_departure([self._to_itinerary(option, query) for option in options])
 
     async def _vendor_between(self, origin_code: str, destination_code: str) -> list[dict]:
         key = CacheKey(
@@ -229,11 +226,10 @@ class RailIndiaProvider(BaseProvider):
             option.destination_lon,
         )
 
-        warnings: list[str] = [
-            "Fare not checked yet; it is fetched for the finalists only.",
-            "Delay risk model is not active yet, so no risk band can be given.",
-            "Seat availability is not included in the current data plan; check it on IRCTC.",
-        ]
+        # Only facts about this leg. The generic "no fare, no risk, no seats"
+        # warnings belong to the engine, which knows what is missing across all
+        # providers and can say it once instead of once per adapter.
+        warnings: list[str] = []
         if orig.geo is None or dest.geo is None:
             warnings.append(
                 "Station coordinates unavailable, so this leg cannot be drawn on the map."
@@ -284,36 +280,20 @@ class RailIndiaProvider(BaseProvider):
             warnings=warnings,
         )
 
-    def _rank(self, itineraries: list[Itinerary], query: Query) -> list[Itinerary]:
-        """Rank by scheduled duration, then departure proximity to the window.
+    def _order_by_departure(self, itineraries: list[Itinerary]) -> list[Itinerary]:
+        """Deterministic data order only. Ranking belongs to the engine.
 
-        Only facts we actually have are used. When the delay model and fares land,
-        this becomes a Pareto front; the contract does not change.
+        The wire shape requires a `score` and a `rank` on every itinerary, so an
+        adapter has to put something there. It puts the earliest departure first
+        and a score of 0.0, which cannot be mistaken for a judgement, and
+        `railmind.engine.ranking` overwrites both before a user sees a card.
+
+        Two ranking implementations with different weights would be the bug this
+        avoids: a second provider would silently change what a score means.
         """
-        if not itineraries:
-            return []
-
-        durations = [item.total_duration_s for item in itineraries]
-        shortest, longest = min(durations), max(durations)
-        span = max(1, longest - shortest)
-
-        def score(item: Itinerary) -> float:
-            duration_score = 1.0 - (item.total_duration_s - shortest) / span
-            return round(0.7 * duration_score + 0.3 * 0.5, 4)
-
-        for item in itineraries:
-            value = score(item)
-            item.score = value
-            item.score_breakdown = ScoreBreakdown(
-                price=0.5,
-                duration=round(1.0 - (item.total_duration_s - shortest) / span, 4),
-                delay_risk=0.5,
-                comfort=0.5,
-                transfers=1.0,
-            )
-
-        itineraries.sort(key=lambda item: (-item.score, item.depart_at))
+        itineraries.sort(key=lambda item: (item.depart_at, item.legs[0].leg_id))
         for index, item in enumerate(itineraries, start=1):
+            item.score = 0.0
             item.rank = index
         return itineraries
 

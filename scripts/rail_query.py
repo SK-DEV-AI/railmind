@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from railmind.core.errors import ProviderError
 from railmind.core.types import Query, format_inr
+from railmind.engine.ranking import rank
 from railmind.providers.rail_india import DEFAULT_CLASS_ORDER, _stop
 
 
@@ -61,7 +62,7 @@ async def run(args: argparse.Namespace) -> int:
     )
 
     try:
-        itineraries = await provider.search(query)
+        itineraries = rank(await provider.search(query)).itineraries
     except ProviderError as exc:
         print(f"FAIL {exc}", file=sys.stderr)
         return 1
