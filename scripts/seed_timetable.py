@@ -20,6 +20,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import datetime as dt
+
 from railmind.data.timetable import DEFAULT_DB, TimetableRepo, seed_from_fixtures
 
 
@@ -29,6 +31,15 @@ def main() -> int:
     )
     parser.add_argument("--fixtures", type=Path, default=Path("tests/fixtures/railradar"))
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
+    parser.add_argument(
+        "--fetched-at",
+        default=None,
+        help=(
+            "When these fixtures were captured, ISO-8601. Defaults to now, which is "
+            "right for a fresh crawl and wrong for recorded data: /health judges "
+            "schedule freshness from this value."
+        ),
+    )
     parser.add_argument(
         "--sample",
         nargs=2,
@@ -42,7 +53,8 @@ def main() -> int:
         return 2
 
     repo = TimetableRepo(args.db)
-    seeded = seed_from_fixtures(repo, args.fixtures)
+    moment = dt.datetime.fromisoformat(args.fetched_at) if args.fetched_at else None
+    seeded = seed_from_fixtures(repo, args.fixtures, fetched_at=moment)
     counts = repo.counts()
     print(f"seeded from {args.fixtures}:")
     print(f"  stations ingested: {seeded['stations']}")

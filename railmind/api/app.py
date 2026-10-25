@@ -186,9 +186,21 @@ def create_app(
 
     @app.get("/health", response_model=Health)
     async def health() -> Health:
-        checks = [_probe("timetable_db", lambda: _count_trains(timetable or _repo()))]
+        repo = timetable or _repo()
+        checks = [
+            _probe("timetable_db", lambda: _count_trains(repo)),
+            # Freshness is a dependency like any other, and one that actually rots.
+            # Reported as degraded rather than down: stale schedules still answer,
+            # they just answer about last month.
+            _probe(
+                "timetable_schedule",
+                lambda: _assert_schedule_fresh(repo),
+                on_fail=State1.degraded,
+            ),
+        ]
+        status = Status2.ok if all(item.state is State1.ok for item in checks) else Status2.degraded
         return Health(
-            status=Status2.ok,
+            status=status,
             version=VERSION,
             uptime_s=round(time.monotonic() - started, 3),
             dependencies=checks,
@@ -287,7 +299,22 @@ def _count_trains(repo: TimetableRepo) -> int:
     return len(trains)
 
 
-def _probe(name: str, check) -> Dependency:
+class StaleData(Exception):
+    """Raised by a freshness probe. Not a failure, a warning with a name."""
+
+
+def _assert_schedule_fresh(repo: TimetableRepo) -> None:
+    """Fail the probe when schedules are past the policy in `data/freshness.py`."""
+    report = repo.staleness()
+    due = int(report.get("due") or 0)
+    if due:
+        raise StaleData(
+            f"{due} of {report.get('trains')} schedules are older than the "
+            f"{report.get('policy_days')} day policy; run scripts/refresh_timetable.py"
+        )
+
+
+def _probe(name: str, check, *, on_fail: State1 = State1.down) -> Dependency:
     """Run one check and time it. A failing check is reported, not raised."""
     start = time.perf_counter()
     try:
@@ -295,7 +322,7 @@ def _probe(name: str, check) -> Dependency:
     except Exception:
         return Dependency(
             name=name,
-            state=State1.down,
+            state=on_fail,
             latency_ms=round((time.perf_counter() - start) * 1000, 3),
         )
     return Dependency(

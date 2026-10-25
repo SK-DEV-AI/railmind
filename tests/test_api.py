@@ -79,8 +79,10 @@ def test_health_reports_a_probe_it_actually_ran(client):
     assert body["status"] == "ok"
     assert body["version"]
     names = [dependency["name"] for dependency in body["dependencies"]]
-    assert names == ["timetable_db"]
+    assert names == ["timetable_db", "timetable_schedule"]
     assert body["dependencies"][0]["latency_ms"] is not None
+    # The freshly seeded fixture is inside the freshness policy, so both are ok.
+    assert [item["state"] for item in body["dependencies"]] == ["ok", "ok"]
 
 
 def test_providers_lists_capabilities_as_data(client):

@@ -17,6 +17,8 @@ wrapper that pretends to be non-blocking while holding the GIL anyway.
 
 from __future__ import annotations
 
+import datetime as dt
+import hashlib
 import json
 import sqlite3
 from dataclasses import dataclass
@@ -29,7 +31,8 @@ CREATE TABLE IF NOT EXISTS stations (
     code TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     lat REAL,
-    lon REAL
+    lon REAL,
+    fetched_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS trains (
@@ -40,7 +43,11 @@ CREATE TABLE IF NOT EXISTS trains (
     source_code TEXT,
     dest_code TEXT,
     distance_km REAL,
-    classes TEXT                     -- comma separated, e.g. "1A,2A,3A"
+    classes TEXT,                    -- comma separated, e.g. "1A,2A,3A"
+    fetched_at TEXT,                 -- ISO-8601 UTC, last successful refresh
+    content_hash TEXT                -- hash of the schedule we stored, so a
+                                     -- refresh can say "unchanged" rather than
+                                     -- rewriting every row and calling it work
 );
 
 CREATE TABLE IF NOT EXISTS stops (
@@ -99,6 +106,50 @@ class TripOption:
 
 
 @dataclass(frozen=True, slots=True)
+class ScheduleWrite:
+    """What a schedule ingest did: created, replaced, or found nothing new."""
+
+    number: str
+    outcome: str
+    content_hash: str
+
+
+def _schedule_hash(train: dict, route: list[dict]) -> str:
+    """Canonical fingerprint of a schedule, stable across formatting differences."""
+    stops = [
+        [
+            str(stop.get("station", {}).get("code") or ""),
+            str(stop.get("sequence") or ""),
+            str(stop.get("arrival") or ""),
+            str(stop.get("departure") or ""),
+            str(stop.get("arrivalDay") or stop.get("departureDay") or ""),
+            str(stop.get("distance") or ""),
+        ]
+        for stop in route
+    ]
+    payload = {
+        "name": str(train.get("name") or ""),
+        "type": str(train.get("type") or ""),
+        "runDays": [str(day).lower() for day in (train.get("runDays") or [])],
+        "distance": str(train.get("distance") or ""),
+        "stops": stops,
+    }
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:32]
+
+
+def _parse_moment(text: object) -> dt.datetime | None:
+    """An ISO timestamp from the database, or None when absent or unreadable."""
+    if not text:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(str(text))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=dt.UTC) if parsed.tzinfo is None else parsed
+
+
+@dataclass(frozen=True, slots=True)
 class StationRow:
     code: str
     name: str
@@ -121,10 +172,107 @@ class TimetableRepo:
         self._conn = sqlite3.connect(self.path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA)
+        self._migrate()
         self._conn.commit()
 
     def close(self) -> None:
         self._conn.close()
+
+    # -- schema migration --
+
+    #: Columns added after the first version of the database. A demo machine may
+    #: hold a database created before freshness existed, and refusing to open it
+    #: would be a worse outcome than adding a column.
+    _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
+        ("trains", "fetched_at", "TEXT"),
+        ("trains", "content_hash", "TEXT"),
+        ("stations", "fetched_at", "TEXT"),
+    )
+
+    def _migrate(self) -> None:
+        for table, column, kind in self._ADDED_COLUMNS:
+            existing = {row["name"] for row in self._conn.execute(f"PRAGMA table_info({table})")}
+            if column not in existing:
+                self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
+
+    # -- freshness --
+
+    def schedule_age(self, train_number: str, *, now: dt.datetime | None = None):
+        """How old this train's stored schedule is, judged against policy."""
+        from railmind.data.freshness import age_of
+
+        return age_of(self.fetched_at(train_number), now=now, tier="schedule")
+
+    def fetched_at(self, train_number: str) -> dt.datetime | None:
+        row = self._conn.execute(
+            "SELECT fetched_at FROM trains WHERE number = ?", (str(train_number),)
+        ).fetchone()
+        return _parse_moment(row["fetched_at"]) if row else None
+
+    def due_for_refresh(
+        self,
+        *,
+        older_than_days: float | None = None,
+        limit: int | None = None,
+        numbers: list[str] | None = None,
+        now: dt.datetime | None = None,
+    ) -> list[str]:
+        """Train numbers whose schedule is older than the policy allows.
+
+        Ordered oldest first, so a limited sweep spends its requests on the stalest
+        rows. A missing timestamp sorts first, because an unknown age is the best
+        reason there is to re-fetch.
+        """
+        from railmind.data.freshness import SCHEDULE_MAX_AGE_DAYS
+
+        days = SCHEDULE_MAX_AGE_DAYS if older_than_days is None else older_than_days
+        reference = now or dt.datetime.now(dt.UTC)
+        rows = self._conn.execute("SELECT number, fetched_at FROM trains").fetchall()
+
+        due: list[tuple[float, str]] = []
+        for row in rows:
+            number = str(row["number"])
+            if numbers is not None and number not in numbers:
+                continue
+            moment = _parse_moment(row["fetched_at"])
+            if moment is None:
+                due.append((float("inf"), number))
+                continue
+            age_days = (reference - moment).total_seconds() / 86_400
+            if age_days > days:
+                due.append((age_days, number))
+
+        due.sort(key=lambda item: (-item[0], item[1]))
+        ordered = [number for _age, number in due]
+        return ordered[:limit] if limit is not None else ordered
+
+    def staleness(self, *, now: dt.datetime | None = None) -> dict[str, object]:
+        """A report a human can read: how old the whole timetable is."""
+        rows = self._conn.execute("SELECT number, fetched_at FROM trains").fetchall()
+        moments = [
+            moment for row in rows if (moment := _parse_moment(row["fetched_at"])) is not None
+        ]
+        reference = now or dt.datetime.now(dt.UTC)
+        missing = len(rows) - len(moments)
+        if not moments:
+            return {
+                "trains": len(rows),
+                "missing_timestamp": missing,
+                "oldest_days": None,
+                "newest_days": None,
+                "due": len(rows),
+            }
+        ages = sorted((reference - moment).total_seconds() / 86_400 for moment in moments)
+        from railmind.data.freshness import SCHEDULE_MAX_AGE_DAYS
+
+        return {
+            "trains": len(rows),
+            "missing_timestamp": missing,
+            "oldest_days": round(ages[-1], 2),
+            "newest_days": round(ages[0], 2),
+            "due": len(self.due_for_refresh(now=now)) + missing,
+            "policy_days": SCHEDULE_MAX_AGE_DAYS,
+        }
 
     # -- ingestion --
 
@@ -139,7 +287,7 @@ class TimetableRepo:
         self._conn.commit()
         return len(rows)
 
-    def upsert_schedule(self, payload: dict) -> str:
+    def upsert_schedule(self, payload: dict, *, fetched_at: dt.datetime | None = None) -> str:
         """Ingest one `/v1/trains/{number}` response: train row plus every stop.
 
         Station coordinates are taken from the route, which is the only place the
@@ -153,6 +301,11 @@ class TimetableRepo:
         if not route:
             raise ValueError(f"schedule for {number} has no route")
 
+        # The hash is over the parts a passenger could notice: times, halts,
+        # distances, name, run days. A refresh that changes none of them must be able
+        # to say so, otherwise every sweep looks like an update.
+        content_hash = _schedule_hash(train, route)
+
         run_days = train.get("runDays") or []
         normalised_days = (
             "daily" if len(run_days) == 7 else ",".join(str(day).lower() for day in run_days)
@@ -161,13 +314,26 @@ class TimetableRepo:
         destination = (train.get("destination") or {}).get("code")
         classes = train.get("classes") or train.get("availableClasses") or []
 
+        # `fetched_at` is the time the vendor was actually asked, which is not
+        # always now: seeding from recorded fixtures must record when they were
+        # captured, otherwise a rebuild would claim the data is fresher than it is.
+        moment = fetched_at or dt.datetime.now(dt.UTC)
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=dt.UTC)
+        fetched = moment.isoformat(timespec="seconds")
+        previous = self._conn.execute(
+            "SELECT content_hash FROM trains WHERE number = ?", (number,)
+        ).fetchone()
+
         self._conn.execute(
             "INSERT INTO trains (number, name, type, run_days, source_code, dest_code, "
-            "distance_km, classes) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+            "distance_km, classes, fetched_at, content_hash) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(number) DO UPDATE SET name = excluded.name, type = excluded.type, "
             "run_days = excluded.run_days, source_code = excluded.source_code, "
             "dest_code = excluded.dest_code, distance_km = excluded.distance_km, "
-            "classes = excluded.classes",
+            "classes = excluded.classes, fetched_at = excluded.fetched_at, "
+            "content_hash = excluded.content_hash",
             (
                 number,
                 train.get("name") or number,
@@ -177,6 +343,8 @@ class TimetableRepo:
                 destination,
                 train.get("distance"),
                 ",".join(str(c) for c in classes),
+                fetched,
+                content_hash,
             ),
         )
 
@@ -211,7 +379,14 @@ class TimetableRepo:
             stop_rows,
         )
         self._conn.commit()
-        return number
+
+        if previous is None:
+            outcome = "new"
+        elif previous["content_hash"] == content_hash:
+            outcome = "same"
+        else:
+            outcome = "changed"
+        return ScheduleWrite(number=number, outcome=outcome, content_hash=content_hash)
 
     # -- queries --
 
@@ -320,7 +495,12 @@ class TimetableRepo:
         return {"trains": one, "stops": two, "stations": three}
 
 
-def seed_from_fixtures(repo: TimetableRepo, fixtures_dir: str | Path) -> dict[str, int]:
+def seed_from_fixtures(
+    repo: TimetableRepo,
+    fixtures_dir: str | Path,
+    *,
+    fetched_at: dt.datetime | None = None,
+) -> dict[str, int]:
     """Build the database from recorded vendor responses. No network involved.
 
     Fixture layout, all raw responses from the vendor, never edited:
@@ -342,6 +522,6 @@ def seed_from_fixtures(repo: TimetableRepo, fixtures_dir: str | Path) -> dict[st
         if payload.get("success") is not True:
             continue
         seeded["trains"] = seeded["trains"] + 1
-        repo.upsert_schedule(payload.get("data") or {})
+        repo.upsert_schedule(payload.get("data") or {}, fetched_at=fetched_at)
 
     return seeded
