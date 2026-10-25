@@ -281,6 +281,13 @@ class TimetableRepo:
         ).fetchall()
         return [StationRow(r["code"], r["name"], r["lat"], r["lon"]) for r in rows]
 
+    def stop_count(self, train_number: str) -> int:
+        """How many stops we hold for a train. One of the model's input features."""
+        row = self._conn.execute(
+            "SELECT COUNT(*) AS n FROM stops WHERE train_number = ?", (str(train_number),)
+        ).fetchone()
+        return int(row["n"])
+
     def served_codes(self) -> set[str]:
         """Stations at least one seeded train stops at.
 

@@ -382,9 +382,10 @@ def _warn_missing(itinerary: Itinerary) -> None:
     if itinerary.total_price is None:
         warnings.append("No fare available for this train, so price did not affect its ranking.")
     if _worst_delay_probability(itinerary) is None:
-        warnings.append(
-            "No punctuality estimate yet: the delay model is not trained, so risk is unknown."
-        )
+        # Deliberately does not say why. The reason differs (no model built, or a
+        # model that has never seen this train) and the engine cannot tell which,
+        # so it states only what is true in both cases.
+        warnings.append("No punctuality estimate for this train, so its risk band is unknown.")
     if itinerary.legs[0].availability is None:
         warnings.append("Seat availability unknown: check the class and quota on the booking page.")
     itinerary.warnings = _dedupe(warnings)

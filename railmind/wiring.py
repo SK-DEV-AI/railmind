@@ -19,10 +19,15 @@ from railmind.providers.quota import DEFAULT_BUDGET, QuotaLedger
 from railmind.providers.rail_india import RailIndiaProvider
 from railmind.providers.railradar import RailRadarClient
 from railmind.providers.registry import ProviderRegistry
+from railmind.risk.predict import PunctualityModel
 
 #: The free data plan excludes seat availability; set this to 1 only with a paid
 #: plan, or the provider would advertise a capability the vendor will refuse.
 _SEAT_ENV = "RAILRADAR_SEAT_AVAILABILITY"
+
+#: Where the trained punctuality artifact lives. Absent is a supported state: cards
+#: then say risk is unknown instead of quoting a number nobody built.
+_MODEL_ENV = "RAILMIND_DELAY_MODEL"
 
 
 def timetable_path() -> Path:
@@ -31,6 +36,11 @@ def timetable_path() -> Path:
 
 def seat_availability_enabled() -> bool:
     return os.environ.get(_SEAT_ENV, "0").strip() in {"1", "true", "yes", "on"}
+
+
+def risk_model() -> PunctualityModel | None:
+    """The punctuality model, or None when it has not been built on this machine."""
+    return PunctualityModel.load(os.environ.get(_MODEL_ENV, "data/delay-model.json"))
 
 
 def data_budget() -> int:
@@ -47,6 +57,7 @@ def build_rail_provider(
     db_path: str | Path | None = None,
     cache: RouteCache | None = None,
     ledger: QuotaLedger | None = None,
+    model: PunctualityModel | None = None,
 ) -> RailIndiaProvider:
     """Build the rail provider from the environment. Raises if the key is missing.
 
@@ -66,6 +77,7 @@ def build_rail_provider(
         repo=repo,
         cache=cache or RouteCache(),
         seat_availability=seat_availability_enabled(),
+        risk_model=model if model is not None else risk_model(),
     )
 
 

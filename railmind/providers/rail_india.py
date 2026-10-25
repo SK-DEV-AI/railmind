@@ -53,6 +53,7 @@ from railmind.handoff.deeplink import LEGAL_NOTICE, build_irctc_deeplink
 from railmind.providers.cache import CacheKey, CacheKind, RouteCache
 from railmind.providers.railradar import PROVIDER_ID as VENDOR_ID
 from railmind.providers.railradar import RailRadarClient
+from railmind.risk.predict import PunctualityModel
 
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30), "IST")
 ATTRIBUTION = (
@@ -102,6 +103,11 @@ class RailIndiaProvider(BaseProvider):
     regions = frozenset({"IN"})
     attribution = ATTRIBUTION
 
+    #: Optional punctuality model. When absent, every itinerary keeps
+    #: `risk_band: unknown`, which the contract defines as a real value rather than
+    #: a placeholder, so the absence is honest instead of silent.
+    _model: PunctualityModel | None
+
     def __init__(
         self,
         *,
@@ -109,6 +115,7 @@ class RailIndiaProvider(BaseProvider):
         repo: TimetableRepo,
         cache: RouteCache | None = None,
         seat_availability: bool = False,
+        risk_model: PunctualityModel | None = None,
     ) -> None:
         # Real capabilities, not aspirational ones: on the free data plan there is
         # no seat availability, so we do not advertise it.
@@ -127,6 +134,7 @@ class RailIndiaProvider(BaseProvider):
         self.repo = repo
         self.cache = cache or RouteCache()
         self.seat_availability = seat_availability
+        self._model = risk_model
         super().__init__()
 
     # -- search ---------------------------------------------------------------
@@ -226,6 +234,8 @@ class RailIndiaProvider(BaseProvider):
             option.destination_lon,
         )
 
+        risk = self._risk_for(option, query, departure)
+
         # Only facts about this leg. The generic "no fare, no risk, no seats"
         # warnings belong to the engine, which knows what is missing across all
         # providers and can say it once instead of once per adapter.
@@ -252,6 +262,7 @@ class RailIndiaProvider(BaseProvider):
             ),
             distance_km=option.distance_km or None,
             availability=None,
+            risk=risk,
             live_available=True,
             booking_channel=BookingChannel.deeplink,
         )
@@ -270,7 +281,7 @@ class RailIndiaProvider(BaseProvider):
             ),
             rank=1,
             risk_band="unknown",
-            risk_reasons=[],
+            risk_reasons=_risk_reasons(risk),
             confidence=0.4,
             handoff=HandoffSummary(
                 available=self.capabilities.supports(Feature.BOOKING),
@@ -279,6 +290,23 @@ class RailIndiaProvider(BaseProvider):
             tags=[],
             warnings=warnings,
         )
+
+    def _risk_for(self, option: TripOption, query: Query, departure: dt.datetime):
+        """A real probability for this train, or None when the model has no record.
+
+        Features come from what we hold, not from the vendor: departure hour and
+        weekday from the query, distance and stop count from the local timetable.
+        """
+        if self._model is None:
+            return None
+        prediction = self._model.predict(
+            train_number=option.train_number,
+            departure_hour=departure.hour,
+            weekday=query.service_date.weekday(),
+            distance_km=option.distance_km,
+            stop_count=self.repo.stop_count(option.train_number),
+        )
+        return None if prediction is None else self._model.to_risk(prediction)
 
     def _order_by_departure(self, itineraries: list[Itinerary]) -> list[Itinerary]:
         """Deterministic data order only. Ranking belongs to the engine.
@@ -495,3 +523,19 @@ class RailIndiaProvider(BaseProvider):
                 "so enter the journey yourself. It takes a few seconds.",
             ],
         )
+
+
+def _risk_reasons(risk) -> list[str]:
+    """Plain sentences for the card. Empty when there is no model output."""
+    if risk is None:
+        return []
+    reasons = [
+        f"Observed punctuality: {risk.delay_probability * 100:.0f}% chance of arriving "
+        "more than 15 minutes late"
+    ]
+    if risk.expected_delay_min is not None:
+        reasons.append(f"Typical arrival delay on record: {risk.expected_delay_min:.0f} minutes")
+    if risk.top_features:
+        driver = risk.top_features[0]
+        reasons.append(f"Main factor: {driver.name}")
+    return reasons
