@@ -203,3 +203,43 @@ def test_parsing_is_deterministic_for_the_same_input_and_now(repo):
     assert first.origin.code == second.origin.code
     assert first.confidence == second.confidence
     assert first.depart_window.start == second.depart_window.start
+
+
+def test_station_choice_follows_the_timetable_not_popularity(repo):
+    """ "mumbai" matches several stations; only some of them reach Pune.
+
+    In the seeded fixture only CSMT has trains to Pune, so that is the answer even
+    though a busier Mumbai station may exist in the wider database.
+    """
+    parsed = ask("mumbai to pune tomorrow", repo)
+
+    assert parsed.intent.origin.code == "CSMT"
+    assert parsed.intent.destination.code == "PUNE"
+    assert parsed.ambiguities == ()
+
+
+def test_an_explicitly_named_station_is_honoured_even_with_no_trains(repo):
+    """If a user names Mumbai Central, we do not silently move them to CSMT."""
+    parsed = ask("mumbai central to pune tomorrow", repo)
+
+    assert parsed.intent.origin.code == "MMCT"
+    # No direct trains from MMCT to PUNE exist here; the search will say so, which
+    # is a better answer than quietly changing the station they asked for.
+    assert parsed.ambiguities == ()
+
+
+def test_the_pairs_with_the_most_service_win(repo):
+    """Among connected pairs, more trains is a better answer than fewer."""
+    from railmind.intent.parser import _pick_connected
+
+    origins = [repo.station(code) for code in ("MMCT", "CSMT", "LTT")]
+    destinations = [repo.station("PUNE")]
+    picked = _pick_connected(
+        [row for row in origins if row is not None],
+        [row for row in destinations if row is not None],
+        repo,
+    )
+
+    # MMCT comes first in the candidate list and has no trains to Pune; CSMT has
+    # three in the fixture, so connectivity outranks candidate order.
+    assert picked[0].code == "CSMT"

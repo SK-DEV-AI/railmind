@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS stations (
     name TEXT NOT NULL,
     lat REAL,
     lon REAL,
-    fetched_at TEXT
+    fetched_at TEXT,
+    name_source TEXT                 -- 'vendor' or 'ntes'; see NAME_SOURCE_PRIORITY
 );
 
 CREATE TABLE IF NOT EXISTS trains (
@@ -103,6 +104,18 @@ class TripOption:
         if self.run_days.strip().lower() == "daily":
             return True
         return WEEKDAYS[weekday] in {part.strip() for part in self.run_days.split(",")}
+
+    # Two sources give station names and they disagree: the vendor writes
+    # "Mumbai CSMT", NTES writes "C SHIVAJI MAH T" because it truncates. Merging
+    # blindly replaced 13,010 readable names with truncated ones and, worse, broke
+    # name-based station lookup: "mumbai" stopped matching CSMT entirely.
+    # Length is the wrong test (the truncated name is often the longer string), so
+    # names carry their source and a higher-priority source wins.
+
+
+#: Where a station's display name came from, highest priority first. The vendor
+#: directory is written for humans; NTES truncates to fit a column.
+NAME_SOURCE_PRIORITY: dict[str, int] = {"vendor": 3, "ntes": 1}
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,6 +204,7 @@ class TimetableRepo:
         ("trains", "fetched_at", "TEXT"),
         ("trains", "content_hash", "TEXT"),
         ("stations", "fetched_at", "TEXT"),
+        ("stations", "name_source", "TEXT"),
     )
 
     def _migrate(self) -> None:
@@ -280,18 +294,61 @@ class TimetableRepo:
 
     # -- ingestion --
 
-    def upsert_stations(self, stations: dict[str, str]) -> int:
+    def upsert_stations(self, stations: dict[str, str], *, source: str = "vendor") -> int:
         """Bulk insert `{code: name}`. Coordinates arrive later, with the routes."""
-        rows = [(code, name) for code, name in stations.items()]
-        self._conn.executemany(
-            "INSERT INTO stations (code, name) VALUES (?, ?) "
-            "ON CONFLICT(code) DO UPDATE SET name = excluded.name",
-            rows,
-        )
+        for code, name in stations.items():
+            self._merge_station(code, name, None, None, source)
         self._conn.commit()
-        return len(rows)
+        return len(stations)
 
-    def upsert_schedule(self, payload: dict, *, fetched_at: dt.datetime | None = None) -> str:
+    def _merge_station(
+        self,
+        code: str,
+        name: str | None,
+        lat: float | None,
+        lon: float | None,
+        source: str,
+    ) -> None:
+        """Write one station, resolving a name conflict by source priority.
+
+        Two sources name the same station differently: the vendor writes "Mumbai
+        CSMT", NTES writes "C SHIVAJI MAH T" because it truncates to fit a column.
+        Length is the wrong test (the truncated string is often the longer one), so
+        each name records where it came from and the higher priority wins. A rename
+        that loses information is not an improvement.
+        """
+        existing = self._conn.execute(
+            "SELECT name, name_source FROM stations WHERE code = ?", (code,)
+        ).fetchone()
+        if existing is None:
+            self._conn.execute(
+                "INSERT INTO stations (code, name, lat, lon, name_source) VALUES (?, ?, ?, ?, ?)",
+                (code, name or code, lat, lon, source),
+            )
+            return
+
+        incoming = NAME_SOURCE_PRIORITY.get(source, 1)
+        current = NAME_SOURCE_PRIORITY.get(str(existing["name_source"] or ""), 0)
+        keep_current_name = current > incoming and bool(existing["name"])
+        self._conn.execute(
+            "UPDATE stations SET name = ?, lat = COALESCE(?, lat), lon = COALESCE(?, lon), "
+            "name_source = ? WHERE code = ?",
+            (
+                existing["name"] if keep_current_name else (name or existing["name"]),
+                lat,
+                lon,
+                existing["name_source"] if keep_current_name else source,
+                code,
+            ),
+        )
+
+    def upsert_schedule(
+        self,
+        payload: dict,
+        *,
+        fetched_at: dt.datetime | None = None,
+        name_source: str = "vendor",
+    ) -> str:
         """Ingest one `/v1/trains/{number}` response: train row plus every stop.
 
         Station coordinates are taken from the route, which is the only place the
@@ -359,12 +416,12 @@ class TimetableRepo:
             code = str(station.get("code") or "").strip()
             if not code:
                 continue
-            self._conn.execute(
-                "INSERT INTO stations (code, name, lat, lon) VALUES (?, ?, ?, ?) "
-                "ON CONFLICT(code) DO UPDATE SET name = excluded.name, "
-                "lat = COALESCE(excluded.lat, stations.lat), "
-                "lon = COALESCE(excluded.lon, stations.lon)",
-                (code, station.get("name") or code, station.get("lat"), station.get("lng")),
+            self._merge_station(
+                code,
+                station.get("name"),
+                station.get("lat"),
+                station.get("lng"),
+                name_source,
             )
             stop_rows.append(
                 (

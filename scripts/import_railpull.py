@@ -220,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
                 unknown_days.append(str(record.get("number")))
                 continue
             try:
-                written = repo.upsert_schedule(payload, fetched_at=fetched_at)
+                written = repo.upsert_schedule(payload, fetched_at=fetched_at, name_source="ntes")
             except (ValueError, KeyError) as exc:
                 counts["failed"] += 1
                 print(f"  {record.get('number')}: {exc}")

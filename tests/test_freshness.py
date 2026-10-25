@@ -186,3 +186,37 @@ def test_derived_lookups_are_cached_and_invalidated_by_new_stops(repo):
 
     assert third != first
     assert repo._derived["station_traffic"][1] == third
+
+
+def test_a_vendor_name_survives_an_ntes_import(repo):
+    """NTES truncates "Mumbai CSMT" to "C SHIVAJI MAH T"; the vendor name must win."""
+    repo.upsert_stations({"CSMT": "Mumbai CSMT"})
+
+    payload = schedule("12951")
+    payload["route"][0]["station"]["code"] = "CSMT"
+    payload["route"][0]["station"]["name"] = "C SHIVAJI MAH T"
+    repo.upsert_schedule(payload, name_source="ntes")
+
+    assert repo.station("CSMT").name == "Mumbai CSMT"
+
+
+def test_an_ntes_name_is_used_for_a_station_only_it_knows(repo):
+    payload = schedule("12951")
+    payload["route"][0]["station"]["code"] = "ZZNEW"
+    payload["route"][0]["station"]["name"] = "Some New Halt"
+    repo.upsert_schedule(payload, name_source="ntes")
+
+    row = repo.station("ZZNEW")
+    assert row is not None and row.name == "Some New Halt"
+
+
+def test_priority_is_about_source_not_length(repo):
+    """The truncated name is often the LONGER string, which is why length was wrong."""
+    repo.upsert_stations({"CSMT": "Mumbai CSMT"})
+
+    payload = schedule("12951")
+    payload["route"][0]["station"]["code"] = "CSMT"
+    payload["route"][0]["station"]["name"] = "A MUCH LONGER BUT TRUNCATED NTES NAME"
+    repo.upsert_schedule(payload, name_source="ntes")
+
+    assert repo.station("CSMT").name == "Mumbai CSMT"

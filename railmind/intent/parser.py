@@ -107,6 +107,11 @@ _MONTHS = {
     "dec": 12,
 }
 
+#: How many station candidates per side are checked for connectivity. Eight squared
+#: is 64 indexed lookups, measured at well under a millisecond each, and it is enough
+#: to see a whole city: Mumbai alone contributes CSMT, LTT, MMCT, DR, BCL, BCT.
+MAX_CANDIDATES = 8
+
 _WEEKDAYS = {
     "monday": 0,
     "tuesday": 1,
@@ -301,12 +306,58 @@ def _places(text: str, repo: TimetableRepo) -> tuple[Stop | None, Stop | None, l
         return None, None, ambiguities
 
     origin_phrase, destination_phrase = parts
-    origin, origin_ambiguity = _resolve(origin_phrase, repo, field_name="origin")
-    destination, destination_ambiguity = _resolve(
+    origin_rows, origin_ambiguity = _resolve(origin_phrase, repo, field_name="origin")
+    destination_rows, destination_ambiguity = _resolve(
         destination_phrase, repo, field_name="destination"
     )
+    if not origin_rows or not destination_rows:
+        ambiguities.extend([item for item in (origin_ambiguity, destination_ambiguity) if item])
+        return (
+            _stop(origin_rows[0]) if origin_rows else None,
+            _stop(destination_rows[0]) if destination_rows else None,
+            ambiguities,
+        )
+
+    origin_row, destination_row = _pick_connected(origin_rows, destination_rows, repo)
+
+    # A tie that the timetable itself resolves is not an ambiguity any more: if only
+    # one pair of stations actually has trains between them, that is the answer.
+    if origin_row is not origin_rows[0] or destination_row is not destination_rows[0]:
+        return _stop(origin_row), _stop(destination_row), ambiguities
+
     ambiguities.extend([item for item in (origin_ambiguity, destination_ambiguity) if item])
-    return origin, destination, ambiguities
+    return _stop(origin_row), _stop(destination_row), ambiguities
+
+
+def _pick_connected(
+    origins: list[StationRow], destinations: list[StationRow], repo: TimetableRepo
+) -> tuple[StationRow, StationRow]:
+    """Choose the station pair that actually has trains between them.
+
+    This is why resolution reads the timetable and not just the station directory.
+    "mumbai to pune" matches Mumbai Central first by traffic, and Mumbai Central to
+    Pune has zero trains, while CSMT to Pune has fifteen. Answering the first match
+    would be arithmetically defensible and practically useless, so connectivity
+    outranks popularity when the two disagree.
+
+    Falls back to the best pair when nothing connects, because a route with no
+    direct trains is a real answer too.
+    """
+    best_pair = (origins[0], destinations[0])
+    best_trains = 0
+    for origin_rank, origin in enumerate(origins[:MAX_CANDIDATES]):
+        for destination_rank, destination in enumerate(destinations[:MAX_CANDIDATES]):
+            if origin.code == destination.code:
+                continue
+            count = len(repo.trains_between(origin.code, destination.code))
+            # Most service wins, not merely any service: "mumbai to pune" should
+            # prefer a terminus with fifteen trains over one with two, and both are
+            # more useful than the busiest station in the city with none.
+            score = (count, -(origin_rank + destination_rank))
+            if count and score > (best_trains, -99):
+                best_trains = count
+                best_pair = (origin, destination)
+    return best_pair
 
 
 def _split_route(text: str) -> tuple[str, str] | None:
@@ -334,7 +385,7 @@ def _split_route(text: str) -> tuple[str, str] | None:
 
 def _resolve(
     phrase: str, repo: TimetableRepo, *, field_name: str
-) -> tuple[Stop | None, Ambiguity | None]:
+) -> tuple[list[StationRow], Ambiguity | None]:
     """One phrase to one station, or to a question with the options attached.
 
     Three signals decide the answer, in this order, because the vendor's station
@@ -354,7 +405,7 @@ def _resolve(
     """
     words = [word for word in _words(phrase) if word not in _NOISE]
     if not words:
-        return None, Ambiguity(field=field_name, question=f"Which station is the {field_name}?")
+        return [], Ambiguity(field=field_name, question=f"Which station is the {field_name}?")
 
     traffic = repo.station_traffic()
     for attempt in _attempts(words):
@@ -368,17 +419,21 @@ def _resolve(
             for row in ordered[1:]
             if _station_rank(row, attempt, traffic)[:4] == _station_rank(best, attempt, traffic)[:4]
         ]
+        candidates = [best, *rivals]
         if not rivals:
-            return _stop(best), None
-        options = [f"IN:{row.code.upper()}" for row in [best, *rivals]][:5]
-        names = ", ".join(f"{row.code} ({row.name})" for row in [best, *rivals][:4])
-        return _stop(best), Ambiguity(
+            # Everything ordered is still returned: the caller may need to look past
+            # the busiest station in a city for one that actually has trains to the
+            # other end. That is not an ambiguity, it is a choice the timetable makes.
+            return ordered, None
+        options = [f"IN:{row.code.upper()}" for row in candidates][:5]
+        names = ", ".join(f"{row.code} ({row.name})" for row in candidates[:4])
+        return ordered, Ambiguity(
             field=field_name,
             question=f"{phrase.strip()!r} could be more than one station: {names}. Which one?",
             options=options,
         )
 
-    return None, Ambiguity(
+    return [], Ambiguity(
         field=field_name,
         question=f"I could not find a station called {phrase.strip()!r}. Which one did you mean?",
     )
