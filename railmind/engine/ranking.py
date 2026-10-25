@@ -345,6 +345,14 @@ def _tags(itinerary: Itinerary, candidates: list[Itinerary], front: set[int]) ->
     if id(itinerary) in front and len(front) < len(candidates):
         tags.append("efficient")
 
+    # Surfaced as a label, not just a warning, because of a result that surprises
+    # people: an option with NO punctuality history can outrank one with a bad
+    # history. That is deliberate (unknown is not the same as proven late, and we
+    # refuse to score a gap as average), but a reader who cannot see why will
+    # assume the ranking is broken. So the card says which options are unrated.
+    if _worst_delay_probability(itinerary) is None:
+        tags.append("punctuality_unknown")
+
     return tags
 
 

@@ -163,6 +163,10 @@ class TimetableRepo:
     def __init__(self, path: str | Path = DEFAULT_DB) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        # Derived lookups that are O(stops) and are asked for on every intent parse.
+        # Keyed by the total stop count, which changes whenever a schedule is written,
+        # so the cache cannot go stale without invalidating itself.
+        self._derived: dict[str, tuple[int, object]] = {}
         # `check_same_thread=False` because the ASGI server may call this from a
         # different thread than the one that opened it: FastAPI runs async
         # handlers on the event loop and the test client runs them in its own
@@ -476,6 +480,22 @@ class TimetableRepo:
         ).fetchall()
         return [StationRow(r["code"], r["name"], r["lat"], r["lon"]) for r in rows]
 
+    def _cached(self, name: str, build):
+        """Memoise an O(stops) lookup until the number of stops changes.
+
+        With the full NTES timetable this table holds ~185,000 stops, and a station
+        lookup that scans them costs milliseconds per call. `/intent` asks for traffic
+        and served codes on every parse, so caching is the difference between a
+        15 ms parse and a 150 ms one.
+        """
+        stamp = int(self._conn.execute("SELECT COUNT(*) AS n FROM stops").fetchone()["n"])
+        cached = self._derived.get(name)
+        if cached is not None and cached[0] == stamp:
+            return cached[1]
+        value = build()
+        self._derived[name] = (stamp, value)
+        return value
+
     def stop_count(self, train_number: str) -> int:
         """How many stops we hold for a train. One of the model's input features."""
         row = self._conn.execute(
@@ -492,8 +512,18 @@ class TimetableRepo:
         the intent parser uses it to prefer a real terminus when a user types a
         city that has eight of them.
         """
-        rows = self._conn.execute("SELECT DISTINCT station_code FROM stops").fetchall()
-        return {str(row["station_code"]).upper() for row in rows}
+        return {
+            str(code).upper()
+            for code in self._cached(
+                "served_codes",
+                lambda: [
+                    row["station_code"]
+                    for row in self._conn.execute(
+                        "SELECT DISTINCT station_code FROM stops"
+                    ).fetchall()
+                ],
+            )
+        }
 
     def station_traffic(self) -> dict[str, int]:
         """How many seeded stop records a station appears in.
@@ -503,10 +533,17 @@ class TimetableRepo:
         Crude is fine here, because the alternative is guessing a terminus from a
         hard-coded list, which would be wrong the moment the data changes.
         """
-        rows = self._conn.execute(
-            "SELECT station_code, COUNT(*) AS n FROM stops GROUP BY station_code"
-        ).fetchall()
-        return {str(row["station_code"]).upper(): int(row["n"]) for row in rows}
+        return dict(
+            self._cached(
+                "station_traffic",
+                lambda: {
+                    str(row["station_code"]).upper(): int(row["n"])
+                    for row in self._conn.execute(
+                        "SELECT station_code, COUNT(*) AS n FROM stops GROUP BY station_code"
+                    ).fetchall()
+                },
+            )
+        )
 
     def counts(self) -> dict[str, int]:
         one = self._conn.execute("SELECT COUNT(*) AS n FROM trains").fetchone()["n"]

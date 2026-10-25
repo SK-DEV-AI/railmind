@@ -215,3 +215,20 @@ def test_score_and_breakdown_stay_inside_the_contract_bounds():
         assert item.rank >= 1
         assert item.depart_at is not None
         assert isinstance(item.depart_at, dt.datetime)
+
+
+def test_an_unrated_option_is_labelled_not_silently_outranking_a_bad_one():
+    """Unknown can beat known-bad by design, so the card has to say so."""
+    unrated = make_itinerary(service_id="unrated", depart_hour=6, duration_h=8.0)
+    unrated.legs[0].risk = None
+    unrated = unrated.model_copy(update={"legs": unrated.legs}, deep=True)
+    bad = make_itinerary(service_id="bad", duration_h=9.0, delay_probability=0.9)
+
+    result = rank([unrated, bad])
+    tags = {item.legs[0].service.service_id: set(item.tags) for item in result.itineraries}
+
+    assert "punctuality_unknown" in tags["unrated"]
+    assert "punctuality_unknown" not in tags["bad"]
+    # The unrated option does win, which is the behaviour the tag explains.
+    assert result.itineraries[0].legs[0].service.service_id == "unrated"
+    assert any("No punctuality estimate" in w for w in result.itineraries[0].warnings)

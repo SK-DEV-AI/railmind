@@ -170,3 +170,19 @@ def test_an_old_database_gains_the_new_columns_instead_of_refusing_to_open(tmp_p
         assert repo.due_for_refresh() == ["12951"]
     finally:
         repo.close()
+
+
+def test_derived_lookups_are_cached_and_invalidated_by_new_stops(repo):
+    """The cache must not outlive the data it describes."""
+    repo.upsert_schedule(schedule("12951"))
+    first = repo.station_traffic()
+    second = repo.station_traffic()
+    assert second == first
+    assert repo._derived["station_traffic"][1] == first
+
+    # A different train adds stops, so the cache must be rebuilt.
+    repo.upsert_schedule(schedule("12127"))
+    third = repo.station_traffic()
+
+    assert third != first
+    assert repo._derived["station_traffic"][1] == third
