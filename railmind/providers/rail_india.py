@@ -150,13 +150,21 @@ class RailIndiaProvider(BaseProvider):
         if not origin_code or not destination_code:
             raise InvalidQuery("a station code is required for a rail search")
 
-        options = self.repo.trains_between(origin_code, destination_code)
+        seeded = self.repo.trains_between(origin_code, destination_code)
         weekday = query.service_date.weekday()
-        options = [option for option in options if option.runs_on(weekday)]
 
-        if not options:
-            # Not seeded. One request tells us which trains run it; their stops and
-            # coordinates come from the local station table where known.
+        if seeded:
+            # The corridor is in the local timetable, so the answer is local, full
+            # stop. Filtering by run-day may leave nothing, and that is a real
+            # answer: no train on that date. Asking the vendor here would spend
+            # quota to learn what we already know, and a corridor audit found 21
+            # percent of sampled corridors doing exactly that.
+            options = [option for option in seeded if option.runs_on(weekday)]
+            if not options:
+                return []
+        else:
+            # Genuinely not seeded. One request tells us which trains run it; their
+            # stops and coordinates come from the local station table where known.
             options = self._options_from_vendor(
                 await self._vendor_between(origin_code, destination_code)
             )

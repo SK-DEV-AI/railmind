@@ -125,6 +125,17 @@ first. Add `--apply` to refresh, at one vendor request per train, and it reports
 `new / changed / same / failed` per train. `same` is the normal answer and is the
 proof that a refresh is not just rewriting rows.
 
+## 6b. Does the whole timetable answer correctly?
+
+```bash
+.venv/bin/python scripts/audit_corridors.py --sample 400 --seed 0
+```
+
+It walks a deterministic sample of real corridors offline, with a vendor client that
+raises on any use, and prints built / empty / errors. A non-zero exit means something
+escaped. Run it after every import: it is how the quota leak and the boardable-segment
+bug were both caught.
+
 ## What is honestly missing
 
 Say these before they are found:

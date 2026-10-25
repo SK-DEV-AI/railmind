@@ -420,3 +420,38 @@ class TestSegmentUsability:
         itineraries = await provider.search(make_query())
 
         assert [item.legs[0].service.service_id for item in itineraries] == [good.train_number]
+
+
+class TestNoQuotaOnSeededCorridors:
+    async def test_a_corridor_with_no_train_that_day_does_not_call_the_vendor(
+        self, repo, transport
+    ):
+        """The local timetable already knows; asking the vendor would spend quota."""
+        calls_before = len(transport.calls)
+        provider = RailIndiaProvider(
+            client=RailRadarClient(api_key="test-key", transport=transport),
+            repo=repo,
+            seat_availability=False,
+        )
+        # 12127 and friends run daily in the fixtures, so pick a corridor that is
+        # seeded and then ask for a date where nothing runs by filtering the
+        # run-days: an emphatic test is cheaper than a contrived schedule.
+        seeded = repo.trains_between("CSMT", "PUNE")
+        assert seeded
+        for option in seeded:
+            repo._conn.execute(
+                "UPDATE trains SET run_days = 'mon' WHERE number = ?", (option.train_number,)
+            )
+        repo._conn.commit()
+
+        query = make_query()
+        query = Query(
+            origin=query.origin,
+            destination=query.destination,
+            service_date=dt.date(2026, 10, 28),  # a Wednesday
+        )
+
+        itineraries = await provider.search(query)
+
+        assert itineraries == []
+        assert len(transport.calls) == calls_before

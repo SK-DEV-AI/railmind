@@ -152,7 +152,11 @@ class SearchEngine:
             if verdict.refused:
                 itinerary.tags = _dedupe([*(itinerary.tags or []), "not_bookable_yet"])
         degraded = _is_degraded(chosen, outcome)
-        if degraded and not notes:
+        if not chosen and outcome.used and not outcome.failed:
+            # Empty and nothing failed means the timetable has no train for this
+            # route on this date, which is an answer rather than an error.
+            notes.append("no train runs this route on the requested date in the local timetable")
+        elif degraded and not notes:
             notes.append("some inputs were missing or partial; see each card's warnings")
 
         elapsed_ms = (search_done - started) * 1000.0
