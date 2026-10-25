@@ -6,8 +6,9 @@
 # after this point means anything.
 #
 # Usage:  ./scripts/check.sh
-# Needs:  .venv with pydantic, pytest, ruff, openapi-spec-validator,
-#         datamodel-codegen; plus node for openapi-typescript.
+# Needs:  .venv with pydantic, fastapi, uvicorn, httpx, pytest, ruff,
+#         openapi-spec-validator, datamodel-codegen; plus node for
+#         openapi-typescript.
 
 set -euo pipefail
 
@@ -21,7 +22,8 @@ for tool in "$PY" "$PYTEST" "$RUFF"; do
   if [ ! -x "$tool" ]; then
     echo "FAIL missing $tool — create the venv first:"
     echo "  python3 -m venv .venv"
-    echo "  .venv/bin/pip install pydantic pytest pytest-asyncio ruff openapi-spec-validator datamodel-code-generator"
+    echo "  .venv/bin/pip install pydantic fastapi uvicorn httpx pytest pytest-asyncio ruff"
+    echo "    openapi-spec-validator datamodel-code-generator"
     exit 2
   fi
 done

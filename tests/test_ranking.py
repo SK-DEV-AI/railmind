@@ -76,8 +76,34 @@ def test_tags_name_the_single_dimension_winners():
     assert "cheapest" in tags["cheap"]
     assert "fastest" in tags["quick"]
     assert "fewest_changes" in tags["cheap"]  # single-leg trips all tie on legs
-    # The cheap slow train is not dominated: nothing beats it on price.
-    assert "efficient" in tags["cheap"]
+    # Both are non-dominated, so "efficient" would be true of everything and is
+    # withheld. A tag that is always on says nothing.
+    assert "efficient" not in tags["cheap"]
+
+
+def test_efficient_appears_only_when_something_is_dominated():
+    winner = make_itinerary(service_id="winner", duration_h=8.0, price=inr(900))
+    loser = make_itinerary(service_id="loser", duration_h=12.0, price=inr(1800))
+
+    result = rank([winner, loser])
+    tags = {item.legs[0].service.service_id: set(item.tags) for item in result.itineraries}
+
+    assert "efficient" in tags["winner"]
+    assert "efficient" not in tags["loser"]
+
+
+def test_score_is_capped_by_the_evidence_behind_it():
+    """A fast train with no fare and no punctuality data cannot score 1.0."""
+    bare = make_itinerary(service_id="bare")
+    bare.legs[0].risk = None
+    bare.legs[0].availability = None
+    bare = bare.model_copy(update={"legs": bare.legs, "total_price": None}, deep=True)
+
+    result = rank([bare])
+
+    # Only duration and transfers were comparable, so most of the weight is
+    # unusable and the score says so.
+    assert result.itineraries[0].score < 0.5
 
 
 def test_dominated_option_is_off_the_pareto_front():

@@ -22,7 +22,15 @@ The five rules this module enforces:
    a real value, not a placeholder, and a client must render it as "no estimate".
 5. Tags mark the options that win on a single dimension, because "cheapest" and
    "fastest" are questions a user asks directly and a weighted score cannot
-   answer them.
+   answer them. A tag is only added when it discriminates: "efficient" on every
+   card means the comparison found nothing, and a tag that is always true is
+   noise dressed as information.
+
+The score is evidence-weighted, not just quality-weighted: the weighted mean of
+the dimensions we could compare is multiplied by the share of the total weight
+those dimensions carry. A card built on duration alone cannot score 1.0 however
+fast the train is, because we do not know its fare or its punctuality. That keeps
+`score` from saying "perfect" when it means "the least unknown".`
 
 Everything here is pure and synchronous: no clock, no I/O, no provider. That is
 what makes it testable without a network and cheap enough to run inside the
@@ -148,7 +156,14 @@ def rank(
                 totals[name] = value
                 weight_sum += weight
 
-        score = 0.0 if weight_sum == 0 else sum(totals[n] * chosen[n] for n in totals) / weight_sum
+        # Evidence-weighted: the mean over comparable dimensions, scaled by how
+        # much of the intended weight we were actually able to use.
+        coverage = 0.0 if not chosen else weight_sum / sum(chosen.values() or [1.0])
+        score = (
+            0.0
+            if weight_sum == 0
+            else sum(totals[n] * chosen[n] for n in totals) / weight_sum * coverage
+        )
         itinerary.score = round(score, 4)
         itinerary.score_breakdown = ScoreBreakdown(**breakdown)
         itinerary.risk_band = _band(itinerary)
@@ -325,8 +340,9 @@ def _tags(itinerary: Itinerary, candidates: list[Itinerary], front: set[int]) ->
         tags.append("most_reliable")
 
     # Identity, not equality: two identical trips are the same trip, and both
-    # belong on the front or neither does.
-    if id(itinerary) in front:
+    # belong on the front or neither does. The tag is withheld when the front is
+    # everything, because then it distinguishes nothing.
+    if id(itinerary) in front and len(front) < len(candidates):
         tags.append("efficient")
 
     return tags
