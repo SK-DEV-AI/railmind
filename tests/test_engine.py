@@ -7,6 +7,7 @@ point of the deadline.
 
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 
 import pytest
@@ -188,8 +189,9 @@ async def test_every_request_reaches_the_log_and_the_metrics_count_it(tmp_path):
     assert metrics.requests.total == 2
     assert metrics.stages.search.n == 2
     assert metrics.t90_ms is not None
-    # Not instrumented rather than zero: we never claim a perfect cache.
-    assert metrics.provider_calls is None
+    # Two sequential searches, two real provider calls, nothing coalesced.
+    assert metrics.provider_calls == 2
+    assert metrics.cache_hits == 0
 
 
 async def test_a_log_write_failure_is_reported_not_swallowed(tmp_path):
@@ -224,3 +226,57 @@ async def test_modes_override_keeps_the_query_immutable():
     # The intent is untouched, and the provider only ever saw rail.
     assert tuple(intent.modes) == (Mode.rail,)
     assert original.modes == (Mode.rail,)
+
+
+async def test_a_burst_of_identical_searches_costs_one_provider_call(tmp_path):
+    """The rush-hour case: fifty people, one route, one upstream request."""
+    calls = 0
+
+    class Counting(FakeProvider):
+        id = "counting_rail"
+
+        async def search(self, query):
+            nonlocal calls
+            calls += 1
+            await asyncio.sleep(0.01)
+            return list(self._itineraries)
+
+    log = RequestLog(tmp_path / "requests.jsonl")
+    engine = SearchEngine(make_registry(Counting(itineraries=[make_itinerary()])), log=log)
+
+    responses = await asyncio.gather(
+        *[engine.search(SearchRequest(intent=make_intent())) for _ in range(5)]
+    )
+
+    assert calls == 1
+    assert all(len(response.itineraries) == 1 for response in responses)
+    assert engine.flight.stats()["joiners"] == 4
+
+    metrics = log.metrics()
+    # Real numbers now: one call that cost quota, four that were saved.
+    assert metrics.provider_calls == 1
+    assert metrics.cache_hits == 4
+    assert metrics.cache_hit_rate is not None and metrics.cache_hit_rate > 0.7
+
+
+async def test_different_routes_are_not_coalesced(tmp_path):
+    calls: list[str] = []
+
+    class Recording(FakeProvider):
+        id = "recording_rail"
+
+        async def search(self, query):
+            calls.append(query.destination.code)
+            await asyncio.sleep(0.01)
+            return list(self._itineraries)
+
+    engine = SearchEngine(make_registry(Recording(itineraries=[make_itinerary()])))
+
+    await asyncio.gather(
+        engine.search(SearchRequest(intent=make_intent())),
+        engine.search(
+            SearchRequest(intent=make_intent(origin=make_stop("IN:MMCT", "Mumbai Central")))
+        ),
+    )
+
+    assert len(calls) == 2

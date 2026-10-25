@@ -39,6 +39,7 @@ from railmind.core.errors import InvalidQuery, ProviderError
 from railmind.core.types import Mode, Query
 from railmind.engine.metrics import RequestLog, RequestRecord
 from railmind.engine.ranking import rank
+from railmind.engine.singleflight import SingleFlight
 from railmind.guardrails.tatkal import check_tatkal
 from railmind.wire.models import (
     Cache,
@@ -59,6 +60,10 @@ class FanOut:
     failed: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
     timed_out: tuple[str, ...] = ()
+    #: Provider calls that actually ran. The number that costs quota.
+    upstream_calls: int = 0
+    #: Callers served by someone else's in-flight call. The number that was saved.
+    coalesced: int = 0
 
 
 class SearchEngine:
@@ -75,6 +80,7 @@ class SearchEngine:
         log: RequestLog | None = None,
         weights: Mapping[str, float] | None = None,
         clock: object = time.perf_counter,
+        flight: SingleFlight | None = None,
     ) -> None:
         """`registry` is a `ProviderRegistry`. Typed loosely to keep this module
         free of a concrete import cycle, and because the engine only asks it two
@@ -83,6 +89,9 @@ class SearchEngine:
         self.log = log
         self.weights = weights
         self.clock = clock
+        # Shared across requests on purpose: the whole point is that two users
+        # asking the same question at the same tick cost one provider call.
+        self.flight = flight or SingleFlight()
 
     # -- the one public entry point --
 
@@ -180,10 +189,26 @@ class SearchEngine:
         if not providers:
             return FanOut(notes=("no provider serves the requested mode",))
 
-        tasks: dict[asyncio.Task[list[Itinerary]], str] = {}
+        # Per-request attribution, not a diff of global counters: under a burst
+        # every request reads the same counters at nearly the same instant, and a
+        # global delta would be counted once per request and inflate the total.
+        # The factory only ever runs for the leader, so a flag set inside it is
+        # exact evidence that this request paid for the call.
+        tasks: dict[asyncio.Task[list[Itinerary]], tuple[str, dict[str, bool]]] = {}
         for provider in providers:
-            task = asyncio.create_task(_guard(provider, query), name=f"search:{provider.id}")
-            tasks[task] = provider.id
+            # The key is everything that changes the answer. Two users with the
+            # same route, date, class and quota asked the same question.
+            # `quota` may be a bare string, because the wire default is a string.
+            quota_key = getattr(query.quota, "value", query.quota)
+            key = (provider.id, *query.cache_key_parts, query.classes, quota_key)
+            ledger = {"led": False}
+
+            async def factory(candidate=provider, record=ledger):
+                record["led"] = True
+                return await _guard(candidate, query)
+
+            task = asyncio.create_task(self.flight.do(key, factory), name=f"search:{provider.id}")
+            tasks[task] = (provider.id, ledger)
 
         done, pending = await asyncio.wait(tasks, timeout=timeout_s)
         for task in pending:
@@ -195,8 +220,10 @@ class SearchEngine:
         failed: list[str] = []
         notes: list[str] = []
 
+        led = 0
         for task in done:
-            provider_id = tasks[task]
+            provider_id, ledger = tasks[task]
+            led += 1 if ledger["led"] else 0
             error = task.exception()
             if error is None:
                 collected.extend(task.result())
@@ -205,7 +232,7 @@ class SearchEngine:
             failed.append(provider_id)
             notes.append(_explain(provider_id, error))
 
-        timed_out = tuple(tasks[task] for task in pending)
+        timed_out = tuple(tasks[task][0] for task in pending)
         for provider_id in timed_out:
             failed.append(provider_id)
             notes.append(
@@ -219,6 +246,8 @@ class SearchEngine:
             failed=tuple(sorted(set(failed))),
             notes=tuple(notes),
             timed_out=timed_out,
+            upstream_calls=led,
+            coalesced=len(providers) - led,
         )
 
     # -- recording --
@@ -251,6 +280,10 @@ class SearchEngine:
             degraded=response.meta.degraded,
             providers_used=outcome.used,
             providers_failed=outcome.failed,
+            # Reported per request, so /metrics can show what the burst saved
+            # instead of claiming a perfect cache.
+            upstream_calls=outcome.upstream_calls,
+            cache_hits=outcome.coalesced,
         )
         try:
             self.log.append(record)
