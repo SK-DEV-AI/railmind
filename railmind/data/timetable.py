@@ -439,6 +439,26 @@ class TimetableRepo:
             )
         return options
 
+    def set_station_coords(self, code: str, lat: float, lon: float) -> None:
+        """Place a station on the map. Refuses nonsense and never erases good data.
+
+        The OSM step is optional and its output starts empty, so this is called with
+        real numbers only. An out-of-range value is refused rather than clamped:
+        clamping would put a station in the sea and look like a working map.
+        """
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+            raise ValueError(f"coordinates out of range for {code}: {lat}, {lon}")
+        self._conn.execute(
+            "UPDATE stations SET lat = ?, lon = ?, fetched_at = ? WHERE code = ?",
+            (
+                float(lat),
+                float(lon),
+                dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
+                code.upper(),
+            ),
+        )
+        self._conn.commit()
+
     def station(self, code: str) -> StationRow | None:
         row = self._conn.execute(
             "SELECT code, name, lat, lon FROM stations WHERE code = ?", (code.upper(),)
