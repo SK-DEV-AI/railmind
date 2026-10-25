@@ -76,3 +76,37 @@ do instead."
    build a fare calculator from published rules. Until then, no price on the card.
 2. **Scope.** Keep 5 real trains and go deep (engine, model, metrics, UI), or spend
    requests on breadth (more corridors) and stay shallow. Depth scores better.
+
+## 6. Update 2026-10-25: independent research, and where it disagrees with us
+
+A separate research pass enumerated every zero-budget route it could find. Two
+findings are worth keeping, and one of its claims is wrong and is recorded as
+wrong.
+
+**New leads, untested by us, for the human to try in this order:**
+
+| Route | Claim | Why it matters |
+|---|---|---|
+| IndianRailAPI free developer account, `indianrailapi.com/api-collection` | 100 hits per day, class-wise fare, GN-quota availability, PNR. Free account is deleted after 3 months. | 100 **per day** beats our 100 **per month**, and it claims both facts we are missing. Cheapest thing to test. |
+| Blaazetech Indian Railways on RapidAPI | 500,000 requests/month free, but returns **station codes and PNR only**, no fares and no availability. | Kills the "free fares via RapidAPI" hope, while confirming it is a good PNR source. |
+
+**A claim that contradicts our measurement, and loses:**
+
+The same research says RailRadar's free tier includes fare and a 14-day seat
+availability calendar. It does not. We measured this directly on 2026-10-24:
+`GET /v1/trains/{n}/seats` returns HTTP 403 with `PLAN_UPGRADE_REQUIRED` and the
+message "Live Seat Availability and PNR endpoints require an active Developer,
+Growth, or Scale subscription". A vendor documentation page that lists an
+endpoint does not mean the free plan serves it. Measurement beats documentation,
+and the capability flags in code stay as measured: `availability: false`.
+
+**Fare calculator: viable, with one honest limitation.** The rule set is public
+and citable (telescopic distance slabs with rebate percentages, minimum fares,
+per-class reservation and superfast charges, 5 percent GST on AC classes only,
+Tatkal ranges by class and distance, flexi-fare caps). The exact per-km coaching
+tariff table is not published as data, so a calculator built from public rules
+can be close but not exact. That is acceptable **only if the card says
+"estimated, confirm on IRCTC"** and never presents it as the fare. Sources worth
+citing in the report: SATHEE (IIT Kanpur) fare-calculation material, PIB PRID
+2208532 for the 26 Dec 2025 revision, and the coaching circulars on the zonal
+railway sites.
