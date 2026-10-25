@@ -468,7 +468,14 @@ class TimetableRepo:
             JOIN trains t ON t.number = a.train_number
             JOIN stations sa ON sa.code = a.station_code
             JOIN stations sb ON sb.code = b.station_code
+            -- You cannot board where a train terminates, and cannot alight where it
+            -- starts, so a segment needs a departure at the origin and an arrival at
+            -- the destination. Without this the query offered the reverse direction
+            -- of a train as if it were a real option, and one such row rejected the
+            -- whole corridor downstream.
             WHERE a.station_code = ? AND b.station_code = ?
+              AND a.departure IS NOT NULL AND a.departure <> ''
+              AND b.arrival IS NOT NULL AND b.arrival <> ''
             ORDER BY a.departure
         """
         rows = self._conn.execute(query, (origin_code.upper(), destination_code.upper())).fetchall()

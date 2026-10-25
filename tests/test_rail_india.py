@@ -382,3 +382,41 @@ def test_fixtures_are_real_vendor_responses():
 def test_modes_are_rail_only(provider):
     assert provider.modes == {Mode.rail}
     assert provider.regions == {"IN"}
+
+
+class TestSegmentUsability:
+    def test_a_train_that_terminates_here_cannot_be_boarded_here(self, repo):
+        """12951 runs MMCT -> NDLS, so NDLS is a terminus and not an origin."""
+        assert repo.trains_between("MMCT", "NDLS")
+        assert repo.trains_between("NDLS", "MMCT") == []
+
+    async def test_one_unusable_option_does_not_hide_the_corridor(self, provider, monkeypatch):
+        from railmind.data.timetable import TripOption
+
+        good = provider.repo.trains_between("CSMT", "PUNE")[0]
+        broken = TripOption(
+            train_number="99999",
+            train_name="GHOST EXP",
+            train_type="Express",
+            run_days="daily",
+            classes=(),
+            origin_code="CSMT",
+            origin_name="Mumbai CSMT",
+            origin_lat=18.94,
+            origin_lon=72.835,
+            departure="",
+            departure_day=1,
+            origin_distance_km=0.0,
+            destination_code="PUNE",
+            destination_name="Pune Jn",
+            destination_lat=18.52,
+            destination_lon=73.85,
+            arrival="10:00",
+            arrival_day=1,
+            destination_distance_km=190.7,
+        )
+        monkeypatch.setattr(provider.repo, "trains_between", lambda a, b: [broken, good])
+
+        itineraries = await provider.search(make_query())
+
+        assert [item.legs[0].service.service_id for item in itineraries] == [good.train_number]

@@ -161,7 +161,21 @@ class RailIndiaProvider(BaseProvider):
                 await self._vendor_between(origin_code, destination_code)
             )
 
-        return self._order_by_departure([self._to_itinerary(option, query) for option in options])
+        itineraries: list[Itinerary] = []
+        unusable = 0
+        for option in options:
+            try:
+                itineraries.append(self._to_itinerary(option, query))
+            except InvalidQuery:
+                # One malformed schedule in a corridor must not hide the other
+                # trains on it. Counted, and reported only if nothing survives.
+                unusable += 1
+        if not itineraries and unusable:
+            raise InvalidQuery(
+                f"none of the {unusable} trains between {origin_code} and "
+                f"{destination_code} has usable departure and arrival times"
+            )
+        return self._order_by_departure(itineraries)
 
     async def _vendor_between(self, origin_code: str, destination_code: str) -> list[dict]:
         key = CacheKey(
