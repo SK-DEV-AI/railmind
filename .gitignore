@@ -29,6 +29,7 @@ data/*.onnx
 
 # local state (per-machine, not source)
 data/railradar-usage.json
+data/requests.jsonl
 
 # gate logs
 /tmp/railmind-gen.log
