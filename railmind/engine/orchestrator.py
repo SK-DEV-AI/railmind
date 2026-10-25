@@ -41,6 +41,7 @@ from railmind.engine.metrics import RequestLog, RequestRecord
 from railmind.engine.ranking import rank
 from railmind.engine.singleflight import SingleFlight
 from railmind.guardrails.tatkal import check_tatkal
+from railmind.providers.accounting import meter
 from railmind.wire.models import (
     Cache,
     Itinerary,
@@ -115,7 +116,12 @@ class SearchEngine:
 
         deadline_s = min(request.deadline_ms or 1800, 8000) / 1000.0
         remaining = max(0.05, deadline_s - (intent_done - started))
-        outcome = await self._fan_out(query, remaining)
+        # The meter counts outbound vendor calls for THIS request. A search answered
+        # from the local timetable reports zero, which is the true and useful number
+        # on a 100-request monthly budget.
+        with meter() as counter:
+            outcome = await self._fan_out(query, remaining)
+        outcome = replace(outcome, upstream_calls=counter["calls"])
         search_done = self.clock()
 
         ranked = rank(outcome.itineraries, weights=self.weights)
@@ -246,6 +252,8 @@ class SearchEngine:
             failed=tuple(sorted(set(failed))),
             notes=tuple(notes),
             timed_out=timed_out,
+            # Placeholder: the caller replaces this with the meter's count, which is
+            # the only honest measure of what left the machine.
             upstream_calls=led,
             coalesced=len(providers) - led,
         )

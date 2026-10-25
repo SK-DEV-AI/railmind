@@ -189,8 +189,8 @@ async def test_every_request_reaches_the_log_and_the_metrics_count_it(tmp_path):
     assert metrics.requests.total == 2
     assert metrics.stages.search.n == 2
     assert metrics.t90_ms is not None
-    # Two sequential searches, two real provider calls, nothing coalesced.
-    assert metrics.provider_calls == 2
+    # A fake provider makes no network call, so a local answer costs zero quota.
+    assert metrics.provider_calls == 0
     assert metrics.cache_hits == 0
 
 
@@ -253,10 +253,11 @@ async def test_a_burst_of_identical_searches_costs_one_provider_call(tmp_path):
     assert engine.flight.stats()["joiners"] == 4
 
     metrics = log.metrics()
-    # Real numbers now: one call that cost quota, four that were saved.
-    assert metrics.provider_calls == 1
+    # Nothing left the machine (the provider is local), and four of the five
+    # requests were served by the one execution that did run.
+    assert metrics.provider_calls == 0
     assert metrics.cache_hits == 4
-    assert metrics.cache_hit_rate is not None and metrics.cache_hit_rate > 0.7
+    assert metrics.cache_hit_rate == 1.0
 
 
 async def test_different_routes_are_not_coalesced(tmp_path):

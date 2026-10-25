@@ -173,6 +173,10 @@ class RequestLog:
             record.upstream_calls for record in records if record.upstream_calls is not None
         ]
         reported_hits = [record.cache_hits for record in records if record.cache_hits is not None]
+        # Two different savings, kept apart on purpose. `provider_calls` is outbound
+        # network traffic, the number that spends quota; a search answered from the
+        # local timetable contributes zero to it. `cache_hits` is executions served
+        # by an in-flight sibling request, i.e. work that was coalesced away.
         upstream = sum(reported_calls) if reported_calls else None
         cache_hits = sum(reported_hits) if reported_hits else None
         lookups = (upstream or 0) + (cache_hits or 0)

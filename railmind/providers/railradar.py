@@ -33,6 +33,7 @@ from railmind.core.errors import (
     UpstreamDown,
 )
 from railmind.providers import _http
+from railmind.providers.accounting import count_upstream
 from railmind.providers.quota import QuotaLedger
 
 HOST = "api.railradar.in"
@@ -116,6 +117,9 @@ class RailRadarClient:
             self.ledger.ensure_allowed()
 
         headers = {"Authorization": f"Bearer {self.api_key}"}
+        # Every outbound vendor call passes here, which is why the meter is applied
+        # at this line and not in each endpoint method: one place cannot be forgotten.
+        count_upstream()
         try:
             response = await self.transport(
                 HOST, path, params=params, headers=headers, deadline_s=self.timeout
