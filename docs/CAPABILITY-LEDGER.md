@@ -110,3 +110,21 @@ can be close but not exact. That is acceptable **only if the card says
 citing in the report: SATHEE (IIT Kanpur) fare-calculation material, PIB PRID
 2208532 for the 26 Dec 2025 revision, and the coaching circulars on the zonal
 railway sites.
+
+## 7. Punctuality: moved from "cannot" to "measured" on 2026-10-25
+
+The earlier version of this file said delay prediction was unbuilt. It is now
+built, from real data, and the method and limits are in `docs/DELAY-MODEL.md`.
+
+| | |
+|---|---|
+| Source | RSTGCN, 1,282,325 per-stop delay observations, September 2024, 3,892 trains |
+| Coverage of our trains | all 5 |
+| Model | logistic regression, 8 features, trained in 3.5 s |
+| Validation | ROC-AUC **0.7778**, Brier 0.1242, date split (1-21 vs 22-30 Sept) |
+| Serving cost | standard library only, microseconds, no ML dependency in the server |
+| Honest limits | one month of data, so no seasonality; no weather, congestion or rake status; a train absent from the data gets **no prediction**, not a neutral one |
+
+What this buys: the recommendation now responds to reliability. On the demo
+corridor 22105 leads 12127 because it is meaningfully less likely to be late,
+which is a fact from data rather than a preference in the weights.
