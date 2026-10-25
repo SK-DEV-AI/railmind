@@ -20,6 +20,11 @@ Two deliberate omissions, both legal rather than technical:
 Routing note: FastAPI's automatic 422 body does not match this contract's
 `Problem` shape, so validation errors are translated. A client that parses one
 error must be able to parse them all.
+
+Every route sets `response_model_exclude_none=True`. The contract's first stated
+convention is "absent, not null": a field is omitted when its value is unknown, and
+a client must treat missing as unknown rather than as zero. FastAPI's default is the
+opposite, and a conformance test against openapi.yaml is what caught it.
 """
 
 from __future__ import annotations
@@ -33,6 +38,7 @@ from fastapi import FastAPI
 from fastapi import Query as QueryParam
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from railmind.core.errors import InvalidQuery, NotFound, PolicyRefused, ProviderError
 from railmind.core.ids import parse_leg_id
@@ -75,6 +81,13 @@ ITINERARY_TTL_S = 600.0
 #: Bound on the in-process store, so a long-running demo cannot grow memory
 #: without limit. Old entries are dropped oldest-first.
 ITINERARY_CAPACITY = 500
+
+
+class ProvidersResponse(BaseModel):
+    """`GET /providers` envelope. Declared here, not in the generated models file,
+    because anything in `wire/models.py` is overwritten on every regeneration."""
+
+    providers: list[ProviderInfo]
 
 
 class ItineraryStore:
@@ -161,7 +174,7 @@ def create_app(
     async def _provider_error(_request, exc: ProviderError) -> JSONResponse:
         problem = exc.to_problem()
         return JSONResponse(
-            problem.model_dump(mode="json"),
+            problem.model_dump(mode="json", exclude_none=True),
             status_code=exc.http_status,
             media_type="application/problem+json",
         )
@@ -177,14 +190,14 @@ def create_app(
             retryable=False,
         )
         return JSONResponse(
-            problem.model_dump(mode="json"),
+            problem.model_dump(mode="json", exclude_none=True),
             status_code=400,
             media_type="application/problem+json",
         )
 
     # -- ops -------------------------------------------------------------------
 
-    @app.get("/health", response_model=Health)
+    @app.get("/health", response_model=Health, response_model_exclude_none=True)
     async def health() -> Health:
         repo = timetable or _repo()
         checks = [
@@ -206,19 +219,22 @@ def create_app(
             dependencies=checks,
         )
 
-    @app.get("/metrics", response_model=Metrics)
+    @app.get("/metrics", response_model=Metrics, response_model_exclude_none=True)
     async def metrics(
         window_seconds: int = QueryParam(3600, ge=60, le=604800),
     ) -> Metrics:
         return request_log.metrics(window_seconds=window_seconds)
 
-    @app.get("/providers", response_model=list[ProviderInfo])
-    async def providers() -> list[ProviderInfo]:
-        return registry.info()
+    @app.get("/providers", response_model=ProvidersResponse, response_model_exclude_none=True)
+    async def providers() -> ProvidersResponse:
+        # Wrapped, because that is what the contract says: an object with a
+        # `providers` key. It returned a bare array until the conformance test
+        # compared the response with openapi.yaml and disagreed.
+        return ProvidersResponse(providers=registry.info())
 
     # -- intent ----------------------------------------------------------------
 
-    @app.post("/intent", response_model=IntentResponse)
+    @app.post("/intent", response_model=IntentResponse, response_model_exclude_none=True)
     async def intent(request: IntentRequest) -> IntentResponse:
         """One sentence in, a structured intent out, with the gaps named.
 
@@ -243,19 +259,21 @@ def create_app(
 
     # -- the hot path ----------------------------------------------------------
 
-    @app.post("/search", response_model=SearchResponse)
+    @app.post("/search", response_model=SearchResponse, response_model_exclude_none=True)
     async def search(request: SearchRequest) -> SearchResponse:
         response = await search_engine.search(request)
         store.put(response.itineraries, intent=request.intent)
         return response
 
-    @app.get("/itinerary/{itinerary_id}", response_model=Itinerary)
+    @app.get(
+        "/itinerary/{itinerary_id}", response_model=Itinerary, response_model_exclude_none=True
+    )
     async def get_itinerary(itinerary_id: str) -> Itinerary:
         return store.get(itinerary_id)
 
     # -- human-in-the-loop and live -------------------------------------------
 
-    @app.post("/handoff", response_model=WireHandoff)
+    @app.post("/handoff", response_model=WireHandoff, response_model_exclude_none=True)
     async def handoff(request: HandoffRequest) -> WireHandoff:
         itinerary, intent = store.context(request.itinerary_id)
         provider = _provider_for(registry, itinerary, request.provider_preference)
@@ -272,7 +290,7 @@ def create_app(
             handoff.warnings = list(dict.fromkeys([*(handoff.warnings or []), *verdict.warnings]))
         return handoff
 
-    @app.get("/live/{leg_id}", response_model=LiveStatus)
+    @app.get("/live/{leg_id}", response_model=LiveStatus, response_model_exclude_none=True)
     async def live(leg_id: str) -> LiveStatus:
         parsed = parse_leg_id(leg_id)
         provider = registry.get(parsed.provider_id)

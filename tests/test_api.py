@@ -89,7 +89,7 @@ def test_providers_lists_capabilities_as_data(client):
     response = client.get("/providers")
 
     assert response.status_code == 200
-    [provider] = response.json()
+    [provider] = response.json()["providers"]
     assert provider["provider_id"] == "fake_rail"
     assert provider["capabilities"]["search"] is True
     assert provider["modes"] == ["rail"]
@@ -267,7 +267,8 @@ def test_intent_reads_a_sentence_and_names_what_it_could_not_read(client):
 def test_intent_returns_a_question_instead_of_guessing_the_date(client):
     body = client.post("/intent", json={"text": "mumbai to pune"}).json()
 
-    assert body["intent"]["depart_window"] is None
+    # Absent, not null: the contract's first convention, and now enforced by test.
+    assert "depart_window" not in body["intent"]
     assert body["intent"]["ambiguities"][0]["field"] == "depart_window"
 
 
