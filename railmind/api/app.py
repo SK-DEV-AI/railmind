@@ -39,14 +39,18 @@ from railmind.core.provider import TransportProvider
 from railmind.data.timetable import TimetableRepo
 from railmind.engine.metrics import RequestLog
 from railmind.engine.orchestrator import SearchEngine
+from railmind.intent.parser import parse as parse_intent
 from railmind.providers.registry import ProviderRegistry
 from railmind.wire.models import (
     Code,
     Dependency,
     HandoffRequest,
     Health,
+    IntentRequest,
+    IntentResponse,
     Itinerary,
     LiveStatus,
+    Meta,
     Metrics,
     Problem,
     ProviderInfo,
@@ -181,6 +185,31 @@ def create_app(
     @app.get("/providers", response_model=list[ProviderInfo])
     async def providers() -> list[ProviderInfo]:
         return registry.info()
+
+    # -- intent ----------------------------------------------------------------
+
+    @app.post("/intent", response_model=IntentResponse)
+    async def intent(request: IntentRequest) -> IntentResponse:
+        """One sentence in, a structured intent out, with the gaps named.
+
+        Rules only, for now and by design: this is the request that has a human
+        waiting, and `parsed_by` on the result says `rules` so nobody believes a
+        model read it. `use_llm` is accepted and ignored until there is a model
+        wired, rather than being silently pretended.
+        """
+        started = time.perf_counter()
+        parsed = parse_intent(
+            request.text,
+            repo=timetable or _repo(),
+            now=request.now,
+            passengers=request.passengers,
+            locale=request.locale or "en-IN",
+        )
+        elapsed = (time.perf_counter() - started) * 1000
+        return IntentResponse(
+            intent=parsed.intent,
+            meta=Meta(elapsed_ms=round(elapsed, 1), parser="rules", cached=False),
+        )
 
     # -- the hot path ----------------------------------------------------------
 

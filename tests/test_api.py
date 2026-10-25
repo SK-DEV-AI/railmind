@@ -7,12 +7,14 @@ test needs a network, a key, or a running server.
 from __future__ import annotations
 
 import datetime as dt
+import pathlib
 
 import pytest
 from fastapi.testclient import TestClient
 
 from railmind.api.app import ItineraryStore, create_app
 from railmind.core.errors import NotFound, NotSupported
+from railmind.data.timetable import TimetableRepo, seed_from_fixtures
 from railmind.engine.metrics import RequestLog
 from railmind.engine.orchestrator import SearchEngine
 from railmind.providers.fake import FakeProvider, make_itinerary, make_stop
@@ -25,6 +27,7 @@ from railmind.wire.models import (
     TimeWindow,
 )
 
+FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures" / "railradar"
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30), "IST")
 SERVICE_DATE = dt.date(2026, 10, 25)
 
@@ -47,11 +50,24 @@ def make_intent() -> BookingIntent:
 
 
 @pytest.fixture
-def client(tmp_path):
+def timetable(tmp_path):
+    database = TimetableRepo(tmp_path / "timetable.db")
+    seed_from_fixtures(database, FIXTURES)
+    yield database
+    database.close()
+
+
+@pytest.fixture
+def client(tmp_path, timetable):
     registry = ProviderRegistry()
     registry.register(FakeProvider(itineraries=[make_itinerary()]))
     log = RequestLog(tmp_path / "requests.jsonl")
-    app = create_app(registry=registry, engine=SearchEngine(registry, log=log), log=log)
+    app = create_app(
+        registry=registry,
+        engine=SearchEngine(registry, log=log),
+        log=log,
+        timetable=timetable,
+    )
     return TestClient(app)
 
 
@@ -227,3 +243,39 @@ def test_a_raising_handoff_verb_becomes_its_own_problem_document():
     problem = response.json()
     assert problem["code"] == "not_supported"
     assert "tatkal opening day" in problem["detail"]
+
+
+def test_intent_reads_a_sentence_and_names_what_it_could_not_read(client):
+    response = client.post(
+        "/intent",
+        json={"text": "book me mumbai to pune tomorrow 3ac under 2000", "use_llm": False},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    intent = body["intent"]
+    assert intent["origin"]["code"] == "CSMT"
+    assert intent["destination"]["code"] == "PUNE"
+    assert intent["class_preferences"] == ["3A"]
+    assert intent["parsed_by"] == "rules"
+    assert body["meta"]["parser"] == "rules"
+    assert body["meta"]["elapsed_ms"] is not None
+
+
+def test_intent_returns_a_question_instead_of_guessing_the_date(client):
+    body = client.post("/intent", json={"text": "mumbai to pune"}).json()
+
+    assert body["intent"]["depart_window"] is None
+    assert body["intent"]["ambiguities"][0]["field"] == "depart_window"
+
+
+def test_intent_then_search_works_with_no_hand_built_json(client):
+    """The point of /intent: one sentence reaches ranked cards."""
+    intent = client.post("/intent", json={"text": "mumbai to pune tomorrow morning"}).json()[
+        "intent"
+    ]
+
+    response = client.post("/search", json={"intent": intent})
+
+    assert response.status_code == 200
+    assert response.json()["itineraries"]

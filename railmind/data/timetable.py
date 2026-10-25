@@ -112,7 +112,13 @@ class TimetableRepo:
     def __init__(self, path: str | Path = DEFAULT_DB) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self.path)
+        # `check_same_thread=False` because the ASGI server may call this from a
+        # different thread than the one that opened it: FastAPI runs async
+        # handlers on the event loop and the test client runs them in its own
+        # thread. This build's sqlite3 is compiled threadsafe (serialized), so it
+        # applies its own mutex; the only writer is `scripts/seed_timetable.py`,
+        # which finishes before the server starts.
+        self._conn = sqlite3.connect(self.path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA)
         self._conn.commit()
@@ -274,6 +280,31 @@ class TimetableRepo:
             (needle, needle, text.strip().upper(), limit),
         ).fetchall()
         return [StationRow(r["code"], r["name"], r["lat"], r["lon"]) for r in rows]
+
+    def served_codes(self) -> set[str]:
+        """Stations at least one seeded train stops at.
+
+        The vendor's station directory is not a list of bookable stations: it also
+        contains loco sheds, military sidings and parcel offices. This set is the
+        honest answer to "can a train actually take me there in what we hold", and
+        the intent parser uses it to prefer a real terminus when a user types a
+        city that has eight of them.
+        """
+        rows = self._conn.execute("SELECT DISTINCT station_code FROM stops").fetchall()
+        return {str(row["station_code"]).upper() for row in rows}
+
+    def station_traffic(self) -> dict[str, int]:
+        """How many seeded stop records a station appears in.
+
+        A crude but real popularity signal: the station our trains use most is
+        the one a traveller is most likely to mean when they type a city name.
+        Crude is fine here, because the alternative is guessing a terminus from a
+        hard-coded list, which would be wrong the moment the data changes.
+        """
+        rows = self._conn.execute(
+            "SELECT station_code, COUNT(*) AS n FROM stops GROUP BY station_code"
+        ).fetchall()
+        return {str(row["station_code"]).upper(): int(row["n"]) for row in rows}
 
     def counts(self) -> dict[str, int]:
         one = self._conn.execute("SELECT COUNT(*) AS n FROM trains").fetchone()["n"]
