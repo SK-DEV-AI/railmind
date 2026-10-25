@@ -243,3 +243,52 @@ def test_the_pairs_with_the_most_service_win(repo):
     # MMCT comes first in the candidate list and has no trains to Pune; CSMT has
     # three in the fixture, so connectivity outranks candidate order.
     assert picked[0].code == "CSMT"
+
+
+def test_a_city_with_no_station_of_that_name_still_resolves(repo):
+    """ "kolkata" appears in no station name; the alias layer knows where it means."""
+    parsed = ask("delhi to kolkata tomorrow", repo)
+
+    assert parsed.intent.destination is not None
+    assert parsed.intent.destination.code in {"HWH", "SDAH", "KOAA"}
+    assert parsed.ambiguities == ()
+
+
+def test_an_exonym_resolves_to_the_modern_station(repo):
+    assert ask("mumbai to bangalore tomorrow", repo).intent.destination.code in {
+        "SBC",
+        "BNC",
+        "SMVB",
+    }
+    assert ask("pune to bombay tomorrow", repo).intent.destination.code in {
+        "CSMT",
+        "MMCT",
+        "LTT",
+    }
+
+
+def test_an_alias_never_overrides_a_real_station_name(repo):
+    """The table is operator data; the alias file is human knowledge. Data wins."""
+    parsed = ask("mumbai to pune tomorrow", repo)
+
+    assert parsed.intent.destination.code == "PUNE"
+
+
+def test_every_alias_target_exists_in_the_database(repo):
+    """A typo in the alias file must fail the build, not silently resolve nothing."""
+    from railmind.intent.aliases import CITY_ALIASES
+
+    missing = [
+        f"{city}->{code}"
+        for city, codes in CITY_ALIASES.items()
+        for code in codes
+        if repo.station(code) is None
+    ]
+    assert missing == []
+
+
+def test_an_unknown_city_still_becomes_a_question(repo):
+    parsed = ask("mumbai to atlantis tomorrow", repo)
+
+    assert parsed.intent.destination is None
+    assert [item.field for item in parsed.ambiguities] == ["destination"]

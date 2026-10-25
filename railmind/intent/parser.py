@@ -412,6 +412,12 @@ def _resolve(
         rows = _candidates(attempt, repo)
         if not rows:
             continue
+        # An alias never replaces a real station, it joins the candidates. "Bombay"
+        # matches a fringe halt called "Bombay Grnt Road" in the table, and the
+        # stations people mean are busier, so traffic decides rather than a
+        # hand-written priority. When the table has nothing (Kolkata), the alias is
+        # the only source and becomes the answer.
+        rows = _with_alias_candidates(rows, attempt, repo)
         ordered = sorted(rows, key=lambda row: _station_rank(row, attempt, traffic))
         best = ordered[0]
         rivals = [
@@ -433,10 +439,31 @@ def _resolve(
             options=options,
         )
 
+    # Nothing in the station table matched at all. People say "Kolkata"; the table
+    # says "Howrah Jn" and "Sealdah" and holds no station with the word Kolkata in
+    # it. This is the one case where the alias file is the only source.
+    aliased = _with_alias_candidates([], " ".join(words), repo)
+    if aliased:
+        return aliased, None
+
     return [], Ambiguity(
         field=field_name,
         question=f"I could not find a station called {phrase.strip()!r}. Which one did you mean?",
     )
+
+
+def _with_alias_candidates(
+    rows: list[StationRow], phrase: str, repo: TimetableRepo
+) -> list[StationRow]:
+    """Union the table's matches with any alias candidates for the same phrase."""
+    from railmind.intent.aliases import candidates as alias_candidates
+
+    codes = alias_candidates(phrase)
+    if not codes:
+        return rows
+    seen = {row.code for row in rows}
+    extra = [row for code in codes if code not in seen and (row := repo.station(code)) is not None]
+    return [*rows, *extra]
 
 
 def _attempts(words: list[str]) -> list[str]:
