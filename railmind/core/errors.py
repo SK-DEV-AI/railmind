@@ -86,6 +86,18 @@ class NotSupported(ProviderError):
     title = "Not supported by this provider"
 
 
+class PolicyRefused(NotSupported):
+    """The provider could do it, but a published booking rule forbids it now.
+
+    Same wire code and status as `NotSupported` (the contract's error set is
+    closed, and 422 is where it documents policy refusals such as Tatkal on
+    opening day), but a different title, because "this provider cannot" and "the
+    rules do not allow this today" are different sentences to a user.
+    """
+
+    title = "Refused by a booking rule"
+
+
 class RateLimited(ProviderError):
     """Upstream is throttling us. Back off; do not retry immediately."""
 

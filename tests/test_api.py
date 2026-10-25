@@ -279,3 +279,42 @@ def test_intent_then_search_works_with_no_hand_built_json(client):
 
     assert response.status_code == 200
     assert response.json()["itineraries"]
+
+
+def _tatkal_intent(days_ahead: int) -> dict:
+    """An intent whose journey is in the future, so Tatkal cannot be open yet."""
+    start = (dt.datetime.now(IST) + dt.timedelta(days=days_ahead)).replace(
+        hour=8, minute=0, second=0, microsecond=0
+    )
+    intent = make_intent().model_dump(mode="json")
+    intent["quota"] = "tatkal"
+    intent["class_preferences"] = ["3A"]
+    intent["depart_window"] = {
+        "start": start.isoformat(),
+        "end": (start + dt.timedelta(hours=6)).isoformat(),
+    }
+    return intent
+
+
+def test_tatkal_that_has_not_opened_is_said_plainly_and_tagged(client):
+    body = client.post("/search", json={"intent": _tatkal_intent(days_ahead=3)}).json()
+
+    assert any("Tatkal" in note for note in body["meta"]["notes"])
+    assert "not_bookable_yet" in body["itineraries"][0]["tags"]
+    assert any("Tatkal" in warning for warning in body["itineraries"][0]["warnings"])
+
+
+def test_handoff_refuses_a_tatkal_party_over_the_four_passenger_cap(client):
+    body = client.post("/search", json={"intent": _tatkal_intent(days_ahead=1)}).json()
+    itinerary_id = body["itineraries"][0]["itinerary_id"]
+    passengers = [{"name": f"Passenger {index}", "age": 30} for index in range(5)]
+
+    response = client.post(
+        "/handoff", json={"itinerary_id": itinerary_id, "passengers": passengers}
+    )
+
+    assert response.status_code == 422
+    problem = response.json()
+    assert problem["code"] == "not_supported"
+    assert problem["title"] == "Refused by a booking rule"
+    assert "4 passengers" in problem["detail"]

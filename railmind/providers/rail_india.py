@@ -454,8 +454,12 @@ class RailIndiaProvider(BaseProvider):
             ),
             HandoffStep(
                 order=4,
-                title="Answer the Aadhaar OTP on your phone",
-                detail="Tatkal bookings need an Aadhaar-authenticated account.",
+                title="Answer the Aadhaar OTP if this train asks for one",
+                detail=(
+                    "Not every train: as of December 2025, IRCTC requires Aadhaar-verified "
+                    "booking on 322 trains online. If this one does, the site prompts you "
+                    "and the OTP goes to your phone. We never see it."
+                ),
                 requires="aadhaar",
                 est_seconds=25,
             ),

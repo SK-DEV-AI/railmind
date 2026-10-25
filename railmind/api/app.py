@@ -24,6 +24,7 @@ error must be able to parse them all.
 
 from __future__ import annotations
 
+import datetime as dt
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -33,15 +34,17 @@ from fastapi import Query as QueryParam
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from railmind.core.errors import InvalidQuery, NotFound, ProviderError
+from railmind.core.errors import InvalidQuery, NotFound, PolicyRefused, ProviderError
 from railmind.core.ids import parse_leg_id
 from railmind.core.provider import TransportProvider
 from railmind.data.timetable import TimetableRepo
 from railmind.engine.metrics import RequestLog
 from railmind.engine.orchestrator import SearchEngine
+from railmind.guardrails.tatkal import check_tatkal
 from railmind.intent.parser import parse as parse_intent
 from railmind.providers.registry import ProviderRegistry
 from railmind.wire.models import (
+    BookingIntent,
     Code,
     Dependency,
     HandoffRequest,
@@ -85,17 +88,32 @@ class ItineraryStore:
     def __init__(self, *, ttl_s: float = ITINERARY_TTL_S, capacity: int = ITINERARY_CAPACITY):
         self.ttl_s = ttl_s
         self.capacity = capacity
-        self._items: dict[str, tuple[Itinerary, float]] = {}
+        # The intent is kept beside the itinerary because it holds the quota and
+        # the party size, which the handoff guardrail needs and the itinerary
+        # itself does not carry. Storing it is cheaper than changing the contract.
+        self._items: dict[str, tuple[Itinerary, float, BookingIntent | None]] = {}
 
-    def put(self, itineraries: list[Itinerary], *, now: float | None = None) -> None:
+    def put(
+        self,
+        itineraries: list[Itinerary],
+        *,
+        intent: BookingIntent | None = None,
+        now: float | None = None,
+    ) -> None:
         stamp = time.monotonic() if now is None else now
         for itinerary in itineraries:
-            self._items[itinerary.itinerary_id] = (itinerary, stamp + self.ttl_s)
+            self._items[itinerary.itinerary_id] = (itinerary, stamp + self.ttl_s, intent)
         while len(self._items) > self.capacity:
             oldest = min(self._items, key=lambda key: self._items[key][1])
             del self._items[oldest]
 
     def get(self, itinerary_id: str, *, now: float | None = None) -> Itinerary:
+        return self.context(itinerary_id, now=now)[0]
+
+    def context(
+        self, itinerary_id: str, *, now: float | None = None
+    ) -> tuple[Itinerary, BookingIntent | None]:
+        """The itinerary and the intent that produced it, or a 404 that says why."""
         stamp = time.monotonic() if now is None else now
         entry = self._items.get(itinerary_id)
         if entry is None or entry[1] < stamp:
@@ -103,7 +121,7 @@ class ItineraryStore:
                 f"no itinerary {itinerary_id!r} in this store; it may have expired",
                 provider_id=None,
             )
-        return entry[0]
+        return entry[0], entry[2]
 
     def recent(self) -> Iterator[Itinerary]:
         """Every live entry. Public because two helpers below need it and
@@ -216,7 +234,7 @@ def create_app(
     @app.post("/search", response_model=SearchResponse)
     async def search(request: SearchRequest) -> SearchResponse:
         response = await search_engine.search(request)
-        store.put(response.itineraries)
+        store.put(response.itineraries, intent=request.intent)
         return response
 
     @app.get("/itinerary/{itinerary_id}", response_model=Itinerary)
@@ -227,9 +245,20 @@ def create_app(
 
     @app.post("/handoff", response_model=WireHandoff)
     async def handoff(request: HandoffRequest) -> WireHandoff:
-        itinerary = store.get(request.itinerary_id)
+        itinerary, intent = store.context(request.itinerary_id)
         provider = _provider_for(registry, itinerary, request.provider_preference)
-        return await provider.handoff(itinerary, request.passengers or [])
+
+        # A handoff for a journey that cannot legally be booked right now is not a
+        # courtesy, it is a wrong instruction: it sends someone to a page where the
+        # quota does not exist yet. Refused as policy, with the reason in words.
+        verdict = _quota_verdict(intent, itinerary, request)
+        if verdict.refused:
+            raise PolicyRefused(" ".join(verdict.reasons), provider_id=provider.id)
+
+        handoff = await provider.handoff(itinerary, request.passengers or [])
+        if verdict.warnings:
+            handoff.warnings = list(dict.fromkeys([*(handoff.warnings or []), *verdict.warnings]))
+        return handoff
 
     @app.get("/live/{leg_id}", response_model=LiveStatus)
     async def live(leg_id: str) -> LiveStatus:
@@ -273,6 +302,27 @@ def _probe(name: str, check) -> Dependency:
         name=name,
         state=State1.ok,
         latency_ms=round((time.perf_counter() - start) * 1000, 3),
+    )
+
+
+def _quota_verdict(
+    intent: BookingIntent | None,
+    itinerary: Itinerary,
+    request: HandoffRequest,
+):
+    """Guardrail check for this handoff, using the intent that produced the trip.
+
+    With no stored intent there is nothing to check against, so general-quota rules
+    apply and the party size comes from the request. That is the honest fallback:
+    an unknown quota is not an excuse to assume Tatkal is open.
+    """
+    passengers = request.passengers or (intent.passengers if intent is not None else None) or []
+    return check_tatkal(
+        quota=(intent.quota if intent is not None and intent.quota else "general"),
+        service_date=itinerary.legs[0].service_date,
+        now=dt.datetime.now(dt.UTC),
+        passenger_count=len(passengers),
+        class_codes=tuple(intent.class_preferences or ()) if intent is not None else (),
     )
 
 

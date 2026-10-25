@@ -39,6 +39,7 @@ from railmind.core.errors import InvalidQuery, ProviderError
 from railmind.core.types import Mode, Query
 from railmind.engine.metrics import RequestLog, RequestRecord
 from railmind.engine.ranking import rank
+from railmind.guardrails.tatkal import check_tatkal
 from railmind.wire.models import (
     Cache,
     Itinerary,
@@ -114,6 +115,27 @@ class SearchEngine:
 
         notes = list(outcome.notes)
         notes.extend(ranked.notes)
+
+        # Quota rules are evaluated once per request, not once per card: they are
+        # properties of the journey, and a card that disagreed with its neighbour
+        # about whether Tatkal is open would be worse than no warning at all.
+        verdict = check_tatkal(
+            quota=query.quota,
+            service_date=query.service_date,
+            now=wall,
+            passenger_count=len(query.passengers),
+            class_codes=query.classes,
+        )
+        if verdict.refused:
+            notes.extend(verdict.reasons)
+        for itinerary in chosen:
+            # A refusal has to travel with the card, not only with the response:
+            # a card can be screenshotted, cached, or read on its own, and "why
+            # you cannot act on this" must survive that trip.
+            extra = (*verdict.warnings, *verdict.reasons)
+            itinerary.warnings = _dedupe([*(itinerary.warnings or []), *extra])
+            if verdict.refused:
+                itinerary.tags = _dedupe([*(itinerary.tags or []), "not_bookable_yet"])
         degraded = _is_degraded(chosen, outcome)
         if degraded and not notes:
             notes.append("some inputs were missing or partial; see each card's warnings")
@@ -236,6 +258,17 @@ class SearchEngine:
             notes = list(response.meta.notes or [])
             notes.append(f"request log write failed: {exc}")
             response.meta.notes = notes
+
+
+def _dedupe(values: Sequence[str]) -> list[str]:
+    seen: set[str] = set()
+    kept: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        kept.append(value)
+    return kept
 
 
 def _cache_state(itineraries: Sequence[Itinerary]) -> Cache:
