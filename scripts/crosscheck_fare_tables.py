@@ -41,7 +41,7 @@ from pathlib import Path
 PAISE_PER_KM = {
     "2S": 2,
     "SL": 2,
-    "1S": 2,
+    "FC": 2,
     "CC": 2,
     "3E": 2,
     "3A": 2,

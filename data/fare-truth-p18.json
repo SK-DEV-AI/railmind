@@ -1,0 +1,24 @@
+{
+ "section": "rajdhani",
+ "classes": ["3A", "2A_peak", "2A_lean", "1A_peak", "1A_lean"],
+ "page": 18,
+ "read_by": "hand, from the rendered page image, at full size",
+ "note": "The first fifteen rows of the Rajdhani basic fare table, CC 24 of 2025. Read off the printed page, not off any program's output.",
+ "rows": [
+  {"start": 1, "end": 300, "3A": 522, "2A_peak": 730, "2A_lean": 707, "1A_peak": 1227, "1A_lean": 1157},
+  {"start": 301, "end": 310, "3A": 585, "2A_peak": 822, "2A_lean": 792, "1A_peak": 1380, "1A_lean": 1304},
+  {"start": 311, "end": 320, "3A": 601, "2A_peak": 838, "2A_lean": 813, "1A_peak": 1416, "1A_lean": 1332},
+  {"start": 321, "end": 330, "3A": 615, "2A_peak": 862, "2A_lean": 834, "1A_peak": 1452, "1A_lean": 1366},
+  {"start": 331, "end": 340, "3A": 629, "2A_peak": 879, "2A_lean": 850, "1A_peak": 1481, "1A_lean": 1398},
+  {"start": 341, "end": 350, "3A": 641, "2A_peak": 898, "2A_lean": 869, "1A_peak": 1514, "1A_lean": 1429},
+  {"start": 351, "end": 360, "3A": 653, "2A_peak": 913, "2A_lean": 883, "1A_peak": 1547, "1A_lean": 1458},
+  {"start": 361, "end": 370, "3A": 667, "2A_peak": 938, "2A_lean": 907, "1A_peak": 1580, "1A_lean": 1489},
+  {"start": 371, "end": 380, "3A": 681, "2A_peak": 954, "2A_lean": 922, "1A_peak": 1612, "1A_lean": 1519},
+  {"start": 381, "end": 390, "3A": 693, "2A_peak": 972, "2A_lean": 941, "1A_peak": 1644, "1A_lean": 1554},
+  {"start": 391, "end": 400, "3A": 708, "2A_peak": 991, "2A_lean": 963, "1A_peak": 1680, "1A_lean": 1582},
+  {"start": 401, "end": 410, "3A": 719, "2A_peak": 1010, "2A_lean": 980, "1A_peak": 1710, "1A_lean": 1613},
+  {"start": 411, "end": 420, "3A": 732, "2A_peak": 1028, "2A_lean": 998, "1A_peak": 1740, "1A_lean": 1643},
+  {"start": 421, "end": 430, "3A": 750, "2A_peak": 1052, "2A_lean": 1017, "1A_peak": 1777, "1A_lean": 1677},
+  {"start": 431, "end": 440, "3A": 762, "2A_peak": 1071, "2A_lean": 1034, "1A_peak": 1812, "1A_lean": 1709}
+ ]
+}

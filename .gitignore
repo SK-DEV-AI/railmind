@@ -34,3 +34,6 @@ data/requests.jsonl
 # gate logs
 /tmp/railmind-gen.log
 .cache/
+
+# packaging
+*.egg-info/

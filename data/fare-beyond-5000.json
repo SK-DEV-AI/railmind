@@ -1,0 +1,30 @@
+{
+ "source": "Commercial Circular 24 of 2025, page 17",
+ "effective": "2025-12-26",
+ "read_by": "human, from a 400 dpi render of the page, and independently by tesseract --psm 6 on the same render; both agree on all eleven values",
+ "why": "The basic fare tables stop at 5,000 km. The circular states the rule for longer journeys as prose plus this small table, so it is transcribed by hand rather than routed through the slab reader: it has no distance column to read, and a reader that tried would invent one.",
+ "rule": "Fares for distances beyond 5,000 km are the fare for 5,000 km plus, for every 50 km slab beyond 5,000 km, the amount printed here for that class. The first increment therefore applies to the slab 5,001-5,050 km, matching the slab convention of the basic tables, where a slab is charged once it is entered.",
+ "increments": {
+  "ordinary": {
+   "2S": 6.0,
+   "SL": 9.0,
+   "FC": 41.0
+  },
+  "mail_express": {
+   "2S": 10.0,
+   "SL": 14.0,
+   "CC": 29.0,
+   "3E": 33.0,
+   "3A": 34.0,
+   "FC": 46.0,
+   "2A": 49.0,
+   "1A": 82.0
+  }
+ },
+ "class_note": "The page names the classes ('Second Class', 'Sleeper Class', 'A.C.Chair Car', 'A.C. 3 Economy', 'A.C. 3-Tier', 'First Class', 'A.C. 2-Tier', 'AC First Class'). The codes here are what IRCTC sells them under.",
+ "not_covered": {
+  "rajdhani": "The page lists Ordinary and Mail/Express services only. A Rajdhani journey beyond 5,000 km has no published increment in this circular, so the fare engine must report it as unpriced rather than reuse the Mail/Express number.",
+  "peak_lean_split": "The circular charges 2A and 1A a peak and a lean season fare. This table prints one increment for each, with no season split, so the same increment applies in both seasons."
+ },
+ "length_check": "11 values, matching 3 ordinary classes + 8 mail/express classes"
+}

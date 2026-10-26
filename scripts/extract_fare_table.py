@@ -95,22 +95,58 @@ import numpy as np
 # revised circular must be re-checked by a human rather than trusted to a
 # heuristic that guesses which class a column holds.
 #
-# Value: `page -> (section id, [class codes left to right])`. Both halves of a
-# page carry the same classes; the halves hold different distance ranges.
+# Value: `page -> (section id, [class codes left to right])`. A page holds one
+# section only. Tables set side by side carry the same classes in both, so the
+# class list is a property of the section, not of the table.
+
+#: The AC pages (12-16 of the current circular) print seven fare columns under
+#: the heading "Basic fare of AC classes Mail Express w.e.f 26.12.2025": air
+#: conditioned chair car, 3 economy, 3-tier, and then 2-tier and first class
+#: twice each, because the circular sets a peak-season and a lean-season fare for
+#: those two classes.
+AC_CLASSES = ["CC", "3E", "3A", "2A_peak", "2A_lean", "1A_peak", "1A_lean"]
+
+#: Rajdhani prints one table of five columns, under "Basic fare Rajdhani Exp.
+#: w.e.f. 26.12.2025". It has no chair car and no 3-economy column: the train is
+#: all air-conditioned, and its cheapest accommodation is 3-tier.
+RAJDHANI_CLASSES = ["3A", "2A_peak", "2A_lean", "1A_peak", "1A_lean"]
+
+#: The non-AC pages print three columns headed "Second Class", "Sleeper Class"
+#: and "First Class". The circular never prints a code for any of them; these are
+#: the codes IRCTC sells those accommodations under, and the fare engine keys on
+#: codes, not on headings. First Class is `FC` -- not `1S`, which some timetable
+#: dumps use for a class this circular does not have a column for.
+NON_AC_CLASSES = ["2S", "SL", "FC"]
 
 PLAN: dict[int, tuple[str, list[str]]] = {
-    10: ("mail_express_non_ac", ["2S", "SL", "1S"]),
-    11: ("mail_express_non_ac", ["2S", "SL", "1S"]),
+    10: ("mail_express_non_ac", NON_AC_CLASSES),
+    11: ("mail_express_non_ac", NON_AC_CLASSES),
+    12: ("mail_express_ac", AC_CLASSES),
+    13: ("mail_express_ac", AC_CLASSES),
+    14: ("mail_express_ac", AC_CLASSES),
+    15: ("mail_express_ac", AC_CLASSES),
+    16: ("mail_express_ac", AC_CLASSES),
+    18: ("rajdhani", RAJDHANI_CLASSES),
+    19: ("rajdhani", RAJDHANI_CLASSES),
+    20: ("rajdhani", RAJDHANI_CLASSES),
 }
 
 #: Which classes a section's columns hold, in printed order.
 SECTION_CLASSES = {
-    "mail_express_non_ac": ["2S", "SL", "1S"],
+    "mail_express_non_ac": NON_AC_CLASSES,
+    "mail_express_ac": AC_CLASSES,
+    "rajdhani": RAJDHANI_CLASSES,
 }
 
 #: Junk characters tolerated around a number before the token is rejected. A
 #: photographed column rule contributes one or two.
 MAX_JUNK = 2
+
+#: Below this slab start, a fare is dominated by the minimum fare rather than by
+#: distance, so rupees per kilometre is not a meaningful sanity check there: the
+#: genuine minimum of 31 rupees over 3 kilometres reads as 10 rupees per
+#: kilometre, which looks impossible and is correct.
+LONG_SLAB_KM = 100
 
 
 # --- tokens ------------------------------------------------------------------
@@ -132,6 +168,11 @@ def read_number(raw: str) -> str | None:
     if len(raw) - len(digits) > MAX_JUNK:
         return None
     return digits
+
+
+#: One pass's reading of one cell: the digits it produced, and the pixel box of
+#: the token they came from so the cell can be re-read in isolation later.
+Scrap = tuple[str, tuple[int, int, int, int] | None]
 
 
 @dataclass
@@ -210,14 +251,38 @@ class Row:
     end_cell: Cell | None = None
     values: dict[str, Cell | None] = field(default_factory=dict)
     repaired: int = 0
+    #: The end this slab must have, taken from where the next slab starts. It is
+    #: not a vote and cannot be one: it comes from a different row's number, which
+    #: the document itself repeats as that row's identity.
+    implied_end: int | None = None
+    #: The start this slab must have, taken from where the slab above ended. Also
+    #: not a vote: the number is printed twice, and one of the two copies is
+    #: legible.
+    implied_start: int | None = None
 
     @property
     def start(self) -> int | None:
+        if self.implied_start is not None:
+            return self.implied_start
         return self.start_cell.value
 
     @property
     def end(self) -> int | None:
-        return self.end_cell.value if self.end_cell else None
+        """
+        The end taken from where the next slab starts, when the two disagree.
+
+        The next slab's start is the same number this slab prints as its end, so
+        it is a second reading of the same fact rather than a different one. It
+        wins because it is also that row's identity: a wrong start moves a row,
+        which is visible, where a wrong end only shortens a slab. Measured on
+        page 13 of the current circular, which prints `470` and is read as `0`
+        by both passes; trusting the printed end there costs the row all seven
+        of its fares, since a slab that does not span any distance is discarded.
+        """
+        if self.implied_end is not None:
+            return self.implied_end
+        printed = self.end_cell.value if self.end_cell else None
+        return printed
 
 
 # --- rendering and OCR -------------------------------------------------------
@@ -458,8 +523,14 @@ def row_ruler(
 
 def page_grid(
     words: list[dict], classes: list[str]
-) -> tuple[list[float], dict[int, list[tuple[int, int]]]] | None:
-    """Column centres and row bands for a page, computed once for every pass.
+) -> tuple[list[float], dict[int, list[tuple[int, int]]], int] | None:
+    """Column centres, row bands and table count for a page, computed once.
+
+    The distance axis is printed in two ways in the same circular: the non-AC
+    pages set two half tables side by side to fit 240 rows, and the AC pages set
+    one wide table because their rows are twice as coarse. Which one a page is
+    follows from its column count alone, so the plan carries classes, not layout,
+    and a page cannot be read with the wrong layout by accident.
 
     Both segmentation modes read the same words, so they must share one grid:
     letting each pass derive its own bands let a single merged row shift every
@@ -470,11 +541,15 @@ def page_grid(
     """
     columns = group_columns(words)
     width = 2 + len(classes)
-    if len(columns) != 2 * width:
+    if len(columns) == 2 * width:
+        tables = 2
+    elif len(columns) == width:
+        tables = 1
+    else:
         return None
     centres = column_centres(columns)
-    bands = {half: row_ruler(words, centres, half, width) for half in (0, 1)}
-    return centres, bands
+    bands = {half: row_ruler(words, centres, half, width) for half in range(tables)}
+    return centres, bands, tables
 
 
 def cells_from_pass(
@@ -482,55 +557,82 @@ def cells_from_pass(
     centres: list[float],
     bands: dict[int, list[tuple[int, int]]],
     classes: list[str],
-) -> dict[int, list[list[str]]]:
-    """This pass's text for every cell of the shared grid, rows in order."""
+) -> dict[int, list[list[Scrap]]]:
+    """This pass's text for every cell of the shared grid, rows in order.
+
+    Each cell carries the pixel box of the token the text came from, so a cell
+    nobody could settle can be re-read as isolated glyphs instead of being read
+    again in a crowd of neighbouring columns.
+    """
     width = 2 + len(classes)
 
-    def text_at(column_index: int, top: int, bottom: int) -> str:
+    def text_at(
+        column_index: int, top: int, bottom: int
+    ) -> tuple[str, tuple[int, int, int, int] | None]:
         candidates = [
             word
             for word in words
             if column_of(word["x"], centres) == column_index and top - 3 <= word["y"] <= bottom + 3
         ]
         if not candidates:
-            return ""
+            return "", None
         middle = (top + bottom) / 2
-        return min(candidates, key=lambda word: abs(word["y"] - middle))["text"]
+        word = min(candidates, key=lambda word: abs(word["y"] - middle))
+        return word["text"], word.get("box")
 
     return {
         half: [
             [text_at(index, top, bottom) for index in range(half * width, (half + 1) * width)]
             for top, bottom in bands[half]
         ]
-        for half in (0, 1)
+        for half in sorted(bands)
     }
 
 
 def merge_passes(
-    readings: list[dict[int, list[list[str]]]], page: int, section: str, classes: list[str]
+    readings: list[dict[int, list[list[Scrap]]]],
+    bands: dict[int, list[tuple[int, int]]],
+    page: int,
+    section: str,
+    classes: list[str],
 ) -> list[Row]:
-    """Vote the passes cell by cell on the shared grid."""
+    """Vote the passes cell by cell on the shared grid.
+
+    The box of the first pass that saw a token is kept on the cell. Boxes from
+    different passes are not averaged: a re-read wants one real glyph run, not a
+    rectangle that belongs to none of them.
+    """
     width = 2 + len(classes)
     rows: list[Row] = []
-    for half in (0, 1):
+    for half in sorted(bands):
         count = max(len(reading[half]) for reading in readings)
         for index in range(count):
             cells: list[Cell] = []
             for column_index in range(width):
-                votes = [
+                seen = [
                     reading[half][index][column_index]
                     for reading in readings
-                    if index < len(reading[half]) and reading[half][index][column_index]
+                    if index < len(reading[half]) and reading[half][index][column_index][0]
                 ]
-                cells.append(Cell(page=page, x=0, y=index, votes=votes))
+                box = next((entry[1] for entry in seen if entry[1]), None)
+                cells.append(
+                    Cell(page=page, x=0, y=index, votes=[entry[0] for entry in seen], box=box)
+                )
             if not cells[0].votes:
-                continue
+                # A row whose slab number could not be read at all is still a row
+                # if its fares were read: the number is recoverable from the row
+                # above, and dropping it here would lose five good prices to one
+                # blank cell. A band with neither a number nor two fares is not a
+                # row and is skipped.
+                if sum(1 for cell in cells[2:] if cell.votes) < 2:
+                    continue
             row = Row(
                 page=page,
                 section=section,
                 half=half,
                 y=index,
                 start_cell=cells[0],
+                band=bands[half][index],
                 end_cell=cells[1],
             )
             for offset, class_code in enumerate(classes, start=2):
@@ -556,88 +658,200 @@ def read_page(
     grid = page_grid(primary + secondary, classes)
     if grid is None:
         raise ValueError(
-            f"page {page}: the page is not {2 * (2 + len(classes))} numeric columns; "
-            "the plan does not match the document"
+            f"page {page}: {2 + len(classes)} or {2 * (2 + len(classes))} numeric columns "
+            "expected; the plan does not match the document"
         )
-    centres, bands = grid
+    centres, bands, _tables = grid
     readings = [
         cells_from_pass(batch, centres, bands, classes) for batch in (primary, secondary) if batch
     ]
-    rows = merge_passes(readings, page, section, classes)
-    return repair_slabs(rows)
+    rows = merge_passes(readings, bands, page, section, classes)
+    settled = resolve_unsettled(rows, image, cache / f"cell-{page}.pgm", centres, classes)
+    if settled:
+        print(f"page {page}: {settled} unsettled cells confirmed by an isolated re-read")
+    # Slab repair is deliberately not done here. A half table's first row has no
+    # predecessor on its own page, and in this circular the non-AC table's page 11
+    # opens with the row that page 10's last line ends: `891 - 900` closes page 10
+    # and `901 - 910` opens page 11. Repairing page by page could not see that
+    # boundary, so both rows were lost -- one for a missing end (settled only by
+    # the next row's start) and one for a missing start (settled only by the
+    # previous row's end). `main` repairs the whole section in reading order.
+    return rows
 
 
 def repair_slabs(rows: list[Row]) -> list[Row]:
     """Make the slab column tile the distance axis, as the document defines it.
 
-    A slab starts one kilometre after the one above it ends, so a start that
-    overlaps its predecessor is a misread and its true value is that boundary.
-    This is the document's own rule, not an inference about fares, and every
-    application is counted. A *gap* is left alone: it means a row was missed, and
-    filling a gap would invent a slab that the engine would then price.
-    """
-    for half in (0, 1):
-        previous_end: int | None = None
-        for row in sorted((row for row in rows if row.half == half), key=lambda row: row.y):
-            start, end = row.start, row.end
-            if (
-                previous_end is not None
-                and start is not None
-                and end is not None
-                and start < previous_end + 1
-                and end > previous_end
-            ):
-                row.start_cell.votes = [str(previous_end + 1)]
-                row.repaired += 1
-            if row.end is not None:
-                previous_end = row.end
+    A slab starts one kilometre after the one above it ends and ends one
+    kilometre before the one below it starts: the table states every boundary
+    twice, once as a start and once as an end. That redundancy is what makes a
+    single misread recoverable from the page itself. Three shapes occur, and all
+    three are repaired from the neighbour that repeats the same number:
 
-    # The printed slab end is redundant: the next slab's start defines it. Where
-    # the two disagree the start is the trustworthy of the pair, because it is
-    # the value the next row repeats as its own identity, so the end is taken
-    # from the neighbour and the read end is only checked against it.
-    for half in (0, 1):
-        ordered = sorted((row for row in rows if row.half == half), key=lambda row: row.y)
-        for row, following in itertools.pairwise(ordered):
-            start, next_start = row.start, following.start
-            if start is None or next_start is None or next_start <= start + 1:
-                continue
-            implied = next_start - 1
-            if row.end != implied:
-                row.end_cell = Cell(page=row.page, x=0, y=row.y, votes=[str(implied)])
-                row.repaired += 1
+    - a start that overlaps its predecessor is a misread of that boundary;
+    - a start that could not be read at all (the two passes disagreed, or only
+      one pass produced a number) is the previous end plus one;
+    - an end that disagrees with where the next slab starts is a misread of it.
+
+    Each repair is counted. These are the document's own rules, not inferences
+    about fares. A *gap* is still left alone: it means a row was missed entirely,
+    and filling a gap would invent a slab that the engine would then price.
+
+    Order matters within a walk: a row's end comes from the next row's start, so
+    the starts are settled first and an implied start can then settle the end
+    above it. Two walks are enough for any chain of adjacent unreadable numbers,
+    since one walk makes every start readable and the second makes every end.
+
+    The walk covers a whole section, ordered by page, then half table, then the
+    row's position on the page, because that is the order the document reads in.
+    Chaining within one page is not enough: the number that settles a page's first
+    row is printed on the previous page.
+    """
+    for _ in range(2):
+        for section in sorted({row.section for row in rows}):
+            ordered = sorted(
+                (row for row in rows if row.section == section),
+                key=lambda row: (row.page, row.half, row.y),
+            )
+            previous_end: int | None = None
+            for index, row in enumerate(ordered):
+                following = ordered[index + 1] if index + 1 < len(ordered) else None
+                start, end = row.start, row.end
+
+                if previous_end is not None:
+                    boundary = previous_end + 1
+                    if start is None:
+                        # Only when the slab would still span a distance; a row
+                        # whose end is above this boundary is a real row, an
+                        # empty band is not.
+                        if end is None or boundary < end:
+                            row.implied_start = boundary
+                            row.repaired += 1
+                    elif start < boundary and end is not None and end > previous_end:
+                        row.implied_start = boundary
+                        row.repaired += 1
+
+                if following is not None:
+                    next_start = following.start
+                    if next_start is not None and start is not None and next_start > start + 1:
+                        implied = next_start - 1
+                        if row.end != implied:
+                            # Recorded as an implication, not as a reading. Writing
+                            # it into a cell gave it one vote, which the two-read
+                            # rule correctly threw away, leaving the row with no
+                            # end; `validate` then dropped the whole row and lost
+                            # every fare on it to a redundant column.
+                            row.implied_end = implied
+                            row.repaired += 1
+
+                if row.end is not None:
+                    previous_end = row.end
     return rows
 
 
-def reread_cell(
+def crop_reads(
     image: np.ndarray, box: tuple[int, int, int, int] | None, scratch: Path
-) -> str | None:
-    """Read one token's glyph run on its own, as a third opinion.
+) -> list[str]:
+    """Read one token's glyph run on its own, twice, as a second opinion.
 
-    The two whole-page passes sometimes fail on the same cells. Cropping the
-    exact box the token came from, and enlarging it three times, gives the reader
-    a different problem with no neighbouring column in the crop to confuse it.
-    Only cells the first two passes could not settle are ever re-read.
+    The whole-page passes fail on a handful of cells, always the same way: a
+    blurred glyph run in a crowd of neighbouring columns. Cropping exactly the
+    box a pass reported, and enlarging it, changes the reader's problem from "a
+    table" to "one number", which is the case tesseract is good at.
+
+    Two segmentation modes are used because they fail differently: treating the
+    crop as one text line and treating it as one word disagree on broken glyphs.
+    Both reading the same digits is therefore evidence; a single crop read is
+    still only a guess and is returned as one vote, not a value.
     """
     if box is None:
-        return None
+        return []
     left, top, width, height = box
-    cell = image[max(0, top - 5) : top + height + 5, max(0, left - 5) : left + width + 5]
+    cell = image[max(0, top - 6) : top + height + 6, max(0, left - 6) : left + width + 6]
     if cell.size == 0:
-        return None
-    enlarged = np.kron(cell, np.ones((3, 3), dtype=np.uint8))
-    enlarged = np.pad(enlarged, 24, constant_values=255)
+        return []
+    enlarged = np.pad(np.kron(cell, np.ones((3, 3), dtype=np.uint8)), 24, constant_values=255)
     scratch.parent.mkdir(parents=True, exist_ok=True)
     scratch.write_bytes(
         b"P5\n%d %d\n255\n" % (enlarged.shape[1], enlarged.shape[0]) + enlarged.tobytes()
     )
-    result = subprocess.run(
-        ["tesseract", str(scratch), "-", "--psm", "7", "-c", "tessedit_char_whitelist=0123456789"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return read_number(result.stdout.strip())
+    readings: list[str] = []
+    for mode in ("7", "8"):
+        result = subprocess.run(
+            [
+                "tesseract",
+                str(scratch),
+                "-",
+                "--psm",
+                mode,
+                "-c",
+                "tessedit_char_whitelist=0123456789",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        value = read_number(result.stdout.strip())
+        if value is not None:
+            readings.append(value)
+    return readings
+
+
+def cell_box(
+    row: Row, column_index: int, centres: list[float], margin: int = 8
+) -> tuple[int, int, int, int]:
+    """The rectangle a column of a row occupies, from the shared grid.
+
+    Used for the cells no whole-page pass produced any token for at all: the
+    geometry still says where that number would be printed, and an isolated read
+    of exactly that rectangle is a real measurement, not a guess. The rectangle
+    stops short of its neighbours so a re-read cannot return the column beside it.
+    """
+    centre = centres[column_index]
+    gap_left = centre - max([x for x in centres if x < centre], default=centre - 120)
+    gap_right = min([x for x in centres if x > centre], default=centre + 120) - centre
+    half_width = max(12.0, min(gap_left, gap_right) / 2 - margin)
+    top, bottom = row.band
+    return (round(centre - half_width), top + 2, round(2 * half_width), max(4, bottom - top - 4))
+
+
+def resolve_unsettled(
+    rows: list[Row], image: np.ndarray, scratch: Path, centres: list[float], classes: list[str]
+) -> int:
+    """Give every cell no two reads agreed on another, isolated read.
+
+    A cell the whole-page passes could not settle is cropped and re-read. The
+    cell is only settled when two reads agree, so this can turn a lone vote into a
+    confirmed value and can also overturn one, but it never invents a value from a
+    single reading. A cell no pass found a token for is cropped from the grid's
+    own geometry instead. Returns how many cells were settled this way.
+    """
+    width = 2 + len(classes)
+    settled = 0
+    for row in rows:
+        columns = [
+            (row.start_cell, row.half * width),
+            (row.end_cell, row.half * width + 1),
+            *(
+                (row.values.get(code), row.half * width + 2 + offset)
+                for offset, code in enumerate(classes)
+            ),
+        ]
+        for cell, column_index in columns:
+            if cell is None or cell.confirmed:
+                continue
+            box = cell.box or cell_box(row, column_index, centres)
+            extra = crop_reads(image, box, scratch)
+            if len(extra) == 2 and extra[0] == extra[1]:
+                # An isolated crop read by two segmentation modes beats what a
+                # crowded page pass said, because it is a different problem, not
+                # a louder opinion about the same one.
+                cell.votes = list(extra)
+                settled += 1
+            elif len(extra) == 1 and extra[0] in cell.votes:
+                cell.votes = [*cell.votes, extra[0]]
+                settled += 1
+    return settled
 
 
 # --- validation --------------------------------------------------------------
@@ -652,22 +866,35 @@ class Report:
     single: int = 0
     disputed: int = 0
     missing: int = 0
+    dropped: list[str] = field(default_factory=list)
     out_of_order: list[str] = field(default_factory=list)
     violations: list[str] = field(default_factory=list)
 
 
 def validate(rows: list[Row], section: str, classes: list[str]) -> tuple[list[dict], list[Report]]:
-    """Merge halves, check continuity and monotonicity, and refuse to fill holes.
+    """Merge halves, check the table against its own shape, and refuse to fill holes.
 
-    Three checks are the whole reason to trust an OCR'd price list:
+    These checks are the whole reason to trust an OCR'd price list, because they
+    need no second document: a fare table carries its own proof of correctness in
+    its shape.
 
     - slab continuity: every slab starts one kilometre after the last ended,
       which catches a dropped, duplicated or misread row;
     - monotonicity: a longer journey never costs less;
-    - rate sanity: implied rupees per kilometre stays inside a plausible band,
-      which catches a misread that is still monotonic.
+    - digit-count consistency: fares rise smoothly, so a value printed with more
+      or fewer digits than the values either side of it is a misread. This is
+      what separates a garbled `6877` from its neighbours `688` and `696`, where
+      monotonicity alone cannot say which of the two rows is the wrong one;
+    - rate sanity on long slabs: implied rupees per kilometre stays inside a
+      plausible band. It is deliberately not applied to short slabs, where the
+      minimum fare dominates and a perfectly correct 31 rupees over 3 kilometres
+      looks like 10 rupees per kilometre. The band is wide because it spans every
+      class in both sections, from second sitting to AC first class, and this
+      check is the weakest of the four for exactly that reason.
 
-    A row failing a check is dropped and counted, never smoothed over.
+    A value failing a check is **deleted**, not reported and kept. A table that
+    prints a warning next to a number somebody will read as a price is a table
+    that shows the wrong price, so the value has to go.
     """
     reports: dict[str, Report] = {
         code: Report(section=section, class_code=code) for code in classes
@@ -675,11 +902,10 @@ def validate(rows: list[Row], section: str, classes: list[str]) -> tuple[list[di
     usable_rows = [row for row in rows if row.start and row.end and row.start < row.end]
     ordered = sorted(usable_rows, key=lambda row: (row.start, row.end))
 
-    kept: list[dict] = []
+    entries: list[dict] = []
     previous_end: int | None = None
     for row in ordered:
         entry: dict = {"start": row.start, "end": row.end}
-        complete = True
         if previous_end is not None and row.start != previous_end + 1:
             for report in reports.values():
                 report.out_of_order.append(f"{previous_end + 1}-{row.start - 1}")
@@ -690,7 +916,6 @@ def validate(rows: list[Row], section: str, classes: list[str]) -> tuple[list[di
             value = cell.value if cell else None
             if value is None:
                 report.missing += 1
-                complete = False
                 continue
             if cell.confirmed:
                 report.confirmed += 1
@@ -699,22 +924,63 @@ def validate(rows: list[Row], section: str, classes: list[str]) -> tuple[list[di
             else:
                 report.single += 1
             entry[code] = value
-        if complete:
-            kept.append(entry)
+        entries.append(entry)
         previous_end = row.end
 
     for code in classes:
         report = reports[code]
-        values = [(entry["start"], entry["end"], entry[code]) for entry in kept if code in entry]
-        for earlier, later in itertools.pairwise(values):
+        holders = [entry for entry in entries if code in entry]
+        values = [(entry["start"], entry["end"], entry[code]) for entry in holders]
+        doomed: set[int] = set()
+
+        # A value with a different number of digits from both of its neighbours,
+        # which agree with each other, is a misread. Nothing else in the scan
+        # makes a number change its width and change back.
+        for index in range(1, len(values) - 1):
+            before, here, after = values[index - 1][2], values[index][2], values[index + 1][2]
+            if len(str(before)) == len(str(after)) != len(str(here)):
+                report.violations.append(
+                    f"{values[index][0]}-{values[index][1]}: {here} has "
+                    f"{len(str(here))} digits between {before} and {after}"
+                )
+                doomed.add(index)
+
+        for index, (earlier, later) in enumerate(itertools.pairwise(values)):
             if later[2] < earlier[2]:
                 report.violations.append(
                     f"{later[0]}-{later[1]}: {later[2]} < {earlier[2]} at {earlier[0]}-{earlier[1]}"
                 )
-        for start, end, value in values:
+                if {index, index + 1} & doomed:
+                    doomed.update((index, index + 1))
+                    continue
+                before = values[index - 1][2] if index else None
+                after = values[index + 2][2] if index + 2 < len(values) else None
+                if before is None or after is None:
+                    # At the edge of the table there is no trend to judge
+                    # against, so the value that broke the ordering goes.
+                    doomed.add(index + 1)
+                    continue
+                # Fares rise smoothly, so the value far from the trend through
+                # its outer neighbours is the misread one.
+                midpoint = (before + after) / 2
+                doomed.add(
+                    index if abs(earlier[2] - midpoint) > abs(later[2] - midpoint) else index + 1
+                )
+
+        for index, (start, end, value) in enumerate(values):
+            if start < LONG_SLAB_KM:
+                continue
             rate = value / max(1, (start + end) / 2)
-            if not 0.15 <= rate <= 8.0:
+            if not 0.1 <= rate <= 20.0:
                 report.violations.append(f"{start}-{end}: {value} is {rate:.2f}/km, implausible")
+                doomed.add(index)
+
+        for index in doomed:
+            entry = holders[index]
+            report.dropped.append(f"{entry['start']}-{entry['end']}: {entry[code]}")
+            del entry[code]
+
+    kept = [entry for entry in entries if len(entry) > 2]
     return kept, list(reports.values())
 
 
@@ -783,11 +1049,17 @@ def main(argv: list[str] | None = None) -> int:
         png = render_page(args.pdf, page, args.dpi, args.cache)
         page_rows = read_page(page, png, load_gray(png), section, classes, args.cache, args.pdf)
         rows.extend(page_rows)
-        repairs = sum(row.repaired for row in page_rows)
         print(
-            f"page {page}: {len(page_rows)} rows, {repairs} cells re-read",
+            f"page {page}: {len(page_rows)} rows",
             file=sys.stderr,
         )
+
+    # Slab repair happens once, over the whole document, in reading order, so a
+    # page boundary cannot break the chain between two halves of one table.
+    repair_slabs(rows)
+    for section in sorted({row.section for row in rows}):
+        repairs = sum(row.repaired for row in rows if row.section == section)
+        print(f"{section}: {repairs} slab fields repaired", file=sys.stderr)
 
     sections: dict[str, dict] = {}
     reports: list[Report] = []
@@ -802,16 +1074,26 @@ def main(argv: list[str] | None = None) -> int:
         }
 
     for report in reports:
+        complete = sum(
+            1
+            for entry in sections[report.section]["rows"]
+            if all(code in entry for code in sections[report.section]["classes"])
+        )
         print(
-            f"{report.section} {report.class_code}: {len(sections[report.section]['rows'])} "
-            f"complete rows; {report.confirmed} confirmed, {report.single} single-pass, "
-            f"{report.disputed} disputed, {report.missing} missing; "
+            f"{report.section} {report.class_code}: {report.confirmed} confirmed, "
+            f"{report.single} single-read, {report.disputed} disputed, {report.missing} unread, "
+            f"{len(report.dropped)} deleted by checks; "
             f"{len(report.out_of_order)} discontinuities, {len(report.violations)} violations"
         )
+        for item in report.dropped[:12]:
+            print(f"    deleted {item}")
         for item in report.out_of_order[:8]:
             print(f"    discontinuity {item}")
         for item in report.violations[:12]:
             print(f"    violation {item}")
+        print(
+            f"    {complete} of {len(sections[report.section]['rows'])} rows priced in every class"
+        )
 
     if args.report or args.out is None:
         return 0
