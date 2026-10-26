@@ -33,3 +33,4 @@ data/requests.jsonl
 
 # gate logs
 /tmp/railmind-gen.log
+.cache/
