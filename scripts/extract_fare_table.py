@@ -1,11 +1,19 @@
 """Turn the scanned Railway Board fare circular into a machine-readable table.
 
-STATUS (2026-10-26): reads one page at 80% full-row recall and validates
-everything it emits; not yet good enough to price tickets from. See
+STATUS (2026-10-26): measured against 120 slabs of page 10 that were read by
+hand (`data/fare-truth-p10.json`), it now emits **no wrong fares**: 288 of 360
+hand-read values reproduce exactly and the other 72 are reported missing rather
+than guessed. Coverage is the remaining gap, not correctness, and it is not yet
+good enough to price tickets from. See
 `~/session-root/railway-ai-booking/RESEARCH-FARE-AND-FREE-PATHS.md` and the
-handoff for the two known gaps (glyph-level misreads in this scan, and rows whose
-slab number is misread). Do not wire its output into the product until coverage
-and cross-document checks are green.
+handoff. Do not wire its output into the product until coverage and the
+cross-document check are green.
+
+The next accuracy step is known and measured, not guessed: most missing values are
+cells only one of the two passes read at all, so a third read of the same page at
+800 dpi, aligned to the reference frame by column and row-band centres, turns
+single reads into pairs. Scaling the high-resolution coordinates instead of
+aligning them was tried and made things worse (see the traps below).
 
 Why this exists
 ---------------
@@ -25,12 +33,14 @@ How it reads a scanned grid
    (x, y) position. A table is then geometry, and OCR that returns garbage prose
    no longer matters.
 3. Build one grid for the page: columns from the wide horizontal gaps between
-   word positions, rows from the ink profile of the slab column. Both passes read
-   the same grid, because a pass that derives its own grid can merge a row and
-   shift every following row onto its neighbour's numbers.
+   word positions, rows from a smoothed histogram of the words' own y positions,
+   one peak per row. Both passes read the same grid, because a pass that derives
+   its own grid can merge a row and shift every following row onto its
+   neighbour's numbers.
 4. Read the page twice with two segmentation modes and vote cell by cell. A value
-   two reads agree on is confirmed; a cell all reads disagree about has no value
-   at all, because a fare chosen from a tie is a plausible number nobody read.
+   two reads agree on is used; a cell that one read produced and no other read
+   confirms has no value at all, because a fare chosen from a tie, or from a lone
+   read, is a plausible number nobody actually read.
 5. Repair the two things the document itself defines: a slab starts one
    kilometre after the previous one ends, and the printed end of a slab is
    redundant because the next slab's start states it. Both repairs are counted.
@@ -40,8 +50,10 @@ Five failure modes, found the hard way:
 - The last class column of the left half is printed hard against the column rule,
   so OCR returns `1310||` for `1310`. A token is accepted when it carries digits
   and no letters; `1121f` is a rejection, not a `1121`.
-- Rows are not uniformly spaced, so bands come from the ink profile, not a
-  constant pitch.
+- Rows are not uniformly spaced, so bands cannot come from a constant pitch, and
+the ink profile of the slab column is not good enough either: on page 10 it
+yields 41 bands for 60 rows, since the scan's rows touch. A histogram of token y
+positions has hundreds of samples per row and is what works.
 - Reading a row as one strip mangles it: tesseract's line model is worse at a
   table row than its page model plus geometry, measured on page 11.
 - At 400 dpi this scan reads `552` as `592`; at 800 dpi it reads `552`. A
@@ -154,7 +166,12 @@ class Cell:
             return None
         counts = Counter(self.votes)
         value, support = counts.most_common(1)[0]
-        if support == 1 and len(counts) > 1:
+        if support < 2:
+            # One read is not a value. Measured on page 10: the only two wrong
+            # fares in 360 hand-read ones were both cells that a single pass read
+            # confidently and no other pass read at all (`438` for `48`). A lone
+            # read of a scanned digit run is a guess that looks like a
+            # measurement.
             return None
         return value
 
@@ -370,74 +387,93 @@ def load_gray(png: Path) -> np.ndarray:
     )
 
 
-def ink_bands(
-    image: np.ndarray, x0: int, x1: int, body_top: int, threshold: float = 0.25
+def row_ruler(
+    words: list[dict], centres: list[float], half: int, width: int
 ) -> list[tuple[int, int]]:
-    """Horizontal bands of ink in one column, which are the table's rows.
+    """Row bands from a histogram of where the numbers sit, one peak per row.
 
-    Rows are found from the pixels rather than from OCR, because a row OCR could
-    not read still has to occupy its place in the sequence: without the band, a
-    failed row silently closes the gap and shifts every later row's slab number
-    onto its neighbour's fare. The slab column holds exactly one line of print
-    per row, so its ink profile is the row ruler.
+    A row is a line of print, so the numbers are the best evidence of where the
+    rows are. Two cheaper rulers were measured on page 10 of the current circular
+    and both fail:
+
+    - the ink profile of the slab column returns 41 bands for 60 rows, because
+      the scan's rows touch and two touching rows arrive as one band;
+    - grouping the y positions by the median gap returns 216 bands for 60 rows,
+      because the two OCR passes read the same page and their positions differ by
+      a pixel or two, which is what the median ends up measuring.
+
+    One lost or gained band is not one lost row: `cells_from_pass` takes the
+    token nearest each band's middle, so a shifted band hands a row its
+    neighbour's fare. A histogram smoothed over a few pixels is immune to both
+    problems, since hundreds of tokens per row vote for one peak and no single
+    misread can move it.
+
+    Peaks are picked strongest first with a minimum separation of a third of the
+    page's row pitch, so a smudge between two rows cannot become a row of its own.
     """
-    column = image[:, x0:x1] < 170
-    profile = column.sum(axis=1)
-    if not profile.any():
+    columns = range(half * width, (half + 1) * width)
+    ys = [word["y"] for word in words if column_of(word["x"], centres) in columns]
+    if len(ys) < 4:
         return []
-    limit = max(3, int(profile.max() * threshold))
-    runs: list[list[int]] = []
-    for index in np.nonzero(profile > limit)[0]:
+    low = min(ys)
+    bins = np.zeros(max(ys) - low + 1, dtype=float)
+    for y in ys:
+        bins[y - low] += 1.0
+    # A row's tokens are within about ten pixels of each other; smoothing over
+    # nine makes one peak out of them and leaves the ~100 pixel gap between rows
+    # empty.
+    smooth = np.convolve(bins, np.ones(9) / 9.0, mode="same")
+    floor = float(smooth.max()) * 0.25
+    separation = 30
+    peaks: list[int] = []
+    for index in np.argsort(smooth)[::-1]:
         index = int(index)
-        if runs and index - runs[-1][-1] <= 6:
-            runs[-1].append(index)
-        else:
-            runs.append([index])
-    bands = [(run[0], run[-1]) for run in runs if run[-1] - run[0] >= 8 and run[0] > body_top]
-    if not bands:
+        if smooth[index] < floor:
+            break
+        if all(abs(index - taken) > separation for taken in peaks):
+            peaks.append(index)
+    if not peaks:
         return []
-    heights = sorted(bottom - top for top, bottom in bands)
-    typical = heights[len(heights) // 2]
-    # Two rows whose ink touches arrive as one tall band. Splitting anything much
-    # taller than a normal row at its midpoint keeps one band per slab, which is
-    # what every later step assumes; without this, a merged pair shifts every
-    # following row's numbers onto its neighbour.
-    split: list[tuple[int, int]] = []
-    for top, bottom in bands:
-        if bottom - top > typical * 1.6:
-            middle = (top + bottom) // 2
-            split.append((top, middle))
-            split.append((middle + 1, bottom))
-        else:
-            split.append((top, bottom))
-    return split
+    peaks.sort()
+    peaks = [peak + low for peak in peaks]
+
+    # Bands are the midpoints between peaks, so a band ends where the next row
+    # begins and no token can be nearer two rows than one.
+    edges = [peaks[0] - (peaks[1] - peaks[0]) // 2 if len(peaks) > 1 else peaks[0] - 40]
+    edges += [(above + below) // 2 for above, below in itertools.pairwise(peaks)]
+    edges.append(peaks[-1] + (peaks[-1] - peaks[-2]) // 2 if len(peaks) > 1 else peaks[-1] + 40)
+    bands = [(edges[index], edges[index + 1]) for index in range(len(peaks))]
+
+    # The body starts where the slab column starts. Above it is one header row of
+    # column indices ("1", "2", "3"), which is real printed ink and would
+    # otherwise be read as the first fare row.
+    slab_ys = [word["y"] for word in words if column_of(word["x"], centres) == half * width]
+    first = 0
+    for index, (top, bottom) in enumerate(bands):
+        if any(top <= y < bottom for y in slab_ys):
+            first = index
+            break
+    return bands[first:]
 
 
 def page_grid(
-    words: list[dict], image: np.ndarray, classes: list[str]
+    words: list[dict], classes: list[str]
 ) -> tuple[list[float], dict[int, list[tuple[int, int]]]] | None:
     """Column centres and row bands for a page, computed once for every pass.
 
-    Both segmentation modes read the same image, so they must share one grid:
+    Both segmentation modes read the same words, so they must share one grid:
     letting each pass derive its own bands let a single merged row shift every
     later ordinal, which showed up as fifty "disputed" cells that were really one
-    alignment error. The grid comes from geometry (word positions and the ink
-    profile), so it does not depend on any pass agreeing with any other.
+    alignment error. The grid comes from geometry alone (word positions, and the
+    ink profile only when a row has no readable number at all), so it cannot
+    depend on any pass agreeing with any other.
     """
     columns = group_columns(words)
     width = 2 + len(classes)
     if len(columns) != 2 * width:
         return None
     centres = column_centres(columns)
-    bands: dict[int, list[tuple[int, int]]] = {}
-    for half in range(2):
-        base = half * width
-        body_top = min(
-            (word["y"] for word in words if column_of(word["x"], centres) == base), default=0
-        )
-        bands[half] = ink_bands(
-            image, int(centres[base]) - 45, int(centres[base]) + 45, body_top - 20
-        )
+    bands = {half: row_ruler(words, centres, half, width) for half in (0, 1)}
     return centres, bands
 
 
@@ -517,7 +553,7 @@ def read_page(
     secondary = ocr_words(png, "11")
     if not primary and not secondary:
         raise ValueError(f"page {page}: no numeric words found")
-    grid = page_grid(primary + secondary, image, classes)
+    grid = page_grid(primary + secondary, classes)
     if grid is None:
         raise ValueError(
             f"page {page}: the page is not {2 * (2 + len(classes))} numeric columns; "
@@ -702,19 +738,48 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dpi", type=int, default=400)
     parser.add_argument("--cache", type=Path, default=Path(".cache/fare-ocr"))
     parser.add_argument("--report", action="store_true", help="print validation, write nothing")
+    parser.add_argument(
+        "--section",
+        help="treat --pages as this section (for a document whose pages differ from PLAN)",
+    )
+    parser.add_argument("--classes", help="comma-separated class list, must match --section")
     parser.add_argument("--source", default="Commercial Circular 24 of 2025")
     parser.add_argument("--effective", default="2025-12-26")
     args = parser.parse_args(argv)
 
     pages = parse_pages(args.pages) if args.pages else sorted(PLAN)
-    unknown = [page for page in pages if page not in PLAN]
+    plan = dict(PLAN)
+    if args.section:
+        # A different revision of the circular prints the same table on different
+        # pages, so the mapping must be overridable instead of edited in place.
+        # Without this, cross-checking one document against another means
+        # patching PLAN and remembering to patch it back.
+        if args.section not in SECTION_CLASSES:
+            print(
+                f"unknown section {args.section!r}; known: {sorted(SECTION_CLASSES)}",
+                file=sys.stderr,
+            )
+            return 2
+        classes = SECTION_CLASSES[args.section]
+        if args.classes:
+            classes = [item.strip() for item in args.classes.split(",") if item.strip()]
+            if classes != SECTION_CLASSES[args.section]:
+                print(
+                    f"section {args.section} is defined as {SECTION_CLASSES[args.section]}, "
+                    f"not {classes}",
+                    file=sys.stderr,
+                )
+                return 2
+        for page in pages:
+            plan[page] = (args.section, classes)
+    unknown = [page for page in pages if page not in plan]
     if unknown:
         print(f"page(s) {unknown} are not in the plan; add them to PLAN first", file=sys.stderr)
         return 2
 
     rows: list[Row] = []
     for page in pages:
-        section, classes = PLAN[page]
+        section, classes = plan[page]
         png = render_page(args.pdf, page, args.dpi, args.cache)
         page_rows = read_page(page, png, load_gray(png), section, classes, args.cache, args.pdf)
         rows.extend(page_rows)
