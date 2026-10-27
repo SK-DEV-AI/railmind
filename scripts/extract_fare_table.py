@@ -148,6 +148,24 @@ MAX_JUNK = 2
 #: kilometre, which looks impossible and is correct.
 LONG_SLAB_KM = 100
 
+#: A printed column rule is a few pixels wide; the widest one seen on these pages
+#: is 8. Anything wider than this is left alone rather than guessed at, so a real
+#: glyph is never whitened out of a crop.
+RULE_MAX_WIDTH = 12
+
+#: Extra columns cleared on each side of a rule, for its blurred edge.
+RULE_EDGE = 2
+
+#: The steepest scan skew worth fitting, in pixels of rise per pixel of width.
+#: Measured skew on page 10 is 0.028; anything above this is not a tilted scan but
+#: boxes taken from two different printed lines, and the fit is refused.
+MAX_SKEW = 0.08
+
+#: The enlargements a crop is read at. Two renderings, because tesseract's answer
+#: moves with scale: at three times size it read slab 21-25's `47` as `7` in two
+#: of three modes, while two times and four times size read `47` in all three.
+CROP_SCALES = (2, 4)
+
 
 # --- tokens ------------------------------------------------------------------
 
@@ -759,46 +777,74 @@ def crop_reads(
     box a pass reported, and enlarging it, changes the reader's problem from "a
     table" to "one number", which is the case tesseract is good at.
 
-    Two segmentation modes are used because they fail differently: treating the
-    crop as one text line and treating it as one word disagree on broken glyphs.
-    Both reading the same digits is therefore evidence; a single crop read is
-    still only a guess and is returned as one vote, not a value.
+    Three segmentation modes are used because they fail differently: treating the
+    crop as one text line, as one word, and as a raw line with no layout analysis
+    at all. Two of the three agreeing is therefore evidence within one rendering.
+
+    The third mode is not padding. Measured on page 10's `900` (a clean crop that
+    a human reads without hesitation), `--psm 7` returns `1111`, `800` and `300`
+    depending only on how the crop was scaled, while `--psm 8` and `--psm 13`
+    return `900` at every scale tried. Two modes that both fail on the same cell
+    are not two opinions, and requiring exactly two agreeing reads meant a cell
+    that two of three modes read correctly stayed unread.
+
+    Scale alone moves the answer too, so the crop is enlarged twice and the two
+    renderings each have to reach their own majority. Measured on slab 21-25's
+    Sleeper `47`: at three times size, one mode read `47` and two read `7`; at two
+    and four times size every mode read `47`. Returning one vote per rendering
+    keeps a rendering that lost a glyph from speaking for the whole crop, which is
+    what the caller's two-source rule needs: agreement between renderings, not
+    between settings.
     """
-    if box is None:
-        return []
-    left, top, width, height = box
-    cell = image[max(0, top - 6) : top + height + 6, max(0, left - 6) : left + width + 6]
+    cell = cell_crop(image, box, 6)
     if cell.size == 0:
         return []
-    enlarged = np.pad(np.kron(cell, np.ones((3, 3), dtype=np.uint8)), 24, constant_values=255)
     scratch.parent.mkdir(parents=True, exist_ok=True)
-    scratch.write_bytes(
-        b"P5\n%d %d\n255\n" % (enlarged.shape[1], enlarged.shape[0]) + enlarged.tobytes()
-    )
-    readings: list[str] = []
-    for mode in ("7", "8"):
-        result = subprocess.run(
-            [
-                "tesseract",
-                str(scratch),
-                "-",
-                "--psm",
-                mode,
-                "-c",
-                "tessedit_char_whitelist=0123456789",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
+    rendering_values: list[str] = []
+    for scale in CROP_SCALES:
+        enlarged = np.pad(
+            np.kron(cell, np.ones((scale, scale), dtype=np.uint8)), 24, constant_values=255
         )
-        value = read_number(result.stdout.strip())
-        if value is not None:
-            readings.append(value)
-    return readings
+        scratch.write_bytes(
+            b"P5\n%d %d\n255\n" % (enlarged.shape[1], enlarged.shape[0]) + enlarged.tobytes()
+        )
+        readings: list[str] = []
+        for mode in ("7", "8", "13"):
+            result = subprocess.run(
+                [
+                    "tesseract",
+                    str(scratch),
+                    "-",
+                    "--psm",
+                    mode,
+                    "-c",
+                    "tessedit_char_whitelist=0123456789",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            value = read_number(result.stdout.strip())
+            if value is not None:
+                readings.append(value)
+        if len(readings) >= 2:
+            candidate, support = Counter(readings).most_common(1)[0]
+            if support >= 2:
+                rendering_values.append(candidate)
+    return rendering_values
+
+
+def _readable_fares(row: Row, classes: list[str]) -> int:
+    """How many of a row's class columns carry a value two reads agreed on."""
+    return sum(1 for code in classes if (cell := row.values.get(code)) and cell.confirmed)
 
 
 def cell_box(
-    row: Row, column_index: int, centres: list[float], margin: int = 8
+    row: Row,
+    column_index: int,
+    centres: list[float],
+    margin: int = 8,
+    window: tuple[int, int] | None = None,
 ) -> tuple[int, int, int, int]:
     """The rectangle a column of a row occupies, from the shared grid.
 
@@ -806,13 +852,252 @@ def cell_box(
     geometry still says where that number would be printed, and an isolated read
     of exactly that rectangle is a real measurement, not a guess. The rectangle
     stops short of its neighbours so a re-read cannot return the column beside it.
+    A `window` overrides the band's top and bottom for a row whose band is taller
+    than the line the row actually prints.
     """
     centre = centres[column_index]
     gap_left = centre - max([x for x in centres if x < centre], default=centre - 120)
     gap_right = min([x for x in centres if x > centre], default=centre + 120) - centre
     half_width = max(12.0, min(gap_left, gap_right) / 2 - margin)
-    top, bottom = row.band
+    top, bottom = window or row.band
     return (round(centre - half_width), top + 2, round(2 * half_width), max(4, bottom - top - 4))
+
+
+@dataclass(frozen=True)
+class LineModel:
+    """Where a row's printed line sits, as a function of the column.
+
+    A scan is not level. Measured on page 10's row 191-195, the word boxes of one
+    printed line have tops 2827, 2833, 2839 and 2844 from the right-hand column to
+    the left: the paper is skewed by about 17 pixels across the table, so a single
+    horizontal window is 17 pixels wrong at one end of it. That is how the FC cell
+    of that row read as `011`: the crop cut the top off its `406`. The skew is a
+    line, the row's own cells are the points on it, and fitting it costs nothing
+    because those boxes were already read.
+    """
+
+    intercept: float
+    slope: float
+    height: int
+
+    def window(self, centre: float) -> tuple[int, int]:
+        top = round(self.intercept + self.slope * centre)
+        return top, top + self.height + 4
+
+
+def row_line(row: Row, classes: list[str]) -> LineModel | None:
+    """The row's own printed line, fitted across the columns.
+
+    A band is a slice of the shared grid, and where two printed values merge into
+    one token a whole-page pass emits a single word box spanning both lines.
+    Measured on page 10, the FC cell of slab 191-195 was such a box -- 101x58
+    against 63x29 for every neighbouring cell -- and an isolated read of it
+    returned `408`, a blend of the `406` printed on that line and the `414`
+    printed on the next. The row's other columns still carry tight boxes on the
+    one line the row occupies, so they say where that line is: each contributes a
+    point, and the line through them gives the window of a column that has no box
+    of its own. Returns None when the row has no box to learn from, which leaves
+    the band in charge.
+    """
+    cells = [row.start_cell, row.end_cell, *(row.values.get(code) for code in classes)]
+    boxes = [cell.box for cell in cells if cell and cell.box]
+    if not boxes:
+        return None
+    heights = sorted(box[3] for box in boxes)
+    typical = heights[len(heights) // 2]
+    tight = [box for box in boxes if box[3] <= 1.5 * typical]
+    xs = [box[0] + box[2] / 2 for box in tight]
+    ys = [float(box[1]) for box in tight]
+    mean_x = sum(xs) / len(xs)
+    mean_y = sum(ys) / len(ys)
+    slope = 0.0
+    intercept = mean_y
+    spread = sum((x - mean_x) ** 2 for x in xs)
+    if len(xs) >= 2 and spread > 0:
+        slope = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys, strict=True)) / spread
+        intercept = mean_y - slope * mean_x
+        if abs(slope) > MAX_SKEW:
+            # A fit that steep is not a tilted scan, it is boxes from two lines.
+            slope, intercept = 0.0, mean_y
+    return LineModel(intercept=intercept, slope=slope, height=typical)
+
+
+def probe_box(
+    row: Row,
+    cell: Cell | None,
+    column_index: int,
+    centres: list[float],
+    line: LineModel | None,
+) -> tuple[int, int, int, int]:
+    """The rectangle to re-read for one cell of one row.
+
+    The cell's own box when a pass gave it a tight one on this row's line, the
+    grid geometry otherwise. A box taller than the row's line is a merged token
+    spanning a neighbouring line, which is how slab 191-195's `406` came back as
+    `408`: the box held the `414` printed below it too.
+    """
+    box = cell.box if cell else None
+    window = line.window(centres[column_index]) if line is not None else None
+    if box is None or (line is not None and box[3] > 1.5 * line.height):
+        return cell_box(row, column_index, centres, window=window)
+    return box
+
+
+_SECOND_ENGINE: object | None = None
+_SECOND_ENGINE_MISSING = False
+
+
+def second_engine():
+    """An OCR engine whose failure modes are unrelated to tesseract's, or None.
+
+    Tesseract's modes are not independent evidence: measured on page 10, all
+    three crop modes agreed on `2` where the page prints `40`, and both whole-page
+    passes agreed on `408` where the page prints `406`. Two settings of one reader
+    can be confidently wrong together, so a cell that matters gets a reader built
+    on a different model (PP-OCR via RapidOCR, CPU, ONNX, no torch).
+
+    Absent, the extractor still runs: it settles only what tesseract can settle
+    twice, and leaves the rest unread, which costs coverage and never a wrong
+    price.
+    """
+    global _SECOND_ENGINE, _SECOND_ENGINE_MISSING
+    if _SECOND_ENGINE is not None or _SECOND_ENGINE_MISSING:
+        return _SECOND_ENGINE
+    try:
+        from rapidocr_onnxruntime import RapidOCR
+    except ImportError:
+        _SECOND_ENGINE_MISSING = True
+        print(
+            "note: rapidocr-onnxruntime is not installed, so unsettled cells get one "
+            "reader instead of two; install it with `uv run --extra fare ...`",
+            file=sys.stderr,
+        )
+        return None
+    _SECOND_ENGINE = RapidOCR()
+    return _SECOND_ENGINE
+
+
+GLYPH_CONFUSIONS = str.maketrans({"O": "0", "o": "0", "I": "1", "l": "1", "S": "5"})
+
+
+def normalize_digits(text: str) -> str | None:
+    """A digit string, allowing the glyph pairs this engine actually confuses.
+
+    Measured on page 10: it reads the printed `235` as `23S`. The map stays this
+    narrow on purpose. `A` is not in it, so the read `4061A` of a cell that prints
+    `406` is still refused rather than turned into `40614` -- refusing keeps the
+    fare unread, guessing would price the journey wrongly.
+    """
+    translated = text.translate(GLYPH_CONFUSIONS)
+    if not translated.isdigit():
+        return None
+    return translated
+
+
+def trim_rule(ink: np.ndarray) -> np.ndarray:
+    """Drop full-height bars from a crop, wherever they are in it.
+
+    The cell box is a slice of the grid, and the grid's outer border is a dark
+    vertical band a few pixels wide. Handed to a crop reader, that band is ink and
+    comes back as characters: the printed `406` returned `4061A`, with the `1A`
+    being the border. Digits never fill the height of their cell, so a column of
+    ink that does is a rule, not a numeral.
+
+    A rule is not always at the edge. A pass reported slab 21-25's `47` with a box
+    wide enough to reach the column separator, and both readers then took the
+    separator for a `1` -- `471`. They agreed with each other because the `1` was
+    really in the picture, which is exactly how a bad crop defeats a two-source
+    rule. Interior rules are therefore whitened, not just trimmed off the ends.
+
+    `ink` holds grey levels, so it has to be thresholded before it can be counted.
+    Summing brightness directly makes every white column look like solid ink.
+    """
+    if ink.size == 0:
+        return ink
+    filled = (ink < 128).sum(axis=0)
+    solid = filled >= 0.9 * ink.shape[0]
+    cleaned = ink
+    for start, end in _solid_runs(solid):
+        # A numeral stroke is a vertical run of ink, but it cannot span the whole
+        # crop: the crop is the text line plus padding above and below. A run
+        # wider than any stroke is a printed rule.
+        if start == 0 or end == len(solid) or end - start > RULE_MAX_WIDTH:
+            continue
+        if cleaned is ink:
+            cleaned = ink.copy()
+        # A rule is a few blurred pixels wider than its solid core: measured on
+        # slab 191-195, the columns either side of the core still carried ink for
+        # 33 of 40 rows, enough for a reader to call them a `1`. The edges go too.
+        cleaned[:, max(0, start - RULE_EDGE) : min(len(solid), end + RULE_EDGE)] = 255
+    solid = (cleaned < 128).sum(axis=0) >= 0.9 * ink.shape[0]
+    left = 0
+    while left < len(solid) and solid[left]:
+        left += 1
+    right = len(solid)
+    while right > left and solid[right - 1]:
+        right -= 1
+    if right - left < cleaned.shape[1] // 4:
+        # The crop is mostly rule; trimming would leave nothing to read.
+        return ink
+    return cleaned[:, left:right]
+
+
+def _solid_runs(flags: np.ndarray) -> list[tuple[int, int]]:
+    """The half-open index ranges where `flags` is true, in order."""
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for index, flag in enumerate(flags):
+        if flag and start is None:
+            start = index
+        elif not flag and start is not None:
+            runs.append((start, index))
+            start = None
+    if start is not None:
+        runs.append((start, len(flags)))
+    return runs
+
+
+def cell_crop(image: np.ndarray, box: tuple[int, int, int, int] | None, pad: int) -> np.ndarray:
+    """The pixels one cell's box covers, padded and stripped of printed rules.
+
+    Both crop readers get the same prepared picture, so neither can score a point
+    against the other by reading the grid's own lines.
+    """
+    if box is None:
+        return np.zeros((0, 0), dtype=np.uint8)
+    left, top, width, height = box
+    cell = image[max(0, top - pad) : top + height + pad, max(0, left - pad) : left + width + pad]
+    if cell.size == 0:
+        return cell
+    return trim_rule(cell)
+
+
+def second_engine_probe(
+    image: np.ndarray, box: tuple[int, int, int, int] | None, scratch: Path
+) -> tuple[str | None, str, float]:
+    """Read one cell with the unrelated engine: (value, raw text, confidence)."""
+    engine = second_engine()
+    if engine is None or box is None:
+        return None, "", 0.0
+    cell = cell_crop(image, box, 8)
+    if cell.size == 0:
+        return None, "", 0.0
+    padded = np.pad(cell, 32, constant_values=int(np.percentile(cell, 95)))
+    scratch.parent.mkdir(parents=True, exist_ok=True)
+    scratch.write_bytes(b"P5\n%d %d\n255\n" % (padded.shape[1], padded.shape[0]) + padded.tobytes())
+    result, _ = engine(str(scratch))
+    if not result:
+        return None, "", 0.0
+    raw = "".join(entry[1] for entry in result)
+    score = min(entry[2] for entry in result)
+    return normalize_digits(raw), raw, score
+
+
+def second_engine_read(
+    image: np.ndarray, box: tuple[int, int, int, int] | None, scratch: Path
+) -> str | None:
+    """One cell, read by the unrelated engine. None when it has no opinion."""
+    return second_engine_probe(image, box, scratch)[0]
 
 
 def resolve_unsettled(
@@ -820,15 +1105,23 @@ def resolve_unsettled(
 ) -> int:
     """Give every cell no two reads agreed on another, isolated read.
 
-    A cell the whole-page passes could not settle is cropped and re-read. The
-    cell is only settled when two reads agree, so this can turn a lone vote into a
-    confirmed value and can also overturn one, but it never invents a value from a
-    single reading. A cell no pass found a token for is cropped from the grid's
-    own geometry instead. Returns how many cells were settled this way.
+    A cell the whole-page passes could not settle is cropped and handed to two
+    readers built on different models, and settled only when two of the three
+    sources agree: the page passes, the tesseract crop consensus, and the second
+    engine's read of the same crop. Returns how many cells were settled.
+
+    Three sources, two opinions, and the sources are not interchangeable. A crop
+    is one image read twice, so its two readers are independent; tesseract's own
+    modes are not, because all three measured modes agreed on `2` where the page
+    prints `40`. A page pass and a crop read are also independent of each other,
+    which is why they corroborate. What is refused: one source alone. Every wrong
+    fare this table has produced came from believing a single confident reader.
     """
     width = 2 + len(classes)
     settled = 0
+    scratch = scratch.with_suffix(".cell.pgm")
     for row in rows:
+        line = row_line(row, classes)
         columns = [
             (row.start_cell, row.half * width),
             (row.end_cell, row.half * width + 1),
@@ -840,17 +1133,28 @@ def resolve_unsettled(
         for cell, column_index in columns:
             if cell is None or cell.confirmed:
                 continue
-            box = cell.box or cell_box(row, column_index, centres)
+            box = probe_box(row, cell, column_index, centres, line)
             extra = crop_reads(image, box, scratch)
-            if len(extra) == 2 and extra[0] == extra[1]:
-                # An isolated crop read by two segmentation modes beats what a
-                # crowded page pass said, because it is a different problem, not
-                # a louder opinion about the same one.
-                cell.votes = list(extra)
-                settled += 1
-            elif len(extra) == 1 and extra[0] in cell.votes:
-                cell.votes = [*cell.votes, extra[0]]
-                settled += 1
+            page_values = set(cell.votes)
+            page_value = page_values.pop() if len(page_values) == 1 else None
+            crop_value = None
+            if len(extra) >= 2:
+                counts = Counter(extra)
+                candidate, support = counts.most_common(1)[0]
+                if support >= 2:
+                    crop_value = candidate
+            second = second_engine_read(image, box, scratch)
+
+            chosen = None
+            if crop_value is not None and second is not None and crop_value == second:
+                # Two models, one image: the strongest evidence available here.
+                chosen = crop_value
+            elif page_value is not None and page_value in (crop_value, second):
+                chosen = page_value
+            if chosen is None:
+                continue
+            cell.votes = [*cell.votes, chosen, chosen]
+            settled += 1
     return settled
 
 
@@ -900,7 +1204,28 @@ def validate(rows: list[Row], section: str, classes: list[str]) -> tuple[list[di
         code: Report(section=section, class_code=code) for code in classes
     }
     usable_rows = [row for row in rows if row.start and row.end and row.start < row.end]
-    ordered = sorted(usable_rows, key=lambda row: (row.start, row.end))
+    # Two rows cannot start at the same distance: the slab column is a tiling of
+    # the axis, so a repeated start means one of the two rows was moved there by
+    # an implied start that the other row had already claimed. Keeping both would
+    # emit two prices for one slab, and keeping the wrong one would emit a price
+    # for a slab the document does not print. The row with more readable fares
+    # wins because that is the one whose identity is worth trusting; the other is
+    # dropped whole, and the drop is reported rather than assumed away.
+    by_start: dict[int, Row] = {}
+    for row in usable_rows:
+        held = by_start.get(row.start)
+        if held is None:
+            by_start[row.start] = row
+            continue
+        loser = min((held, row), key=lambda candidate: _readable_fares(candidate, classes))
+        winner = row if loser is held else held
+        by_start[row.start] = winner
+        reports[classes[0]].violations.append(
+            f"{winner.start}-{winner.end}: duplicate start, kept the row with "
+            f"{_readable_fares(winner, classes)} readable fares over "
+            f"{loser.start}-{loser.end} with {_readable_fares(loser, classes)}"
+        )
+    ordered = sorted(by_start.values(), key=lambda row: (row.start, row.end))
 
     entries: list[dict] = []
     previous_end: int | None = None

@@ -18,6 +18,10 @@ dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6", "httpx>=0.27"]
 # Training only. Serving the punctuality model reads a JSON artifact with the
 # standard library, so a demo machine never installs any of this.
 train = ["numpy>=2", "scikit-learn>=1.5"]
+# Fare table extraction from the scanned circular. A second OCR model is what
+# makes a cell read twice by two independent readers rather than twice by
+# tesseract, so this is a build-the-data dependency, never a runtime one.
+fare = ["rapidocr-onnxruntime>=1.4", "opencv-python-headless>=4.10"]
 
 [tool.setuptools.packages.find]
 include = ["railmind*"]
