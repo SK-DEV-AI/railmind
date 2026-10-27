@@ -14,12 +14,18 @@ Say this without hedging, because every line below was run.
 
 1. Type a journey in plain words ("mumbai to pune tomorrow evening, 3AC, need to
    reach by 9") and get back real trains on that corridor, from the full
-   all-India roster: 10,861 trains, 213,105 stops, 13,010 stations.
+   all-India roster: 10,861 trains, 213,105 stops, 13,010 stations. Say
+   "morning" and the shortlist is the morning: the hours you named are a filter,
+   and if nothing leaves inside them the whole day comes back with the mismatch
+   written on each card.
 2. See, for each train, the real departure and arrival times, how many days it
    runs, every stop with distance, and how long it actually takes.
 3. See a **price in rupees for the class you named**, computed locally from the
    railway's own published fare table, with the base fare, reservation charge and
-   any minimum-distance rule broken out, plus the circular it came from.
+   any minimum-distance rule broken out, plus the circular it came from. The
+   timetable carries no class list for any train, so the price stands with a
+   stated caveat; where a class list is known and the train lacks your class, no
+   price is shown and the card names the classes it does carry.
 4. See a **delay-risk score** from a model trained on real running data
    (ROC-AUC 0.778), not a vibe.
 5. Get one ranked shortlist with the reasoning shown (duration, price, delay,
