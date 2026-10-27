@@ -203,6 +203,7 @@ class Query:
     quota: Quota = Quota.general
     passengers: tuple[Passenger, ...] = ()
     arrive_by: dt.datetime | None = None
+    depart_window: TimeWindow | None = None
     max_price: Money | None = None
     tags: frozenset[str] = field(default_factory=frozenset)
 
@@ -256,5 +257,6 @@ class Query:
             quota=intent.quota,
             passengers=tuple(intent.passengers or ()),
             arrive_by=intent.arrive_by,
+            depart_window=window,
             max_price=intent.budget,
         )

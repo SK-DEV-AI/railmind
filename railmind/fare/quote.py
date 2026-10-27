@@ -241,12 +241,12 @@ def _variant(
             "basic",
             "Basic fare",
             base * 100,
-            None
-            if slab is not None
-            else (
+            (
                 f"read past the last printed slab ({printed.slabs[-1].end} km) with the "
                 f"circular's per-50 km increment"
-            ),
+            )
+            if slab is None
+            else (f"row {slab.start}-{slab.end} km of {table.source}, effective {table.effective}"),
         ),
         Component(
             "reservation",

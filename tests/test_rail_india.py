@@ -14,6 +14,7 @@ The three findings that forced design decisions are each pinned by a test:
 
 from __future__ import annotations
 
+import dataclasses
 import datetime as dt
 import json
 import pathlib
@@ -91,15 +92,28 @@ def provider(repo, transport) -> RailIndiaProvider:
 
 
 def make_query(
-    origin: str = "CSMT", destination: str = "PUNE", classes: tuple[str, ...] = ()
+    origin: str = "CSMT",
+    destination: str = "PUNE",
+    classes: tuple[str, ...] = (),
+    window: tuple[str, str] | None = None,
 ) -> Query:
-    from railmind.providers.rail_india import _stop
+    from railmind.providers.rail_india import IST, _stop
+    from railmind.wire.models import TimeWindow
+
+    depart_window = None
+    if window is not None:
+        start, end = window
+        depart_window = TimeWindow(
+            start=dt.datetime.combine(SERVICE_DATE, dt.time.fromisoformat(start), tzinfo=IST),
+            end=dt.datetime.combine(SERVICE_DATE, dt.time.fromisoformat(end), tzinfo=IST),
+        )
 
     return Query(
         origin=_stop(origin, origin, 18.94, 72.83),
         destination=_stop(destination, destination, 18.52, 73.85),
         service_date=SERVICE_DATE,
         classes=classes,
+        depart_window=depart_window,
     )
 
 
@@ -187,6 +201,21 @@ class TestSeededSearch:
         assert len(first) == len(second) == 2
         assert len(transport.calls) == 1
         assert transport.calls[0][0].startswith("/v1/trains/between/CSMT/ADI")
+
+    async def test_the_departure_window_filters_the_day(self, provider):
+        # Morning means morning: the 06:40 and 07:00 trains are not an answer to
+        # "before six".
+        morning = await provider.search(make_query(window=("04:00", "06:00")))
+
+        assert [item.legs[0].service.service_id for item in morning] == ["22105"]
+
+    async def test_an_empty_window_still_shows_the_day_and_says_so(self, provider):
+        # Nothing leaves between 01:00 and 02:00, but "no train exists" would be a
+        # lie, so the whole day comes back with the mismatch on each card.
+        night = await provider.search(make_query(window=("01:00", "02:00")))
+
+        assert len(night) == 3
+        assert all(any("requested window" in w for w in i.warnings) for i in night)
 
     async def test_non_daily_train_is_filtered_out(self, repo, transport):
         payload = load("train_11007.json")
@@ -327,13 +356,35 @@ class TestFare:
         plain = train(await provider.search(make_query()), "22105")
         assert (plain.total_price, plain.price_breakup) == (None, None)
 
-        asked = train(await provider.search(make_query(classes=("3A",))), "22105")
+        asked = train(await provider.search(make_query(classes=("CC",))), "22105")
         assert asked.total_price is not None
-        assert asked.total_price.amount_minor == 49200
+        expected = provider.fare_quote(plain, "CC").total_minor
+        assert asked.total_price.amount_minor == expected
         assert [part.title for part in asked.price_breakup] == [
             Title.base_fare,
             Title.reservation_charge,
         ]
+
+    async def test_refuses_a_price_for_a_train_that_lacks_the_class(self, provider):
+        # 22105 carries CC and 2S on this corridor, so a 3A card would be a lie
+        # about a train the user is about to board.
+        asked = train(await provider.search(make_query(classes=("3A",))), "22105")
+
+        assert asked.total_price is None
+        assert any("No fare is shown for 3A" in w and "CC, 2S" in w for w in asked.warnings)
+
+    async def test_a_price_computed_without_a_known_class_list_says_so(self, provider, repo):
+        # Today every one of the 10,861 trains in the real timetable has no class
+        # list, so this is the live path: price stands, the caveat is stated.
+        option = next(
+            item for item in repo.trains_between("CSMT", "PUNE") if item.train_number == "22105"
+        )
+        unknown = dataclasses.replace(option, classes=())
+
+        itinerary = provider._to_itinerary(unknown, make_query(classes=("CC",)))
+
+        assert itinerary.total_price is not None
+        assert any("records no class list" in w for w in itinerary.warnings)
 
     def test_vendor_upstream_failure_maps_to_upstream_down(self):
         payload = load("fare_12137_3A.json")

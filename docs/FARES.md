@@ -22,16 +22,25 @@ quote = fare.quote(
     distance_km=190.7,
     table=fare.default_table(),
     charges=fare.default_charges(),
-    tax=fare.default_tax(),        # None today: see §5
-    season=None,                   # None = peak, lean returned as alternate
-    superfast=None,                # None = unknown, stated in assumptions
+    tax=fare.default_tax(),
+    season=None,
+    superfast=None,
 )
-quote.total_minor        # 49200  (paise)
-quote.components         # [base_fare 452.00, reservation_charge 40.00]
-quote.assumptions        # plain-English caveats, always populated
-quote.source             # "Commercial Circular 24 of 2025"
-quote.effective          # "2025-12-26"
+quote.total_minor  # 49200 paise, the whole answer
+quote.components  # base_fare 452.00 + reservation_charge 40.00
+quote.assumptions  # plain-English caveats, always populated
+quote.source  # "Commercial Circular 24 of 2025"
+quote.effective  # "2025-12-26"
 ```
+
+Three of those arguments are deliberately `None` rather than guessed:
+
+- `tax=fare.default_tax()` returns nothing today, because no cited tax rule
+  exists yet (see §5). A quote therefore excludes GST and says so.
+- `season=None` means peak. The lean-season rate comes back as an alternate on
+  the same quote, so the caller chooses instead of the code choosing.
+- `superfast=None` means the timetable carries no superfast flag, so the
+  supplement is stated as a possible shortfall rather than added by default.
 
 The provider wraps this: `rail_india.price()` → `quote_for_leg()`, and
 `_to_itinerary` attaches `total_price` + `price_breakup` **only when the query

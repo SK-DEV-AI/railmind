@@ -51,6 +51,7 @@ from railmind.core.types import (
     ScoreBreakdown,
     ServiceRef,
     Stop,
+    TimeWindow,
     Title,
 )
 from railmind.data.timetable import TimetableRepo, TripOption
@@ -243,7 +244,34 @@ class RailIndiaProvider(BaseProvider):
                 f"none of the {unusable} trains between {origin_code} and "
                 f"{destination_code} has usable departure and arrival times"
             )
+        itineraries = self._within_window(itineraries, query.depart_window)
         return self._order_by_departure(itineraries)
+
+    @staticmethod
+    def _within_window(itineraries: list[Itinerary], window: TimeWindow | None) -> list[Itinerary]:
+        """Keep the trains that leave when the user said they want to leave.
+
+        *When* a train departs is the fact that decides a Tatkal decision, so a
+        request for "tomorrow morning" answered with a 17:10 train is a wrong
+        answer even though every field on the card is true. The window is a filter
+        first and a note second: if no train runs inside it, the whole day comes
+        back with the mismatch stated on each card, because answering "when does a
+        train leave" with an empty list hides a real train from someone in a hurry.
+        """
+        if window is None:
+            return itineraries
+        inside = [item for item in itineraries if window.start <= item.depart_at <= window.end]
+        if inside:
+            return inside
+        for item in itineraries:
+            item.warnings = [
+                *(item.warnings or []),
+                (
+                    "No train departs inside the requested window; this one leaves at "
+                    f"{item.depart_at:%H:%M}"
+                ),
+            ]
+        return itineraries
 
     async def _vendor_between(self, origin_code: str, destination_code: str) -> list[dict]:
         key = CacheKey(
@@ -355,12 +383,32 @@ class RailIndiaProvider(BaseProvider):
             # A price is only attached when the user named a class: the wire has one
             # total per itinerary, and a total for a class nobody asked for reads as
             # the price of the train.
-            quote = self.quote_for_leg(leg, query.classes[0])
-            if quote.total_minor is not None:
-                total_price = Money(amount_minor=quote.total_minor, currency="INR")
-                price_breakup = self.fare_components(quote)
-            elif quote.unpriced_reason:
-                warnings.append(f"No fare is shown for {query.classes[0]}: {quote.unpriced_reason}")
+            wanted = query.classes[0]
+            if option.classes and wanted not in option.classes:
+                # The timetable says what this train carries, and it does not carry
+                # the requested class. A fare for that class would be a price for a
+                # seat that does not exist on this train.
+                warnings.append(
+                    f"No fare is shown for {wanted}: this train carries {', '.join(option.classes)}"
+                )
+            else:
+                quote = self.quote_for_leg(leg, wanted)
+                if quote.total_minor is not None:
+                    total_price = Money(amount_minor=quote.total_minor, currency="INR")
+                    price_breakup = self.fare_components(quote)
+                    if not option.classes:
+                        # The crawl records no class list, so the price is the printed
+                        # fare for that class at this distance on this service type,
+                        # which is the right number when the class runs and a
+                        # hypothetical one when it does not. Said out loud rather than
+                        # left for the user to discover on the booking page.
+                        warnings.append(
+                            f"The timetable records no class list for this train, so the "
+                            f"{wanted} fare is the printed fare for this distance; confirm "
+                            f"{wanted} runs on this train before booking"
+                        )
+                elif quote.unpriced_reason:
+                    warnings.append(f"No fare is shown for {wanted}: {quote.unpriced_reason}")
 
         return Itinerary(
             itinerary_id=itinerary_id([leg.leg_id]),
