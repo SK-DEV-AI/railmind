@@ -77,7 +77,6 @@ def transport() -> FakeTransport:
                     "trainNumber": "12951",
                 },
             },
-            "/v1/trains/12951/fare": {"success": True, "data": {"total": 2605.5}},
         }
     )
 
@@ -91,13 +90,16 @@ def provider(repo, transport) -> RailIndiaProvider:
     )
 
 
-def make_query(origin: str = "CSMT", destination: str = "PUNE") -> Query:
+def make_query(
+    origin: str = "CSMT", destination: str = "PUNE", classes: tuple[str, ...] = ()
+) -> Query:
     from railmind.providers.rail_india import _stop
 
     return Query(
         origin=_stop(origin, origin, 18.94, 72.83),
         destination=_stop(destination, destination, 18.52, 73.85),
         service_date=SERVICE_DATE,
+        classes=classes,
     )
 
 
@@ -141,7 +143,7 @@ class TestSeededSearch:
         assert {item.risk_band for item in itineraries} == {"unknown"}
         assert all(item.risk_reasons == [] for item in itineraries)
 
-    async def test_price_is_absent_because_it_was_not_fetched(self, provider):
+    async def test_price_is_absent_when_the_query_names_no_class(self, provider):
         from railmind.engine.ranking import rank
 
         raw = await provider.search(make_query())
@@ -235,25 +237,103 @@ class TestAvailabilityHonesty:
 
 
 class TestFare:
-    async def test_fetches_once_and_returns_exact_paise(self, provider, transport):
-        transport.routes["/v1/trains/12127/fare"] = {"success": True, "data": {"total": 2605.5}}
-        itinerary = train(await provider.search(make_query()), "12127")
+    """A fare is computed from the printed table, so it costs no request and no guess.
+
+    Every number below is read out of `data/fare-table.json`, the transcription of
+    Commercial Circular 24 of 2025, not invented here. 22105 covers 190.7 km on this
+    corridor, which the table charges as 200 km for SL (its printed minimum distance
+    for charge) and as 191 km for 2S and CC (a part kilometre is charged as one).
+    """
+
+    async def test_prices_from_the_printed_table_without_a_request(self, provider, transport):
+        itinerary = train(await provider.search(make_query()), "22105")
         price = await provider.price(itinerary)
-        await provider.price(itinerary)
 
-        assert price.amount_minor == 260550
+        # 130 basic + 20 reservation: SL at the 200 km minimum distance for charge.
+        assert price.amount_minor == 15000
         assert price.currency == "INR"
-        assert len(transport.calls) == 1
-        _path, params = transport.calls[0]
-        assert params["journeyDate"] == SERVICE_DATE.isoformat()
-        assert params["classCode"] == "3A"
-        assert "from" in params and "to" in params
+        assert transport.calls == []
 
-    async def test_unknown_fare_shape_is_refused_not_guessed(self, provider, transport):
-        transport.routes["/v1/trains/12127/fare"] = {"success": True, "data": {"mystery": 1}}
-        itinerary = train(await provider.search(make_query()), "12127")
-        with pytest.raises(NotSupported, match="did not contain a total"):
-            await provider.price(itinerary)
+    async def test_the_parts_add_up_to_the_total(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        quote = provider.fare_quote(itinerary, "3A")
+
+        assert quote.total_minor == 49200
+        assert [(part.code, part.amount_minor) for part in quote.components] == [
+            ("basic", 45200),
+            ("reservation", 4000),
+        ]
+        assert sum(part.amount_minor for part in quote.components) == quote.total_minor
+        assert (quote.section, quote.slab) == ("mail_express_ac", (296, 300))
+
+    async def test_the_quote_cites_the_page_it_read(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        quote = provider.fare_quote(itinerary, "2S")
+
+        assert "Commercial Circular 24 of 2025" in quote.source
+        assert quote.effective == "2025-12-26"
+        assert quote.slab == (191, 195)
+
+    async def test_a_part_kilometre_is_charged_as_a_whole_one(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        quote = provider.fare_quote(itinerary, "2S")
+
+        # 190.7 km must not fall between the printed 186-190 and 191-195 slabs.
+        assert any("190.7 km journey is charged as 191 km" in note for note in quote.assumptions)
+
+    async def test_the_minimum_distance_for_charge_is_applied_and_stated(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        quote = provider.fare_quote(itinerary, "SL")
+
+        assert quote.slab == (196, 200)
+        assert any("minimum distance for charge of 200 km" in note for note in quote.assumptions)
+
+    async def test_an_unknown_superfast_charge_is_stated_not_skipped(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        quote = provider.fare_quote(itinerary, "SL")
+
+        # Neither the circular nor the timetable carries a superfast flag.
+        assert [part.code for part in quote.components] == ["basic", "reservation"]
+        assert any("up to that much higher" in note for note in quote.assumptions)
+        assert any("Rs 30" in note for note in quote.assumptions)
+
+    async def test_refuses_a_service_the_table_does_not_cover(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        leg = itinerary.legs[0]
+        vande_bharat = leg.model_copy(
+            update={"service": leg.service.model_copy(update={"name": "20901 Vande Bharat"})}
+        )
+        with pytest.raises(NotSupported, match="own table"):
+            await provider.price(itinerary.model_copy(update={"legs": [vande_bharat]}))
+
+    async def test_refuses_a_class_the_table_does_not_print(self, provider):
+        itinerary = train(await provider.search(make_query()), "22105")
+        quote = provider.fare_quote(itinerary, "EC")
+
+        assert quote.total_minor is None
+        assert "no EC column" in (quote.unpriced_reason or "")
+        assert quote.components == ()
+        assert quote.assumptions == ()
+
+    async def test_an_unpriced_class_becomes_a_warning_not_a_price(self, provider):
+        itinerary = train(await provider.search(make_query(classes=("EC",))), "22105")
+
+        assert itinerary.total_price is None
+        assert any("No fare is shown for EC" in w for w in itinerary.warnings)
+
+    async def test_search_prices_only_the_class_the_user_named(self, provider):
+        from railmind.core.types import Title
+
+        plain = train(await provider.search(make_query()), "22105")
+        assert (plain.total_price, plain.price_breakup) == (None, None)
+
+        asked = train(await provider.search(make_query(classes=("3A",))), "22105")
+        assert asked.total_price is not None
+        assert asked.total_price.amount_minor == 49200
+        assert [part.title for part in asked.price_breakup] == [
+            Title.base_fare,
+            Title.reservation_charge,
+        ]
 
     def test_vendor_upstream_failure_maps_to_upstream_down(self):
         payload = load("fare_12137_3A.json")

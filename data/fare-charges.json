@@ -1,0 +1,52 @@
+{
+ "source": "Commercial Circular 24 of 2025, page 4, 'Other charges applicable on passenger fares'",
+ "effective": "2025-12-26",
+ "read_by": "human, from a 400 dpi render of the page, and independently by tesseract --psm 6 on the same render; the two agreed on every value except one, which the eye corrected (AC Economy's superfast charge reads 45; tesseract offered 43 at 73% confidence, and the row's neighbours plus the printed 4's crossbar settle it)",
+ "why": "A basic fare is one component of the price. This page states the four numbers that turn it into what a passenger pays: the distance below which a class is charged its minimum fare, that minimum fare, the reservation fee, and the supplementary charge a superfast train adds. The page has no text layer, so it is transcribed by hand with the render kept as the record, rather than routed through the slab reader which expects a distance column this table does not have.",
+ "columns": {
+  "min_distance_km": "Minimum distance for charge, in kilometres. A journey shorter than this is charged as if it were this long.",
+  "min_fare": "Base fare at that minimum distance. It must equal the basic-fare table's value for the same class, which is how it is checked at load time.",
+  "reservation_fee": "Rupees, per passenger. Blank where the class cannot be reserved.",
+  "superfast": "Supplementary charge for superfast trains, rupees per passenger. Blank where the class is not carried on superfast trains."
+ },
+ "mail_express": {
+  "2S": {"min_distance_km": 50, "min_fare": 31, "reservation_fee": 15, "superfast": 15},
+  "SL": {"min_distance_km": 200, "min_fare": 130, "reservation_fee": 20, "superfast": 30},
+  "CC": {"min_distance_km": 150, "min_fare": 217, "reservation_fee": 40, "superfast": 45},
+  "3E": {"min_distance_km": 300, "min_fare": 452, "reservation_fee": 40, "superfast": 45},
+  "3A": {"min_distance_km": 300, "min_fare": 452, "reservation_fee": 40, "superfast": 45},
+  "FC": {"min_distance_km": 100, "min_fare": 235, "reservation_fee": 50, "superfast": 45},
+  "2A_peak": {"min_distance_km": 300, "min_fare": 637, "reservation_fee": 50, "superfast": 45},
+  "2A_lean": {"min_distance_km": 300, "min_fare": 617, "reservation_fee": 50, "superfast": 45},
+  "1A_peak": {"min_distance_km": 300, "min_fare": 1071, "reservation_fee": 60, "superfast": 75},
+  "1A_lean": {"min_distance_km": 300, "min_fare": 1010, "reservation_fee": 60, "superfast": 75},
+  "EC": {"min_distance_km": null, "min_fare": null, "reservation_fee": 60, "superfast": 75}
+ },
+ "ordinary": {
+  "_note": "Ordinary services are unreserved suburban and non-suburban trains plus season tickets. Recorded for completeness; the railway booking flow this engine serves does not sell them, so nothing here is used to price a journey.",
+  "2S_suburban": {"min_distance_km": 10, "min_fare": 4, "reservation_fee": 15, "superfast": null},
+  "FC_suburban": {"min_distance_km": 10, "min_fare": 23, "reservation_fee": null, "superfast": null},
+  "AC_EMU_suburban": {"min_distance_km": 10, "min_fare": 29, "reservation_fee": null, "superfast": null},
+  "2S_non_suburban": {"min_distance_km": 10, "min_fare": 3, "reservation_fee": 15, "superfast": null},
+  "FC_non_suburban": {"min_distance_km": 10, "min_fare": 45, "reservation_fee": 50, "superfast": null},
+  "AC_EMU_non_suburban": {"min_distance_km": 10, "min_fare": 59, "reservation_fee": null, "superfast": null},
+  "SL": {"min_distance_km": 200, "min_fare": 81, "reservation_fee": 20, "superfast": null},
+  "FC": {"min_distance_km": 10, "min_fare": 45, "reservation_fee": 50, "superfast": null},
+  "2S_MST": {"min_distance_km": 10, "min_fare": 100, "reservation_fee": null, "superfast": null},
+  "FC_MST": {"min_distance_km": 10, "min_fare": 325, "reservation_fee": null, "superfast": null},
+  "AC_EMU_MST": {"min_distance_km": 10, "min_fare": 590, "reservation_fee": null, "superfast": null},
+  "2S_QST": {"min_distance_km": 10, "min_fare": 270, "reservation_fee": null, "superfast": null},
+  "FC_QST": {"min_distance_km": 10, "min_fare": 880, "reservation_fee": null, "superfast": null},
+  "AC_EMU_QST": {"min_distance_km": 10, "min_fare": 1595, "reservation_fee": null, "superfast": null}
+ },
+ "not_in_this_table": {
+  "gst": "This page is headed 'Other charges applicable on passenger fares'. It prints no tax line, so the rate and base of any tax on the fare has to come from a tax notification, not from this circular.",
+  "tatkal": "Tatkal charges are notified separately from basic fares and are not printed on this page.",
+  "peak_lean_period": "The table prices AC 2-Tier and AC First Class for a peak and a lean period, but does not say which dates those are. That definition is elsewhere in the circular.",
+  "concessions": "No concession category is priced here, and this engine quotes the standard adult fare only."
+ },
+ "checks": [
+  "Every mail/express min_fare equals the basic-fare table's fare at that same distance for the same class; tests/test_fare.py asserts it, so a transcription slip in either file fails the build.",
+  "Executive Class prints a dash for both minimum-distance cells: its minimum distance and minimum fare are not stated on this page, and the engine therefore reports them as absent rather than zero."
+ ]
+}

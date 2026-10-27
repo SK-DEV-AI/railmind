@@ -45,6 +45,7 @@ from railmind.wire.models import (
     ServiceRef,
     Stop,
     TimeWindow,
+    Title,
 )
 
 __all__ = [
@@ -76,6 +77,7 @@ __all__ = [
     "ServiceRef",
     "Stop",
     "TimeWindow",
+    "Title",
     "add_money",
     "format_inr",
     "inr",

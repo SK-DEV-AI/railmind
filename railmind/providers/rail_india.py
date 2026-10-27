@@ -5,15 +5,17 @@ Composition, and why each part is where it is:
 - `TimetableRepo` answers "which trains run this corridor" with zero network. That
   is what makes a 100-request month survivable.
 - `RailRadarClient` is consulted only for volatile facts: a route it has not seen,
-  a fare for a finalist, a live position.
+  a live position.
+- `railmind.fare` answers "what does a seat cost" from the Railway Board's printed
+  fare table, so a price costs nothing at all.
 - `RouteCache` sits between them, keyed by route, with stale-serve.
 - The IRCTC deep link is built locally. No request, no automation, no booking.
 
 Deliberate limits, stated rather than hidden:
 
-- `search` does not fetch fares. One fare is one request, and a search returns
-  several trains. The engine prices only the finalists, so a search costs zero
-  requests and a decision costs at most a few.
+- A fare exists only for the classes and services the circular prices: Mail/Express
+  and Rajdhani today. A Shatabdi or Vande Bharat is refused rather than priced off
+  the wrong table, and so is a distance the printed rows do not cover.
 - Seat availability is not on the free data plan, so the capability is advertised
   as absent and `availability()` raises `NotSupported`. It is never guessed.
 - Ranking here uses scheduled duration only. The delay model arrives in Step 3,
@@ -26,6 +28,7 @@ from __future__ import annotations
 import datetime as dt
 from collections.abc import Sequence
 
+from railmind import fare
 from railmind.core.capabilities import Capabilities, Feature, rail_capabilities
 from railmind.core.errors import InvalidQuery, NotSupported
 from railmind.core.ids import itinerary_id, leg_id, stop_id
@@ -33,6 +36,7 @@ from railmind.core.provider import BaseProvider
 from railmind.core.types import (
     Availability,
     BookingChannel,
+    FareComponent,
     GeoPoint,
     Handoff,
     HandoffStep,
@@ -47,6 +51,7 @@ from railmind.core.types import (
     ScoreBreakdown,
     ServiceRef,
     Stop,
+    Title,
 )
 from railmind.data.timetable import TimetableRepo, TripOption
 from railmind.handoff.deeplink import LEGAL_NOTICE, build_irctc_deeplink
@@ -63,6 +68,61 @@ ATTRIBUTION = (
 
 #: Vendor classes we know how to read a fare for, in preference order.
 DEFAULT_CLASS_ORDER = ("SL", "3A", "2A", "1A", "CC", "2S")
+
+#: Quote component code -> the wire's label for it.
+FARE_TITLES = {
+    "basic": Title.base_fare,
+    "reservation": Title.reservation_charge,
+    "superfast": Title.superfast_charge,
+    "gst": Title.gst,
+}
+
+#: Services whose base fare the circular prints in a table of their own. Until each
+#: table is transcribed, pricing these off the Mail/Express table would understate
+#: the real fare, so they are refused and named instead.
+UNTABLED_SERVICES = (
+    ("SHATABDI", "Shatabdi"),
+    ("VANDE BHARAT", "Vande Bharat"),
+    ("DURONTO", "Duronto"),
+    ("GATIMAAN", "Gatimaan"),
+    ("TEJAS", "Tejas"),
+    ("HUMSAFAR", "Humsafar"),
+    ("GARIB RATH", "Garib Rath"),
+    ("AMRIT BHARAT", "Amrit Bharat"),
+    ("MAHAMANA", "Mahamana"),
+    ("ANTYODAYA", "Antyodaya"),
+    ("JAN SHATABDI", "Jan Shatabdi"),
+    ("YUVA", "Yuva"),
+    ("VISTADOME", "Vistadome"),
+    ("ANUBHUTI", "Anubhuti"),
+    ("NAMO BHARAT", "Namo Bharat"),
+)
+
+
+def _is_rajdhani(name: str) -> bool:
+    """Rajdhani keeps its own base fare table, including the Tejas Rajdhani."""
+    return "RAJDHANI" in name.upper()
+
+
+def _untabled_service(name: str) -> str | None:
+    upper = name.upper()
+    for marker, label in UNTABLED_SERVICES:
+        if marker in upper:
+            return label
+    return None
+
+
+def _unpriced_quote(
+    table: fare.FareTable, class_code: str, distance_km: float, reason: str
+) -> fare.FareQuote:
+    return fare.FareQuote(
+        section="",
+        class_code=class_code,
+        distance_km=distance_km,
+        unpriced_reason=reason,
+        source=table.source,
+        effective=table.effective,
+    )
 
 
 def _hhmm(value: str, day: int, service_date: dt.date) -> dt.datetime | None:
@@ -289,6 +349,19 @@ class RailIndiaProvider(BaseProvider):
             booking_channel=BookingChannel.deeplink,
         )
 
+        total_price: Money | None = None
+        price_breakup: list[FareComponent] | None = None
+        if query.classes:
+            # A price is only attached when the user named a class: the wire has one
+            # total per itinerary, and a total for a class nobody asked for reads as
+            # the price of the train.
+            quote = self.quote_for_leg(leg, query.classes[0])
+            if quote.total_minor is not None:
+                total_price = Money(amount_minor=quote.total_minor, currency="INR")
+                price_breakup = self.fare_components(quote)
+            elif quote.unpriced_reason:
+                warnings.append(f"No fare is shown for {query.classes[0]}: {quote.unpriced_reason}")
+
         return Itinerary(
             itinerary_id=itinerary_id([leg.leg_id]),
             legs=[leg],
@@ -296,7 +369,8 @@ class RailIndiaProvider(BaseProvider):
             arrive_at=arrival,
             total_duration_s=duration_s,
             modes=[Mode.rail],
-            total_price=None,
+            total_price=total_price,
+            price_breakup=price_breakup,
             score=0.5,
             score_breakdown=ScoreBreakdown(
                 price=0.5, duration=0.5, delay_risk=0.5, comfort=0.5, transfers=1.0
@@ -357,66 +431,83 @@ class RailIndiaProvider(BaseProvider):
         )
 
     async def price(self, itinerary: Itinerary) -> Money:
-        """One request per finalist. This is the only per-train spend we allow."""
-        self._require(Feature.PRICE)
-        leg = itinerary.legs[0]
-        number = leg.service.service_id if leg.service else ""
-        origin = (leg.origin.code or "").upper()
-        destination = (leg.destination.code or "").upper()
-        class_code = (leg.availability.class_code if leg.availability else "") or ""
-        class_code = class_code or DEFAULT_CLASS_ORDER[1]
+        """A published fare, computed locally. No request, no spend, no guess.
 
-        key = CacheKey(
-            provider_id=self.id,
-            kind=CacheKind.FARE,
-            origin=f"IN:{origin}",
-            destination=f"IN:{destination}",
-            service_date=leg.service_date,
-            travel_class=f"{number}:{class_code}",
-        )
+        The fare used to come from the vendor, one request per finalist, from a
+        response shape nobody had ever seen succeed. It now comes from the Railway
+        Board's own printed table, which is both authoritative and free, so a
+        decision costs zero requests and there is no per-train budget to ration.
 
-        async def load() -> dict:
-            return await self.client.fare(
-                number,
-                leg.service_date.isoformat(),
-                origin,
-                destination,
-                class_code,
-            )
-
-        result = await self.cache.get_or_load(key, load)
-        return self._money_from_fare(result.value)
-
-    def _money_from_fare(self, payload: dict) -> Money:
-        """Read a total out of the vendor's fare shape, or refuse.
-
-        The shape was not confirmed during testing (the vendor's upstream failed),
-        so this reads the common keys defensively and raises rather than guessing a
-        number. A wrong price on the card is worse than a missing price.
+        Anything the table does not price raises instead of returning a number: a
+        clever-looking estimate on a booking card is the one error that costs a
+        user money.
         """
-        candidates: list[object] = [
-            payload.get("total"),
-            payload.get("totalFare"),
-            payload.get("fare"),
-        ]
-        fare = payload.get("fare")
-        if isinstance(fare, dict):
-            candidates.extend([fare.get("total"), fare.get("amount")])
+        self._require(Feature.PRICE)
+        quote = self.fare_quote(itinerary)
+        if quote.total_minor is None:
+            raise NotSupported(
+                quote.unpriced_reason or "this journey is not in the published fare table",
+                provider_id=self.id,
+            )
+        return Money(amount_minor=quote.total_minor, currency="INR")
 
-        for candidate in candidates:
-            if isinstance(candidate, (int, float)) and candidate > 0:
-                return Money(amount_minor=round(float(candidate) * 100), currency="INR")
-            if isinstance(candidate, str):
-                try:
-                    value = float(candidate)
-                except ValueError:
-                    continue
-                if value > 0:
-                    return Money(amount_minor=round(value * 100), currency="INR")
-        raise NotSupported(
-            "The fare response did not contain a total we can trust",
-            provider_id=self.id,
+    def fare_quote(self, itinerary: Itinerary, class_code: str | None = None) -> fare.FareQuote:
+        """The worked quote for this leg: parts, assumptions, and its source."""
+        return self.quote_for_leg(itinerary.legs[0], class_code)
+
+    def quote_for_leg(self, leg: Leg, class_code: str | None = None) -> fare.FareQuote:
+        """Price one leg from the printed table, naming what it cannot price."""
+        wanted = class_code or (leg.availability.class_code if leg.availability else "")
+        wanted = wanted or DEFAULT_CLASS_ORDER[0]
+        name = (leg.service.name if leg.service else "") or ""
+        table = fare.default_table()
+        distance = leg.distance_km
+
+        if distance is None or distance <= 0:
+            return _unpriced_quote(
+                table,
+                wanted,
+                0.0,
+                "the timetable does not give this train's distance, so no fare applies",
+            )
+        untabled = _untabled_service(name)
+        if untabled is not None:
+            return _unpriced_quote(
+                table,
+                wanted,
+                distance,
+                f"this is a {untabled} service, whose fares the circular prints in its "
+                f"own table; that table has not been transcribed yet, so quoting the "
+                f"Mail/Express fare would understate the real price",
+            )
+        try:
+            section = fare.resolve(table, wanted, rajdhani=_is_rajdhani(name))
+        except fare.UnknownServiceError as error:
+            return _unpriced_quote(table, wanted, distance, str(error))
+        return fare.quote(
+            section=section,
+            class_code=wanted,
+            # Neither the table nor the timetable carries a superfast flag, so the
+            # supplementary charge is unknown here. Saying so lets the quote carry
+            # the printed upper bound instead of a total that is quietly short.
+            superfast=None,
+            distance_km=distance,
+            table=table,
+            charges=fare.default_charges(),
+            tax=fare.default_tax(),
         )
+
+    def fare_components(self, quote: fare.FareQuote) -> list[FareComponent]:
+        """The quote's parts in the wire shape, so a card can show its working."""
+        return [
+            FareComponent(
+                title=FARE_TITLES[component.code],
+                amount=Money(amount_minor=component.amount_minor, currency="INR"),
+                note=component.note,
+            )
+            for component in quote.components
+            if component.code in FARE_TITLES
+        ]
 
     async def live(self, leg: Leg) -> LiveStatus:
         self._require(Feature.LIVE)

@@ -507,7 +507,13 @@ def row_ruler(
     # empty.
     smooth = np.convolve(bins, np.ones(9) / 9.0, mode="same")
     floor = float(smooth.max()) * 0.25
-    separation = 30
+    # Peaks closer than this are one row. It has to be smaller than the gap between
+    # a block's column-index header and its first data line, which is printed
+    # tighter than the row pitch: at 30 the header and the row under it merged into
+    # one band, and because the band then held a slab-column word the trim below
+    # treated the merged band as the header and dropped a printed row with it
+    # (2251-2275, page 11, measured from the page image).
+    separation = 20
     peaks: list[int] = []
     for index in np.argsort(smooth)[::-1]:
         index = int(index)
@@ -1305,7 +1311,20 @@ def validate(rows: list[Row], section: str, classes: list[str]) -> tuple[list[di
             report.dropped.append(f"{entry['start']}-{entry['end']}: {entry[code]}")
             del entry[code]
 
+    # A row whose every fare went unread carries no price, only the boundaries
+    # of a slab, so it is dropped rather than written as an empty entry. That
+    # drop is reported instead of silent, because it leaves a hole in the
+    # table's coverage that a reader must be able to tell apart from a row the
+    # scan never found: the hole is honest either way (a gap prices as "no
+    # fare", never as an interpolation), but only the report says which of the
+    # two happened.
     kept = [entry for entry in entries if len(entry) > 2]
+    for entry in entries:
+        if len(entry) > 2:
+            continue
+        reports[classes[0]].violations.append(
+            f"{entry['start']}-{entry['end']}: dropped whole, no fare in any class settled"
+        )
     return kept, list(reports.values())
 
 

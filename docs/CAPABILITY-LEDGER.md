@@ -1,7 +1,59 @@
 # CAPABILITY-LEDGER.md — what we can do, what we cannot, and what it costs
 
-Honest matrix as of **2026-10-24**. "Verified" means we ran it, not that a blog said
-so. Costs are the real published or quoted numbers, not guesses.
+Honest matrix as of **2026-10-24**, fares section revised **2026-10-27**. "Verified"
+means we ran it, not that a blog said so. Costs are the real published or quoted
+numbers, not guesses.
+
+---
+
+## 0. Plain answer: what a person can do with RailMind today (2026-10-27)
+
+Say this without hedging, because every line below was run.
+
+**You can:**
+
+1. Type a journey in plain words ("mumbai to pune tomorrow evening, 3AC, need to
+   reach by 9") and get back real trains on that corridor, from the full
+   all-India roster: 10,861 trains, 213,105 stops, 13,010 stations.
+2. See, for each train, the real departure and arrival times, how many days it
+   runs, every stop with distance, and how long it actually takes.
+3. See a **price in rupees for the class you named**, computed locally from the
+   railway's own published fare table, with the base fare, reservation charge and
+   any minimum-distance rule broken out, plus the circular it came from.
+4. See a **delay-risk score** from a model trained on real running data
+   (ROC-AUC 0.778), not a vibe.
+5. Get one ranked shortlist with the reasoning shown (duration, price, delay,
+   comfort, changes), answered in tens of milliseconds, which is what a Tatkal
+   rush actually needs.
+6. Get a **one-tap path to IRCTC** with a step-by-step handoff that says which
+   steps are yours (login, captcha, Aadhaar OTP, payment).
+7. Run the whole thing offline: no vendor call is needed to answer a search or a
+   price.
+
+**You cannot (and the app says so instead of pretending):**
+
+1. **Book or pay.** By design and by IRCTC's terms: the AI never books and never
+   pays. The last step is always yours.
+2. **See seat availability or PNR.** No free, legal machine source exists; it is a
+   paid vendor gate (`403 PLAN_UPGRADE_REQUIRED`) and IRCTC's own endpoint is
+   captcha-walled. The card tells you to check on IRCTC.
+3. **Get a final all-inclusive total.** GST and the Tatkal premium are not in the
+   quote, because the circular prints no rate for either; the quote says exactly
+   that. What you get is the railway's basic fare + reservation + superfast, which
+   is a lower bound.
+4. **Know about today's cancellations, diversions, specials or platform
+   changes.** Not modelled; needs a source we do not have.
+5. **Prefill the IRCTC page from a link.** Measured: IRCTC reads no journey
+   parameters from a URL. The handoff therefore tells you what to type.
+6. **Book other modes.** Metro, bus and cab are shaped into the architecture
+   (provider abstraction matched to ONDC/Beckn), not implemented. Adding one is a
+   new provider module, not a refactor.
+7. **Price premium services with their own tables** (Vande Bharat etc.) or a
+   class the circular does not print (`EC`). Those are refused with a reason, not
+   approximated from the Mail/Express table.
+
+In one line for the report: **we decide, from real data, in a second, and hand
+over an honest path to the booking page, and we never claim more than we did.**
 
 ---
 
@@ -12,6 +64,7 @@ so. Costs are the real published or quoted numbers, not guesses.
 | Full station directory, 13,010 codes and names | **verified working** | 1 request, stored in SQLite |
 | Train schedules: every stop, lat/lon, arrival, departure, day number, cumulative distance | **verified working** | 1 request per train, 285 stops for Punjab Mail |
 | Which trains run a corridor | **verified working** | local SQL join, zero requests when seeded |
+| Local fare per class, cited and itemised | **working** (2026-10-27) | `fare/` from Commercial Circular 24 of 2025, no network call; see `docs/FARES.md` |
 | Rank and present trains by real duration | **working** | real data, no invented scores |
 | Open IRCTC's booking page for the chosen journey | **verified working** | plain link, opens in 200 with no bot block |
 | Tell the human exactly which steps need them | **working** | 5 steps tagged human/captcha/aadhaar/payment |
@@ -37,7 +90,7 @@ so. Costs are the real published or quoted numbers, not guesses.
 
 | Blocked | Unlocks with | Real cost | Worth it? |
 |---|---|---|---|
-| Real fares | RailRadar Dev/Growth tier, **or** a second vendor | RailRadar pricing is not published (JS-rendered page; ask sales). RapidAPI's Indian Railways claims 500,000 requests/month free | That claim is untested. One key, one afternoon, decides it |
+| Real fares | **Resolved without money on 2026-10-27**: built from the published coaching circular instead of a vendor | — | Not needed any more; the vendor was never the source of truth for a price |
 | Seat availability | same | same | For a viva: not needed. For a product: essential |
 | Official IRCTC B2C API | PSP registration | ₹20 lakh integration + ₹10 lakh deposit + ₹10 lakh/year minimum AMC + turnover certificate | No. Not a student project |
 | Agent credential (RSP) | Registration through a PSP | ₹1,300–6,000 for 1–2 years | No: still barred from Tatkal's first 30 minutes, and the rules read counter-only |
