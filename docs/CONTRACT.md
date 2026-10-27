@@ -106,6 +106,7 @@ Additions not in the sketch, all carrying their weight:
 | `Leg` | `Item` + `Fulfillment` | `booking_channel: api` maps to a Beckn-confirmable seller |
 | `Itinerary` | `Fulfillment` group + `Quote` | `price_breakup[]` → `Quote.breakup[]` |
 | `total_price` | `Quote.price` | amount_minor → `value` string at the boundary only |
+| `service_preferences` | `Item.provider` / catalog filter | brand keys, never a train number |
 | `Handoff` | `Order` (init → confirm) | ours stops at init, by design |
 | live status | `Fulfillment.state` | |
 | cancellation | order update | out of scope v0.1 |

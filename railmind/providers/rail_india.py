@@ -29,6 +29,7 @@ import datetime as dt
 from collections.abc import Sequence
 
 from railmind import fare
+from railmind.core import services as services_module
 from railmind.core.capabilities import Capabilities, Feature, rail_capabilities
 from railmind.core.errors import InvalidQuery, NotSupported
 from railmind.core.ids import itinerary_id, leg_id, stop_id
@@ -244,8 +245,44 @@ class RailIndiaProvider(BaseProvider):
                 f"none of the {unusable} trains between {origin_code} and "
                 f"{destination_code} has usable departure and arrival times"
             )
+        itineraries = self._for_services(itineraries, query.services)
         itineraries = self._within_window(itineraries, query.depart_window)
         return self._order_by_departure(itineraries)
+
+    @staticmethod
+    def _for_services(
+        itineraries: list[Itinerary], services: tuple[str, ...]
+    ) -> list[Itinerary]:
+        """Keep the trains that carry the brand the user named.
+
+        Asking for a Vande Bharat and being handed a 21:15 Mail/Express is not a
+        near miss, it is a different journey. The brand is matched against the
+        train name already in hand, so this costs no request and cannot invent a
+        train. Same shape as the window rule: filter first, note second -- if no
+        such train runs this corridor, the whole list comes back with the
+        mismatch stated on every card, because an empty shortlist hides real
+        trains from someone in a hurry.
+        """
+        if not services:
+            return itineraries
+
+        def named(item: Itinerary) -> bool:
+            leg = item.legs[0] if item.legs else None
+            name = leg.service.name if leg is not None and leg.service is not None else ""
+            return any(services_module.matches(key, name) for key in services)
+
+        inside = [item for item in itineraries if named(item)]
+        if inside:
+            return inside
+        wanted = services_module.labels(services)
+        for item in itineraries:
+            leg = item.legs[0] if item.legs else None
+            name = leg.service.name if leg is not None and leg.service is not None else "unknown"
+            item.warnings = [
+                *(item.warnings or ()),
+                f"No {wanted} train runs this corridor; this one is {name}",
+            ]
+        return itineraries
 
     @staticmethod
     def _within_window(itineraries: list[Itinerary], window: TimeWindow | None) -> list[Itinerary]:

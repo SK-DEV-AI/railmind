@@ -35,6 +35,11 @@ Say this without hedging, because every line below was run.
    steps are yours (login, captcha, Aadhaar OTP, payment).
 7. Run the whole thing offline: no vendor call is needed to answer a search or a
    price.
+8. **Ask for a named service.** Say "vande bharat" or "rajdhani or shatabdi" and
+   the shortlist is those trains, matched on the name in the local timetable, so
+   it costs no request. If none runs that corridor the whole day comes back with
+   the mismatch written on each card, because an empty list would hide real
+   trains from someone in a hurry.
 
 **You cannot (and the app says so instead of pretending):**
 
@@ -56,7 +61,9 @@ Say this without hedging, because every line below was run.
    new provider module, not a refactor.
 7. **Price premium services with their own tables** (Vande Bharat etc.) or a
    class the circular does not print (`EC`). Those are refused with a reason, not
-   approximated from the Mail/Express table.
+   approximated from the Mail/Express table. Filtering by brand does work (item 8
+   above): you can ask for only Vande Bharats, you just do not get a price for
+   them.
 
 In one line for the report: **we decide, from real data, in a second, and hand
 over an honest path to the booking page, and we never claim more than we did.**

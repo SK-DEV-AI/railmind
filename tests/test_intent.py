@@ -176,6 +176,36 @@ def test_a_passenger_count_without_names_asks_for_them(repo):
     assert parsed.intent.passengers is None
 
 
+def test_a_named_service_is_read_as_a_preference(repo):
+    intent = ask("book me vande bharat from mumbai to pune tomorrow", repo).intent
+
+    assert intent.service_preferences == ["vande-bharat"]
+    assert intent.origin.code == "CSMT"
+    assert intent.destination.code == "PUNE"
+
+
+def test_a_brand_name_does_not_eat_the_station_name(repo):
+    # "pune vande bharat" is one run of words to the place resolver, and it
+    # matches no station. The brand is stripped before the route is read, so the
+    # user is not asked a question they already answered.
+    intent = ask("mumbai to pune vande bharat tomorrow", repo).intent
+
+    assert (intent.origin.code, intent.destination.code) == ("CSMT", "PUNE")
+    assert intent.service_preferences == ["vande-bharat"]
+
+
+def test_brands_are_kept_in_the_order_they_were_said(repo):
+    intent = ask("shatabdi or rajdhani from mumbai to pune tomorrow", repo).intent
+
+    assert intent.service_preferences == ["shatabdi", "rajdhani"]
+
+
+def test_a_plain_request_names_no_service(repo):
+    # Not an empty list: absent means "any train", which is a different answer
+    # from "a train of a brand nobody has heard of".
+    assert ask("mumbai to pune tomorrow 3ac", repo).intent.service_preferences is None
+
+
 def test_confidence_is_arithmetic_and_capped(repo):
     full = ask("mumbai to pune tomorrow 3ac", repo).intent
     partial = ask("mumbai to pune", repo).intent

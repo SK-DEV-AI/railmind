@@ -880,6 +880,30 @@ components:
           items:
             type: string
           example: ["3A", "2A"]
+        service_preferences:
+          type: array
+          description: |
+            Named services asked for by name, as keys. The vocabulary is
+            enumerable on purpose: a provider keeps the trains whose name carries
+            the brand, and when none does it returns the day with the mismatch
+            stated on each itinerary rather than silently answering a brand
+            question with a different train.
+          items:
+            type: string
+            enum:
+              - vande-bharat
+              - rajdhani
+              - shatabdi
+              - duronto
+              - garib-rath
+              - tejas
+              - gatimaan
+              - humsafar
+              - jan-shatabdi
+              - amrit-bharat
+              - antyodaya
+              - yuva
+          example: ["vande-bharat"]
         quota:
           type: string
           description: |

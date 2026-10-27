@@ -368,6 +368,21 @@ class Ambiguity(BaseModel):
     options: list[str] | None = Field(None, examples=[['IN:CSMT', 'IN:LTT']])
 
 
+class ServicePreference(StrEnum):
+    vande_bharat = 'vande-bharat'
+    rajdhani = 'rajdhani'
+    shatabdi = 'shatabdi'
+    duronto = 'duronto'
+    garib_rath = 'garib-rath'
+    tejas = 'tejas'
+    gatimaan = 'gatimaan'
+    humsafar = 'humsafar'
+    jan_shatabdi = 'jan-shatabdi'
+    amrit_bharat = 'amrit-bharat'
+    antyodaya = 'antyodaya'
+    yuva = 'yuva'
+
+
 class Quota(StrEnum):
     general = 'general'
     tatkal = 'tatkal'
@@ -419,6 +434,11 @@ class BookingIntent(BaseModel):
         None,
         description='Ordered by preference. Provider codes, not display names.',
         examples=[['3A', '2A']],
+    )
+    service_preferences: list[ServicePreference] | None = Field(
+        None,
+        description='Named services asked for by name, as keys. The vocabulary is\nenumerable on purpose: a provider keeps the trains whose name carries\nthe brand, and when none does it returns the day with the mismatch\nstated on each itinerary rather than silently answering a brand\nquestion with a different train.\n',
+        examples=[['vande-bharat']],
     )
     quota: Quota | None = Field(
         'general',

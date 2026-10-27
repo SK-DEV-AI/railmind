@@ -476,6 +476,17 @@ export interface components {
              */
             class_preferences?: string[];
             /**
+             * @description Named services asked for by name, as keys. The vocabulary is
+             *     enumerable on purpose: a provider keeps the trains whose name carries
+             *     the brand, and when none does it returns the day with the mismatch
+             *     stated on each itinerary rather than silently answering a brand
+             *     question with a different train.
+             * @example [
+             *       "vande-bharat"
+             *     ]
+             */
+            service_preferences?: ("vande-bharat" | "rajdhani" | "shatabdi" | "duronto" | "garib-rath" | "tejas" | "gatimaan" | "humsafar" | "jan-shatabdi" | "amrit-bharat" | "antyodaya" | "yuva")[];
+            /**
              * @description Booking quota. `tatkal` changes everything downstream: a shorter
              *     advance-reservation window, a premium, a 4-passenger cap, an Aadhaar
              *     OTP the human must answer, and the 30-minute agent blackout.

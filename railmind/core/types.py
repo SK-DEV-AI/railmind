@@ -200,6 +200,7 @@ class Query:
     service_date: dt.date
     modes: tuple[Mode, ...] = (Mode.rail,)
     classes: tuple[str, ...] = ()
+    services: tuple[str, ...] = ()
     quota: Quota = Quota.general
     passengers: tuple[Passenger, ...] = ()
     arrive_by: dt.datetime | None = None
@@ -254,6 +255,7 @@ class Query:
             service_date=service_date,
             modes=tuple(intent.modes or (Mode.rail,)),
             classes=tuple(normalise_class(c) for c in (intent.class_preferences or ())),
+            services=tuple(intent.service_preferences or ()),
             quota=intent.quota,
             passengers=tuple(intent.passengers or ()),
             arrive_by=intent.arrive_by,

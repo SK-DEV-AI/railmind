@@ -96,6 +96,7 @@ def make_query(
     destination: str = "PUNE",
     classes: tuple[str, ...] = (),
     window: tuple[str, str] | None = None,
+    services: tuple[str, ...] = (),
 ) -> Query:
     from railmind.providers.rail_india import IST, _stop
     from railmind.wire.models import TimeWindow
@@ -114,6 +115,7 @@ def make_query(
         service_date=SERVICE_DATE,
         classes=classes,
         depart_window=depart_window,
+        services=services,
     )
 
 
@@ -246,6 +248,65 @@ class TestSeededSearch:
 
         assert "11007" in on_wednesday
         assert "11007" not in on_tuesday
+
+
+class TestNamedServices:
+    """A brand is what the traveller already decided, so it is a filter, not a hint.
+
+    The markers are matched against the train name in the local timetable, which
+    costs no request. These tests use the real fixtures: 12951 is the Tejas
+    Rajdhani on the Mumbai Central to New Delhi corridor, and nothing on the CSMT
+    to Pune corridor carries a brand at all, which is exactly the case that must
+    not come back as an empty list.
+    """
+
+    async def test_a_named_brand_keeps_only_that_brand(self, provider, transport):
+        itineraries = await provider.search(
+            make_query(origin="MMCT", destination="NDLS", services=("rajdhani",))
+        )
+
+        assert itineraries
+        assert all("RAJDHANI" in item.legs[0].service.name.upper() for item in itineraries)
+        assert transport.calls == []
+
+    async def test_a_brand_is_matched_by_name_not_position(self, provider):
+        # Tejas Rajdhani carries two brands; asking for either one must find it.
+        tejas = await provider.search(
+            make_query(origin="MMCT", destination="NDLS", services=("tejas",))
+        )
+        rajdhani = await provider.search(
+            make_query(origin="MMCT", destination="NDLS", services=("rajdhani",))
+        )
+
+        assert [i.legs[0].service.service_id for i in tejas] == [
+            i.legs[0].service.service_id for i in rajdhani
+        ]
+
+    async def test_an_absent_brand_still_shows_the_day_and_says_so(self, provider):
+        # No Vande Bharat runs CSMT to Pune in the timetable. Answering with an
+        # empty list would hide three real trains from someone in a hurry.
+        itineraries = await provider.search(make_query(services=("vande-bharat",)))
+
+        assert len(itineraries) == 3
+        assert all(
+            any("No Vande Bharat train runs this corridor" in w for w in item.warnings)
+            for item in itineraries
+        )
+
+    async def test_a_brand_and_a_window_do_not_cancel_each_other(self, provider):
+        # The brand narrows first, then the window: both are real constraints, and
+        # the surviving train must satisfy both.
+        itineraries = await provider.search(
+            make_query(
+                origin="MMCT",
+                destination="NDLS",
+                services=("rajdhani",),
+                window=("00:00", "23:59"),
+            )
+        )
+
+        assert itineraries
+        assert all("RAJDHANI" in item.legs[0].service.name.upper() for item in itineraries)
 
 
 class TestAvailabilityHonesty:
