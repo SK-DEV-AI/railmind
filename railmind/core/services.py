@@ -146,7 +146,7 @@ def matches(key: str, train_name: str) -> bool:
     return found is not None and found.matches(train_name)
 
 
-def strip(text: str) -> str:
+def without_brands(text: str) -> str:
     """The sentence with brand names removed.
 
     Brand words sit where a station name sits ("mumbai to pune vande bharat"),

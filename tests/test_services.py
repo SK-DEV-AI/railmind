@@ -60,6 +60,9 @@ def test_from_text_finds_the_brand_and_ignores_it_inside_a_longer_word():
     assert services.from_text("mumbai tejaswini to pune") == []
 
 
-def test_strip_removes_the_brand_and_leaves_the_route():
-    assert "vande" not in services.strip("mumbai to pune vande bharat tomorrow").lower()
-    assert "pune" in services.strip("mumbai to pune vande bharat tomorrow").lower()
+def test_without_brands_removes_the_brand_and_leaves_the_route():
+    text = services.without_brands("mumbai to pune vande bharat tomorrow").lower()
+
+    assert "vande" not in text
+    assert "pune" in text
+    assert "tomorrow" in text

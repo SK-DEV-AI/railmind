@@ -216,7 +216,7 @@ def parse(
         reference = reference.replace(tzinfo=dt.UTC)
 
     lowered = text.lower()
-    origin, destination, place_ambiguities = _places(service_brands.strip(text), repo)
+    origin, destination, place_ambiguities = _places(service_brands.without_brands(text), repo)
     if origin is not None and destination is not None and origin.stop_id == destination.stop_id:
         # Same station on both sides is a sentence we did not understand, not a
         # journey. Saying so beats handing the engine a query it must reject.

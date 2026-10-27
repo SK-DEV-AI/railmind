@@ -250,9 +250,7 @@ class RailIndiaProvider(BaseProvider):
         return self._order_by_departure(itineraries)
 
     @staticmethod
-    def _for_services(
-        itineraries: list[Itinerary], services: tuple[str, ...]
-    ) -> list[Itinerary]:
+    def _for_services(itineraries: list[Itinerary], services: tuple[str, ...]) -> list[Itinerary]:
         """Keep the trains that carry the brand the user named.
 
         Asking for a Vande Bharat and being handed a 21:15 Mail/Express is not a
