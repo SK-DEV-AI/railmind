@@ -97,12 +97,13 @@ a path ever contains `book`, `pay`, `checkout` or `order`.
   --requests 200 --concurrency 10
 ```
 
-Measured on this laptop, 2026-10-25:
+Measured on this laptop, 2026-10-25, and again on the **full 10,861-train
+database** on 2026-10-27:
 
 | Claim | Number | What it does not prove |
 |---|---|---|
-| Time to a ranked card, 90th percentile | **12.3 ms** client-side, **4.5 ms** server-side on a 5-train database. At **4,889 trains**: **18.6 ms** client, **8.1 ms** server (p99 139 ms) | the corridor is answered from SQLite; a live vendor call is bounded by the network, not by this |
-| Throughput, 10 in flight | **920 req/s** at 5 trains, **436 req/s** at 4,889 trains | one process, one laptop, no TLS, no proxy |
+| Time to a ranked card, 90th percentile | **12.3 ms** client-side, **4.5 ms** server-side on a 5-train database. At **4,889 trains**: **18.6 ms** client, **8.1 ms** server (p99 139 ms). At **10,861 trains** (2026-10-27): **20.0 ms** client p90 (p50 16.4, p99 37.6), **9.044 ms** server t90 | the corridor is answered from SQLite; a live vendor call is bounded by the network, not by this. The 10,861-train run used a bench intent with no class, so its answers carry no fare and are `degraded: true`: that is the worst case for size, not for content |
+| Throughput, 10 in flight | **920 req/s** at 5 trains, **436 req/s** at 4,889 trains, **543.7 req/s** at 10,861 trains | one process, one laptop, no TLS, no proxy |
 | Intent latency | p50 **18.4 ms**, max 58.4 ms cold, over ten real corridors at 4,889 trains | rules only; a station lookup scans 13,010 names |
 | Outbound vendor calls for those 200 searches | **0** | because the timetable is local; that is the design, and it is why 100 requests/month is enough |
 | Ranking correctness | not measured | there is no ground-truth "best train". The weights are a stated policy (price .30, duration .28, delay .22, comfort .12, changes .08), not a fitted model. Say that. |
