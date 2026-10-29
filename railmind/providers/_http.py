@@ -148,7 +148,7 @@ async def _first_connection(
         for task in pending:
             try:
                 _, writer, _ = await task
-            except BaseException:  # noqa: BLE001 - cancelled or failed, nothing to keep
+            except BaseException:  # cancelled or failed, nothing left to close
                 continue
             writer.close()
 

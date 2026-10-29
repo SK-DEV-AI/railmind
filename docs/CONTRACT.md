@@ -150,7 +150,7 @@ Individually:
 ```bash
 python3 scripts/check_contract.py   # structure, duplicate keys, broken refs
 ./scripts/generate-clients.sh       # spec conformance + regenerate both clients
-.venv/bin/pytest                    # 487 tests, no network, no sleeps
+.venv/bin/pytest                    # 488 tests, no network, no sleeps
 ```
 
 Step 0's acceptance test from BUILD-ORDER is: *both client devs can generate a
