@@ -128,7 +128,10 @@ export interface paths {
          * Live position and delay for one leg
          * @description Short TTL (60 s default). Served stale on upstream error with
          *     `stale: true` rather than failing: a 90-second-old position is still
-         *     useful, an error is not.
+         *     useful, an error is not. Only when there is no stale copy at all does an
+         *     upstream failure reach the caller, which is why `429` and `502` are
+         *     listed here and nowhere else: this is the one route that does not absorb
+         *     a provider failure into a degraded `200`.
          */
         get: operations["getLiveStatus"];
         put?: never;
@@ -783,11 +786,28 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description Client-side rate limit. Respect `Retry-After`. */
+        /**
+         * @description The provider can do this, but not for this request: a capability it does
+         *     not have, or a published booking rule that forbids it right now (for
+         *     example a Tatkal handoff more than 30 minutes before the quota opens).
+         *     Policy refusals carry the same `422` and say the reason in `detail`.
+         */
+        NotSupported: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /**
+         * @description The data provider is rate limiting us, not the caller. There is no
+         *     `Retry-After`, because the limit is a monthly request budget rather than
+         *     a per-second window: retrying immediately is the wrong response, and the
+         *     itinerary side of this service keeps answering from cache meanwhile.
+         */
         RateLimited: {
             headers: {
-                /** @description Seconds to wait. */
-                "Retry-After"?: number;
                 [name: string]: unknown;
             };
             content: {
@@ -835,7 +855,6 @@ export interface operations {
                     "application/json": components["schemas"]["Health"];
                 };
             };
-            429: components["responses"]["RateLimited"];
         };
     };
     createIntent: {
@@ -861,17 +880,6 @@ export interface operations {
                 };
             };
             400: components["responses"]["InvalidQuery"];
-            /** @description Structurally valid JSON but semantically unusable (for example, no free-text content). */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            429: components["responses"]["RateLimited"];
-            503: components["responses"]["UpstreamDown"];
         };
     };
     searchItineraries: {
@@ -912,24 +920,11 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            429: components["responses"]["RateLimited"];
-            /** @description Deadline exceeded with no usable cached data. The fallback of last resort. */
-            504: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
         };
     };
     getItinerary: {
         parameters: {
-            query?: {
-                /** @description Bypass the availability cache and re-check upstream. */
-                refresh?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 itinerary_id: string;
@@ -948,7 +943,6 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
-            429: components["responses"]["RateLimited"];
         };
     };
     createHandoff: {
@@ -975,25 +969,7 @@ export interface operations {
             };
             400: components["responses"]["InvalidQuery"];
             404: components["responses"]["NotFound"];
-            /** @description Availability changed since the itinerary was priced. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description This provider cannot hand off for this itinerary (capability or policy), for example Tatkal on opening day. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            429: components["responses"]["RateLimited"];
+            422: components["responses"]["NotSupported"];
         };
     };
     getLiveStatus: {
@@ -1018,7 +994,9 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
+            422: components["responses"]["NotSupported"];
             429: components["responses"]["RateLimited"];
+            502: components["responses"]["UpstreamDown"];
         };
     };
     listProviders: {

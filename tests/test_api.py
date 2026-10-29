@@ -361,3 +361,34 @@ def test_giving_both_an_intent_and_an_intent_id_is_refused(client):
 
     assert response.status_code == 400
     assert response.json()["code"] == "invalid_query"
+
+
+# -- the correlation id the contract promised ----------------------------------
+#
+# openapi.yaml says every response carries `X-Request-Id`, and `/search` accepts a
+# client-supplied one. Neither was true: no middleware existed, so the header was
+# documented, generated into the TypeScript client, and never sent. These tests
+# hold the header and the problem document together, because an id in a header
+# that disagrees with the id in the error body is worse than none.
+
+
+def test_every_response_carries_a_generated_request_id(client):
+    first = client.get("/health")
+    second = client.get("/health")
+
+    assert first.headers["X-Request-Id"].startswith("req_")
+    assert len(first.headers["X-Request-Id"]) == len("req_") + 16
+    assert first.headers["X-Request-Id"] != second.headers["X-Request-Id"]
+
+
+def test_a_supplied_request_id_is_echoed_so_a_client_can_log_one_id(client):
+    response = client.get("/health", headers={"X-Request-Id": "req_support_ticket_9"})
+
+    assert response.headers["X-Request-Id"] == "req_support_ticket_9"
+
+
+def test_the_problem_document_carries_the_same_id_as_the_header(client):
+    response = client.post("/search", json={"intent_id": "int_missing"})
+
+    assert response.status_code == 404
+    assert response.json()["request_id"] == response.headers["X-Request-Id"]

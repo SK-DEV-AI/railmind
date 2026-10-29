@@ -59,7 +59,7 @@ Also absent: auth (v0.1 is single-user local), rate-limit tiers, websockets
 | **RFC 9457 `application/problem+json`** | One error shape everywhere, with a stable `code`. Clients switch on `code`, never on prose. A provider's raw error string never reaches a client — that is how provider internals leak into the UI. |
 | **`X-Request-Id` on every response** | One id to grep in the audit log. Free, and it makes the demo debuggable. |
 | **`meta.degraded` + `meta.notes`** | A deadline-bound system must be able to say "this is 14 minutes old and here is why" and still succeed. Degraded is a first-class outcome, not an error. |
-| **`deadline_ms` in the request** | The client declares its patience. The server never silently exceeds it. A timeout is a `200` with stale data, or a `504` with `deadline_exceeded` — never a `500`. |
+| **`deadline_ms` in the request** | The client declares its patience. The server never silently exceeds it. A missed deadline is a `200` with `degraded: true`, the providers that missed it named in `notes`, and whatever cached itineraries exist — never a `500`, and never a `504`: the deadline is how the answer stays fast, not a way to fail. |
 
 ---
 
@@ -130,6 +130,12 @@ Two rules that keep this mapping cheap:
 6. `POST /search` respects `deadline_ms` and reports degradation honestly.
 7. Every response supports `X-Request-Id`.
 8. Every metric in `/metrics` names its source in `counted_from`.
+9. Every status code in `openapi.yaml` is one a code path actually returns. A
+   documented `429` with no limiter behind it is a promise the server breaks, so
+   the audit that found six of them deleted the claims instead of building the
+   feature. The one place an upstream failure is not absorbed into a degraded
+   `200` is `GET /live/{leg_id}` with no cached position, which is why that route
+   and only that route lists `429` and `502`.
 
 ---
 
@@ -144,14 +150,14 @@ Individually:
 ```bash
 python3 scripts/check_contract.py   # structure, duplicate keys, broken refs
 ./scripts/generate-clients.sh       # spec conformance + regenerate both clients
-.venv/bin/pytest                    # 143 tests, no network, no sleeps
+.venv/bin/pytest                    # 487 tests, no network, no sleeps
 ```
 
 Step 0's acceptance test from BUILD-ORDER is: *both client devs can generate a
 typed client from the spec.* Both do today:
 
-- `packages/contract/src/api-types.ts` — `openapi-typescript` 7.13, 1047 lines
-- `railmind/wire/models.py` — `datamodel-codegen`, Pydantic v2, 811 lines,
+- `packages/contract/src/api-types.ts` — `openapi-typescript` 7.13, 1046 lines
+- `railmind/wire/models.py` — `datamodel-codegen`, Pydantic v2, 837 lines,
   `extra='forbid'`, `AwareDatetime`, `constr(max_length=...)` all correct
 
 The generated Python models are imported by the application, not copied. That is

@@ -32,9 +32,11 @@ from __future__ import annotations
 import datetime as dt
 import time
 from collections.abc import Iterator
+from contextvars import ContextVar
 from pathlib import Path
+from uuid import uuid4
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi import Query as QueryParam
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -90,6 +92,12 @@ INTENT_TTL_S = 1800.0
 
 #: Bound on the intent store, same reasoning as the itinerary store.
 INTENT_CAPACITY = 500
+
+#: The correlation id of the request being served. A context variable rather than a
+#: parameter because the two error handlers are the other place that needs it: a
+#: problem document whose `request_id` differs from the `X-Request-Id` header would
+#: be worse than no id at all, since support would grep the wrong one.
+_REQUEST_ID: ContextVar[str] = ContextVar("request_id", default="")
 
 
 class IntentStore:
@@ -218,11 +226,31 @@ def create_app(
         ),
     )
 
+    @app.middleware("http")
+    async def _correlate(request: Request, call_next):
+        """Adopt the caller's `X-Request-Id`, or mint one, and echo it back.
+
+        The contract has promised this header since the first commit and nothing
+        ever sent it. It is cheap and it is the difference between "the demo was
+        slow at 18:40" and a timestamped line in the request log.
+        """
+        supplied = (request.headers.get("x-request-id") or "").strip()
+        # Bounded because it comes from the network: an unbounded header is a log
+        # line an attacker controls the size of.
+        request_id = supplied[:128] or f"req_{uuid4().hex[:16]}"
+        token = _REQUEST_ID.set(request_id)
+        try:
+            response = await call_next(request)
+        finally:
+            _REQUEST_ID.reset(token)
+        response.headers["X-Request-Id"] = request_id
+        return response
+
     # -- error mapping ---------------------------------------------------------
 
     @app.exception_handler(ProviderError)
     async def _provider_error(_request, exc: ProviderError) -> JSONResponse:
-        problem = exc.to_problem()
+        problem = exc.to_problem(request_id=_REQUEST_ID.get() or None)
         return JSONResponse(
             problem.model_dump(mode="json", exclude_none=True),
             status_code=exc.http_status,
@@ -238,6 +266,7 @@ def create_app(
             detail=_first_error(exc),
             code=Code.invalid_query,
             retryable=False,
+            request_id=_REQUEST_ID.get() or None,
         )
         return JSONResponse(
             problem.model_dump(mode="json", exclude_none=True),

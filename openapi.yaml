@@ -72,8 +72,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Health"
-        "429":
-          $ref: "#/components/responses/RateLimited"
 
   /intent:
     post:
@@ -103,16 +101,6 @@ paths:
                 $ref: "#/components/schemas/IntentResponse"
         "400":
           $ref: "#/components/responses/InvalidQuery"
-        "422":
-          description: Structurally valid JSON but semantically unusable (for example, no free-text content).
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "429":
-          $ref: "#/components/responses/RateLimited"
-        "503":
-          $ref: "#/components/responses/UpstreamDown"
 
   /search:
     post:
@@ -160,14 +148,6 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
-        "429":
-          $ref: "#/components/responses/RateLimited"
-        "504":
-          description: Deadline exceeded with no usable cached data. The fallback of last resort.
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
 
   /itinerary/{itinerary_id}:
     get:
@@ -180,12 +160,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: refresh
-          in: query
-          description: Bypass the availability cache and re-check upstream.
-          schema:
-            type: boolean
-            default: false
+
       responses:
         "200":
           description: The itinerary.
@@ -195,8 +170,6 @@ paths:
                 $ref: "#/components/schemas/Itinerary"
         "404":
           $ref: "#/components/responses/NotFound"
-        "429":
-          $ref: "#/components/responses/RateLimited"
 
   /handoff:
     post:
@@ -227,20 +200,8 @@ paths:
           $ref: "#/components/responses/InvalidQuery"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          description: Availability changed since the itinerary was priced.
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
         "422":
-          description: This provider cannot hand off for this itinerary (capability or policy), for example Tatkal on opening day.
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-        "429":
-          $ref: "#/components/responses/RateLimited"
+          $ref: "#/components/responses/NotSupported"
 
   /live/{leg_id}:
     get:
@@ -250,7 +211,10 @@ paths:
       description: |
         Short TTL (60 s default). Served stale on upstream error with
         `stale: true` rather than failing: a 90-second-old position is still
-        useful, an error is not.
+        useful, an error is not. Only when there is no stale copy at all does an
+        upstream failure reach the caller, which is why `429` and `502` are
+        listed here and nowhere else: this is the one route that does not absorb
+        a provider failure into a degraded `200`.
       parameters:
         - name: leg_id
           in: path
@@ -268,8 +232,12 @@ paths:
                 $ref: "#/components/schemas/LiveStatus"
         "404":
           $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/NotSupported"
         "429":
           $ref: "#/components/responses/RateLimited"
+        "502":
+          $ref: "#/components/responses/UpstreamDown"
 
   /providers:
     get:
@@ -350,13 +318,22 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
-    RateLimited:
-      description: Client-side rate limit. Respect `Retry-After`.
-      headers:
-        Retry-After:
-          description: Seconds to wait.
+    NotSupported:
+      description: |
+        The provider can do this, but not for this request: a capability it does
+        not have, or a published booking rule that forbids it right now (for
+        example a Tatkal handoff more than 30 minutes before the quota opens).
+        Policy refusals carry the same `422` and say the reason in `detail`.
+      content:
+        application/problem+json:
           schema:
-            type: integer
+            $ref: "#/components/schemas/Problem"
+    RateLimited:
+      description: |
+        The data provider is rate limiting us, not the caller. There is no
+        `Retry-After`, because the limit is a monthly request budget rather than
+        a per-second window: retrying immediately is the wrong response, and the
+        itinerary side of this service keeps answering from cache meanwhile.
       content:
         application/problem+json:
           schema:
