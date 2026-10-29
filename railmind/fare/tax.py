@@ -32,6 +32,7 @@ def load_tax(path: Path | str = TAX_PATH) -> TaxRules | None:
         rate_ac=_rate(raw, "ac"),
         rate_non_ac=_rate(raw, "non_ac"),
         source=str(raw["source"]),
+        rate_first_class=_rate(raw, "first_class"),
     )
 
 

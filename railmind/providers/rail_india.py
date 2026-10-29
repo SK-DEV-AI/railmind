@@ -49,6 +49,7 @@ from railmind.core.types import (
     Money,
     Passenger,
     Query,
+    Quota,
     ScoreBreakdown,
     ServiceRef,
     Stop,
@@ -76,7 +77,9 @@ FARE_TITLES = {
     "basic": Title.base_fare,
     "reservation": Title.reservation_charge,
     "superfast": Title.superfast_charge,
+    "tatkal": Title.tatkal_premium,
     "gst": Title.gst,
+    "rounding": Title.other,
 }
 
 #: Services whose base fare the circular prints in a table of their own. Until each
@@ -104,6 +107,17 @@ UNTABLED_SERVICES = (
 def _is_rajdhani(name: str) -> bool:
     """Rajdhani keeps its own base fare table, including the Tejas Rajdhani."""
     return "RAJDHANI" in name.upper()
+
+
+def _is_tatkal(quota: Quota | str | None) -> bool:
+    """Whether this journey is a Tatkal one, which is what adds the premium.
+
+    The wire default is a bare string, so an unknown value is read as it arrives and
+    answers no: only the Tatkal quota adds a Tatkal premium.
+    """
+    if quota is None:
+        return False
+    return str(getattr(quota, "value", quota)).lower() == Quota.tatkal.value
 
 
 def _untabled_service(name: str) -> str | None:
@@ -427,7 +441,7 @@ class RailIndiaProvider(BaseProvider):
                     f"No fare is shown for {wanted}: this train carries {', '.join(option.classes)}"
                 )
             else:
-                quote = self.quote_for_leg(leg, wanted)
+                quote = self.quote_for_leg(leg, wanted, quota=query.quota)
                 if quote.total_minor is not None:
                     total_price = Money(amount_minor=quote.total_minor, currency="INR")
                     price_breakup = self.fare_components(quote)
@@ -534,12 +548,21 @@ class RailIndiaProvider(BaseProvider):
             )
         return Money(amount_minor=quote.total_minor, currency="INR")
 
-    def fare_quote(self, itinerary: Itinerary, class_code: str | None = None) -> fare.FareQuote:
+    def fare_quote(
+        self, itinerary: Itinerary, class_code: str | None = None, quota: Quota | None = None
+    ) -> fare.FareQuote:
         """The worked quote for this leg: parts, assumptions, and its source."""
-        return self.quote_for_leg(itinerary.legs[0], class_code)
+        return self.quote_for_leg(itinerary.legs[0], class_code, quota=quota)
 
-    def quote_for_leg(self, leg: Leg, class_code: str | None = None) -> fare.FareQuote:
-        """Price one leg from the printed table, naming what it cannot price."""
+    def quote_for_leg(
+        self, leg: Leg, class_code: str | None = None, quota: Quota | None = None
+    ) -> fare.FareQuote:
+        """Price one leg from the printed table, naming what it cannot price.
+
+        `quota` decides whether the printed Tatkal premium belongs in the total. Under
+        Tatkal it does, and it goes inside the tax base; under any other quota the
+        quote says nothing about Tatkal at all.
+        """
         wanted = class_code or (leg.availability.class_code if leg.availability else "")
         wanted = wanted or DEFAULT_CLASS_ORDER[0]
         name = (leg.service.name if leg.service else "") or ""
@@ -575,9 +598,13 @@ class RailIndiaProvider(BaseProvider):
             # the printed upper bound instead of a total that is quietly short.
             superfast=None,
             distance_km=distance,
+            # AC First and AC 2-Tier are printed twice, once per season. The journey
+            # date settles which column applies; a class that is printed once ignores it.
+            season=fare.season_for(leg.service_date),
             table=table,
             charges=fare.default_charges(),
             tax=fare.default_tax(),
+            tatkal=fare.default_tatkal() if _is_tatkal(quota) else None,
         )
 
     def fare_components(self, quote: fare.FareQuote) -> list[FareComponent]:

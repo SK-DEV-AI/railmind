@@ -9,6 +9,14 @@ The circular tells us what each part is and that the parts are additive:
   issued from time to time". That is a pointer to a tax notification, not a rate, so
   the rate lives here as policy that must be supplied from a source, and a quote
   built without one is `unpriced` rather than tax-free.
+- The Tatkal premium, when the journey is a Tatkal one, from the printed scheme
+  (`railmind.fare.tatkal`). It sits inside the tax base: it is part of the price of
+  the same passenger-transport supply, not a separate one.
+- The rounding the fare table's note 5.1 requires: "Chargeable Fares, as obtained
+  after adding Miscellaneous Charges like Reservation Fee, Supplementary charge for
+  Superfast trains, Catering Charge, Service Tax etc. to the Basic Fare, will be
+  rounded off to the next higher multiple of Rs. 5." The round-up is shown as its own
+  line, so the parts still add up to the total.
 
 Every quote therefore carries its own working: the components it summed, the
 section and slab it read, and a single reason string when it could not price the
@@ -29,6 +37,7 @@ from dataclasses import dataclass
 
 from railmind.fare.charges import Charges, ChargesError
 from railmind.fare.table import FareTable, FareTableError
+from railmind.fare.tatkal import TatkalCharges
 
 #: Class codes whose fare the circular splits into a peak and a lean column.
 SEASON_SPLIT = ("2A", "1A")
@@ -36,6 +45,15 @@ SEASON_SPLIT = ("2A", "1A")
 #: Classes the circular prices as air conditioned, for the tax rule. The tax
 #: treatment follows the class, not the train.
 AC_CLASSES = ("CC", "EC", "3E", "3A", "2A", "1A", "EA")
+
+#: Classes the tax notification names separately from an air-conditioned coach and
+#: taxes at the same rate: "rail in first class or air conditioned coach". First
+#: class is named in the exception to the exemption, so non-air-conditioned FC is
+#: taxable, unlike the other non-AC classes.
+FIRST_CLASS = ("FC",)
+
+#: What one Rs 5 step is, in paise, for the fare table's rounding note.
+ROUNDING_STEP_MINOR = 500
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,9 +63,14 @@ class TaxRules:
     rate_ac: float | None
     rate_non_ac: float | None
     source: str
+    rate_first_class: float | None = None
 
     def rate_for(self, class_code: str) -> float | None:
         base = class_code.split("_")[0]
+        if base in FIRST_CLASS:
+            # The notification taxes first class at the air-conditioned rate, so a
+            # rule that records only the two rates still answers correctly.
+            return self.rate_first_class if self.rate_first_class is not None else self.rate_ac
         return self.rate_ac if base in AC_CLASSES else self.rate_non_ac
 
 
@@ -92,6 +115,7 @@ def quote(
     table: FareTable,
     charges: Charges,
     tax: TaxRules | None = None,
+    tatkal: TatkalCharges | None = None,
     season: str | None = None,
     superfast: bool | None = None,
 ) -> FareQuote:
@@ -105,6 +129,10 @@ def quote(
     the default `None` says the caller cannot tell. `None` does not quietly behave
     like `False`; the quote then states how much the real fare could exceed it,
     because a total that is silently short is the error that costs a passenger money.
+
+    `tatkal` is the printed Tatkal scheme, supplied only when the journey is under the
+    Tatkal quota. It is `None` for general quota, which is not the same statement as
+    "no premium applies": a general-quota quote simply does not mention Tatkal at all.
     """
     base_code = class_code.split("_")[0]
     split = base_code in SEASON_SPLIT
@@ -138,6 +166,7 @@ def quote(
             table=table,
             row=row,
             tax=tax,
+            tatkal=tatkal,
             superfast=superfast,
         )
         for _, code in variants
@@ -153,6 +182,7 @@ def quote(
         alternate_season = variants[1][0]
 
     assumptions: list[str] = []
+    assumptions.extend(primary.assumptions)
     if split and season is None:
         assumptions.append(
             f"the peak-period fare is quoted because the peak period dates are "
@@ -204,6 +234,7 @@ class _Built:
     components: tuple[Component, ...]
     total_minor: int
     slab: tuple[int, int] | None
+    assumptions: tuple[str, ...] = ()
 
 
 def _variant(
@@ -215,6 +246,7 @@ def _variant(
     table: FareTable,
     row,
     tax: TaxRules | None,
+    tatkal: TatkalCharges | None,
     superfast: bool | None,
 ) -> _Built | str:
     """Sum the parts for one class at one season, or say what is missing."""
@@ -265,11 +297,22 @@ def _variant(
             )
         )
 
+    assumptions: list[str] = []
+    if tatkal is not None:
+        premium = tatkal.charge(class_code, float(base), charged_km)
+        if isinstance(premium, str):
+            return premium
+        components.append(Component("tatkal", "Tatkal premium", premium.amount_minor, premium.note))
+        assumptions.append(
+            "the Tatkal premium is inside the tax base: the charge is part of the price "
+            "of the same journey, not a separate supply"
+        )
+
     subtotal = sum(component.amount_minor for component in components)
     rate = tax.rate_for(class_code) if tax is not None else None
     if tax is not None and rate is None:
         return f"no tax rate is recorded for {class_code}"
-    if tax is not None and rate is not None:
+    if tax is not None and rate:
         amount = round(subtotal * rate)
         components.append(
             Component(
@@ -279,11 +322,34 @@ def _variant(
                 f"{rate * 100:.4g}% of {_rupees(subtotal)}",
             )
         )
+    elif tax is not None:
+        # A zero-rated class would otherwise carry a "GST Rs 0" line, which reads like
+        # a charge that came to nothing. Say the class is exempt instead.
+        assumptions.append(
+            f"no tax is charged on {class_code}: the rate recorded for this class is nil"
+        )
     total = sum(component.amount_minor for component in components)
+    # The fare table's note 5.1: the chargeable fare, after the printed charges and
+    # tax are added, is rounded up to the next higher multiple of Rs 5. It is the step
+    # that turns our arithmetic into the number printed on the ticket, and it rounds
+    # up rather than to nearest, so the quoted total is never below the real one.
+    rounded = -(-total // ROUNDING_STEP_MINOR) * ROUNDING_STEP_MINOR
+    if rounded != total:
+        components.append(
+            Component(
+                "rounding",
+                "Round up to the next Rs 5",
+                rounded - total,
+                "the fare table's rounding note: chargeable fares are rounded off to the "
+                "next higher multiple of Rs 5",
+            )
+        )
+        total = rounded
     return _Built(
         components=tuple(components),
         total_minor=total,
         slab=(slab.start, slab.end) if slab else None,
+        assumptions=tuple(assumptions),
     )
 
 

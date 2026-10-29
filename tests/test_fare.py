@@ -181,8 +181,11 @@ class TestTheTotal:
     def test_the_basic_fare_and_reservation_fee_are_both_charged(self, table, charges):
         quote = price(table, charges, "CC", 300)
         parts = {c.code: c.amount_minor for c in quote.components}
-        assert parts == {"basic": 394_00, "reservation": 40_00}
-        assert quote.total_minor == 434_00
+        assert parts == {"basic": 394_00, "reservation": 40_00, "rounding": 1_00}
+        assert quote.total_minor == 435_00
+        # Note 5.1 of the fare table: the chargeable fare is rounded up to the next
+        # higher multiple of Rs 5, which is why the parts differ from the total above.
+        assert quote.total_minor % fare.ROUNDING_STEP_MINOR == 0
 
     def test_a_superfast_charge_is_added_only_when_the_train_is_superfast(self, table, charges):
         plain = price(table, charges, "SL", 1000)
@@ -190,8 +193,16 @@ class TestTheTotal:
         assert dict((c.code, c.amount_minor) for c in plain.components) == {
             "basic": 489_00,
             "reservation": 20_00,
+            "rounding": 1_00,
         }
         difference = fast.total_minor - plain.total_minor
+        # 489 + 20 = 509 rounds up to 510; with the printed Rs 30 superfast charge,
+        # 539 rounds up to 540. The round-up happens after the charge is added, so
+        # the difference stays exactly the printed charge here. It would not if the
+        # two loads landed on different sides of a Rs 5 step, which is why the
+        # numbers are asserted rather than just the difference.
+        assert plain.total_minor == 510_00
+        assert fast.total_minor == 540_00
         assert difference == 30_00
 
     def test_an_unknown_superfast_flag_is_stated_as_a_possible_shortfall(self, table, charges):

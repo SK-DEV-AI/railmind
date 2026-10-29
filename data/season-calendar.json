@@ -1,0 +1,11 @@
+{
+  "source": "Passenger fare table, explanatory notes 6 and 6.1: 'Fares published in these tables are separately for the Peak and Lean seasons. Peak and Lean seasons shall be as under: - Lean Seasons 1st February to 31st March; and 1st August to 31st August. Peak Seasons 1st April to 31st July; and 1st September to 31st January.' Held copy: the passenger fare table of the 2014-15 edition. Railway Board Commercial Circular 24 of 2025 still prices AC 2-Tier and AC First Class twice, in a Peak column and a Lean column (page 4 of the held circular prints AC 2-Tier peak 637 / lean 617 and AC First Class peak 1071 / lean 1010), but prints no date definition of its own, so the periods above are the only printed definition available.",
+  "effective": "2014-04-01",
+  "currency": "reported",
+  "currency_note": "The boundaries have not been re-printed in a 2025-dated document we hold. They are the cheapest thing to be wrong about by a few rupees and the most expensive thing to be silently wrong about, so a quote states which season it used and what the other season would cost.",
+  "seasons": {
+    "lean": [["02-01", "03-31"], ["08-01", "08-31"]],
+    "peak": [["04-01", "07-31"], ["09-01", "01-31"]]
+  },
+  "split_classes": ["1A", "2A"]
+}

@@ -30,7 +30,11 @@ from railmind.providers.rail_india import RailIndiaProvider
 from railmind.providers.railradar import RailRadarClient, map_error
 
 FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures" / "railradar"
-SERVICE_DATE = dt.date(2026, 10, 26)  # a Monday
+# A Monday, always ahead of today: the hand-off refuses a past service date, so a
+# fixed date rots. Keeping it a Monday leaves the weekday-based timetable assertions
+# stable whichever day the suite runs.
+_TODAY = dt.datetime.now(dt.UTC).date()
+SERVICE_DATE = _TODAY + dt.timedelta(days=(7 - _TODAY.weekday()) % 7 or 7)
 
 PUBLISHED = FIXTURES / "stations.json"
 
@@ -348,10 +352,14 @@ class TestFare:
         itinerary = train(await provider.search(make_query()), "22105")
         quote = provider.fare_quote(itinerary, "3A")
 
-        assert quote.total_minor == 49200
+        # 452 basic + 40 reservation at the 300 km minimum distance for charge, 5% GST
+        # on 49200, then the fare table's round-up to the next Rs 5.
+        assert quote.total_minor == 52000
         assert [(part.code, part.amount_minor) for part in quote.components] == [
             ("basic", 45200),
             ("reservation", 4000),
+            ("gst", 2460),
+            ("rounding", 340),
         ]
         assert sum(part.amount_minor for part in quote.components) == quote.total_minor
         assert (quote.section, quote.slab) == ("mail_express_ac", (296, 300))
@@ -384,6 +392,8 @@ class TestFare:
 
         # Neither the circular nor the timetable carries a superfast flag.
         assert [part.code for part in quote.components] == ["basic", "reservation"]
+        # SL is exempt from tax, and the quote says so rather than printing a Rs 0 line.
+        assert any("no tax is charged on SL" in note for note in quote.assumptions)
         assert any("up to that much higher" in note for note in quote.assumptions)
         assert any("Rs 30" in note for note in quote.assumptions)
 
@@ -424,6 +434,8 @@ class TestFare:
         assert [part.title for part in asked.price_breakup] == [
             Title.base_fare,
             Title.reservation_charge,
+            Title.gst,
+            Title.other,
         ]
 
     async def test_refuses_a_price_for_a_train_that_lacks_the_class(self, provider):

@@ -1,0 +1,25 @@
+{
+  "source": "Indian Railways PRS static page 'Tatkal Scheme' (CRIS), https://www.indianrail.gov.in/tatkal_Scheme.html, table 'Tatkal Charges applicable for journey starting from 24.12.2015 onwards' and the header rule 'The Tatkal Charges have been fixed as a percentage of fare at the rate of 10% of basic fare for second class and 30% of basic fare for all other classes subject to minimum and maximum as given in the table below.' Page fetched and text-extracted 2026-10-29 (32818 bytes); the same table is published on IRCTC's Tatkal FAQ page, contents.irctc.co.in/en/TatkalFaq.html.",
+  "effective": "2015-12-24",
+  "seasonal": false,
+  "season_note": "The page settles it in one sentence: 'The above charges will be levied uniformly both in peak period & non-peak periods.' There is no peak or lean Tatkal band to model.",
+  "base": "basic_fare",
+  "classes": {
+    "2S": {"percent": 0.1, "min": 10, "max": 15, "min_km": 100},
+    "SL": {"percent": 0.3, "min": 100, "max": 200, "min_km": 500},
+    "CC": {"percent": 0.3, "min": 125, "max": 225, "min_km": 250},
+    "3A": {"percent": 0.3, "min": 300, "max": 400, "min_km": 500},
+    "2A": {"percent": 0.3, "min": 400, "max": 500, "min_km": 500},
+    "EC": {"percent": 0.3, "min": 400, "max": 500, "min_km": 250}
+  },
+  "inherits": {"3E": "3A"},
+  "not_in_scheme": ["1A", "FC"],
+  "not_in_scheme_note": "1A: the scheme prints no AC First Class row, and IRCTC's terms say a Tatkal ticket may be booked in 'any class except 1 AC'. FC: the page prints no First Class row either, so no charge can be quoted for it rather than an invented one.",
+  "inherit_note": "3E is not printed as its own row. Its basic fare is the 3A table's, so the 3A band is used and the quote says so.",
+  "min_km_note": "The page heads this column 'Minimum Distance for charge (in Km)'. It is carried as printed and is not multiplied into the charge: the printed floor in rupees is what makes the published fare come out right at short distances (CC at 192 km is 30% of basic = 86.40, and the published Tatkal fare is built on the 125 rupee floor).",
+  "timings": {
+    "ac_opening": "10:00 IST",
+    "non_ac_opening": "11:00 IST",
+    "advance_rule": "Tatkal booking opens at 10 AM for AC Classes and 11 AM for NON-AC Classes one day in advance of the actual date of journey, excluding the date of journey (Railway Board commercial circular 34 of 2015, w.e.f. 15.06.2015)."
+  }
+}

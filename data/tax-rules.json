@@ -1,0 +1,8 @@
+{
+  "source": "CBIC Notification No. 11/2017-Central Tax (Rate), S.No. 8, Heading 9964 (2.5% CGST, i.e. 5% with the matching State tax): '(i) Transport of passengers, with or without accompanied belongings, by rail in first class or air conditioned coach.' CBIC Notification No. 12/2017-Central Tax (Rate), S.No. 17, Heading 9964 (Nil): 'Service of transportation of passengers ... by (a) railways in a class other than (i) first class; or (ii) an air-conditioned coach; (b) metro, monorail or tramway.' Both texts fetched 2026-10-29 from the GST Council mirrors of the notifications (gstcouncil.gov.in/sites/default/files/2024-05/download_4.pdf, 408638 bytes, and download_6_0.pdf, 451490 bytes).",
+  "effective": "2017-07-01",
+  "ac": 0.05,
+  "first_class": 0.05,
+  "non_ac": 0.0,
+  "note": "5% is 2.5% CGST plus 2.5% SGST. The exemption covers rail 'in a class other than first class or an air-conditioned coach', so non-air-conditioned First Class (FC) is taxable at 5% - first class is named in the exception, not in the exemption. Confirmed unchanged by the GST 2.0 round of 22.09.2025: Notification 15/2025-Central Tax (Rate) (the services amendment) does not touch Heading 9964. The rate is a rate only; the value it is charged on is basic fare plus the printed charges, which is the base the fare engine uses."
+}
