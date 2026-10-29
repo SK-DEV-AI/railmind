@@ -82,6 +82,55 @@ ITINERARY_TTL_S = 600.0
 #: without limit. Old entries are dropped oldest-first.
 ITINERARY_CAPACITY = 500
 
+#: How long a parsed intent stays addressable by id. Longer than an itinerary
+#: store because the whole point of `/intent` is that it is called once, early,
+#: and reused by later searches; the intent's own `expires_at` is the authority
+#: on freshness, and this is only the memory bound.
+INTENT_TTL_S = 1800.0
+
+#: Bound on the intent store, same reasoning as the itinerary store.
+INTENT_CAPACITY = 500
+
+
+class IntentStore:
+    """Parsed intents, addressable by the id they carry, in this process only.
+
+    `/search` accepts either a whole intent or the id of one parsed earlier.
+    This is where the id resolves. Without it the contract's `intent_id` field
+    was advertised, validated, and then dropped on the floor: a caller that did
+    exactly what the contract said got "search needs a parsed intent; call
+    /intent first" *after* calling `/intent`. The store exists so an id either
+    resolves or 404s, and never silently turns into a missing intent.
+
+    Deliberately not shared between processes: an id from another worker would
+    be a lie about state we do not hold, and a 404 saying so is honest.
+    """
+
+    def __init__(self, *, ttl_s: float = INTENT_TTL_S, capacity: int = INTENT_CAPACITY):
+        self.ttl_s = ttl_s
+        self.capacity = capacity
+        self._items: dict[str, tuple[BookingIntent, float]] = {}
+
+    def put(self, intent: BookingIntent, *, now: float | None = None) -> None:
+        stamp = time.monotonic() if now is None else now
+        self._items[intent.intent_id] = (intent, stamp + self.ttl_s)
+        while len(self._items) > self.capacity:
+            oldest = min(self._items, key=lambda key: self._items[key][1])
+            del self._items[oldest]
+
+    def get(self, intent_id: str, *, now: float | None = None) -> BookingIntent:
+        stamp = time.monotonic() if now is None else now
+        entry = self._items.get(intent_id)
+        if entry is None or entry[1] < stamp:
+            raise NotFound(
+                f"no intent {intent_id!r} in this store; it may have expired",
+                provider_id=None,
+            )
+        return entry[0]
+
+    def __len__(self) -> int:
+        return len(self._items)
+
 
 class ProvidersResponse(BaseModel):
     """`GET /providers` envelope. Declared here, not in the generated models file,
@@ -157,6 +206,7 @@ def create_app(
     request_log = log or RequestLog()
     search_engine = engine or SearchEngine(registry, log=request_log)
     store = ItineraryStore()
+    intents = IntentStore()
     started = time.monotonic()
 
     app = FastAPI(
@@ -252,6 +302,9 @@ def create_app(
             locale=request.locale or "en-IN",
         )
         elapsed = (time.perf_counter() - started) * 1000
+        # Kept so `/search {"intent_id": ...}` resolves, which the contract has
+        # always promised and this process previously did not deliver.
+        intents.put(parsed.intent)
         return IntentResponse(
             intent=parsed.intent,
             meta=Meta(elapsed_ms=round(elapsed, 1), parser="rules", cached=False),
@@ -261,8 +314,16 @@ def create_app(
 
     @app.post("/search", response_model=SearchResponse, response_model_exclude_none=True)
     async def search(request: SearchRequest) -> SearchResponse:
-        response = await search_engine.search(request)
-        store.put(response.itineraries, intent=request.intent)
+        body = request
+        if request.intent is None and request.intent_id is not None:
+            # The contract says exactly one of the two; a stored id resolves, an
+            # unknown one is a 404, and neither case quietly becomes a search
+            # with no intent.
+            body = request.model_copy(update={"intent": intents.get(request.intent_id)})
+        elif request.intent is not None and request.intent_id is not None:
+            raise InvalidQuery("give either intent or intent_id, not both: they can disagree")
+        response = await search_engine.search(body)
+        store.put(response.itineraries, intent=body.intent)
         return response
 
     @app.get(

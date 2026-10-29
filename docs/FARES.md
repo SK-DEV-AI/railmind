@@ -22,23 +22,25 @@ quote = fare.quote(
     distance_km=190.7,
     table=fare.default_table(),
     charges=fare.default_charges(),
-    tax=fare.default_tax(),
-    season=None,
+    tax=fare.default_tax(),  # 5% AC/FC, nil others, cited
+    tatkal=fare.default_tatkal(),  # omit unless the journey is under Tatkal
+    season="peak",
     superfast=None,
 )
-quote.total_minor  # 49200 paise, the whole answer
-quote.components  # base_fare 452.00 + reservation_charge 40.00
+quote.total_minor  # 52000 paise, the whole answer
+quote.components  # base 452.00 + reservation 40.00 + GST 24.60 + round-up 3.40
 quote.assumptions  # plain-English caveats, always populated
 quote.source  # "Commercial Circular 24 of 2025"
 quote.effective  # "2025-12-26"
 ```
 
-Three of those arguments are deliberately `None` rather than guessed:
+Three of those arguments deserve a word:
 
-- `tax=fare.default_tax()` returns nothing today, because no cited tax rule
-  exists yet (see §5). A quote therefore excludes GST and says so.
+- `tatkal` is only passed when the journey is under the Tatkal quota. Passing it
+  adds the printed premium and puts it inside the tax base (§5).
 - `season=None` means peak. The lean-season rate comes back as an alternate on
-  the same quote, so the caller chooses instead of the code choosing.
+  the same quote, so the caller chooses instead of the code choosing. The
+  provider always passes a season, because it has the journey date.
 - `superfast=None` means the timetable carries no superfast flag, so the
   supplement is stated as a possible shortfall rather than added by default.
 
@@ -99,18 +101,24 @@ Mapping is narrow and refuses by design:
 
 ## 4. Verified quotes (not hypotheses)
 
-Train 22105 Indrayani SF Express, 190.7 km:
+Train 22105 Indrayani SF Express, 190.7 km, priced with the shipped tables and
+the shipped tax rule:
 
 | Class | Total | Components | Slab actually used |
 |---|---|---|---|
-| SL | ₹150 | 130 base + 20 reservation | 196-200 (minimum distance 200) |
-| 3A | ₹492 | 452 base + 40 reservation | 296-300 (minimum distance 300) |
-| 2S | ₹96 | 81 base + 15 reservation | 191-195 |
-| CC | ₹328 | 288 base + 40 reservation | 296-300 |
+| SL | ₹150 | 130 base + 20 reservation, no tax | 196-200 (minimum distance 200) |
+| 3A | ₹520 | 452 + 40 + 24.60 GST + 3.40 round-up | 296-300 (minimum distance 300) |
+| 2S | ₹100 | 81 + 15 + 4.00 round-up, no tax | 191-195 |
+| CC | ₹345 | 288 + 40 + 16.40 GST + 0.60 round-up | 296-300 |
+| 2A | ₹725 | 637 + 50 + 34.35 GST + 3.65 round-up, peak | 296-300 (minimum distance 300) |
 
 Note what those rows show: for 190.7 km the minimum-distance rule, not the raw
 distance, picks the slab for SL, 3A and CC. That is the document's rule, not a
 rounding choice of ours.
+
+Every total is a multiple of ₹5 because the fare table's note 5.1 says the
+chargeable fare is rounded up to the next higher multiple of ₹5. It is its own
+component, so the parts still sum to the total exactly.
 
 One apparent oddity that is **not** a bug: `mail_express_ac` prints `3A: 452`
 flat from slab 1-150 through 296-300, then 504 at 301. The page image confirms
@@ -119,19 +127,38 @@ the circular itself prints it that way (`mail_express_ac`, page 12). Do not
 
 ---
 
-## 5. What a quote does not include, and says so
+## 5. What is included, what is not
+
+Included, each with the published text it came from:
+
+| Part | Rule | Source |
+|---|---|---|
+| **GST** | 5% on first class and air conditioned coaches; nil on every other class | `data/tax-rules.json`: CBIC 11/2017 S.No. 8 Heading 9964 (2.5% CGST) and 12/2017 S.No. 17 Heading 9964 (Nil) |
+| **Tatkal premium** | 10% of basic fare for 2S, 30% for others, clamped to a per-class floor and ceiling | `data/tatkal-charges.json`: indianrail.gov.in Tatkal Scheme page, cross-checked against IRCTC's Tatkal FAQ |
+| **Round-up** | chargeable fare rounded **up** to the next ₹5 | fare table note 5.1, printed on the held copy |
+| **Season** | AC 2-Tier and AC First Class are printed twice, peak and lean | `data/season-calendar.json`: notes 6 and 6.1 |
+
+Two consequences worth stating plainly:
+
+- **First Class is taxable.** The exemption covers rail "in a class other than
+  first class or an air-conditioned coach", so non-AC First Class pays 5%. It
+  used to be read as non-AC here and left untaxed, which was wrong.
+- **The Tatkal premium sits inside the tax base.** The one published Tatkal fare
+  this project could check is CC on 22105 at 192 km, ₹525: (288 + 40 + 45 + 125)
+  × 1.05 = 522.90, rounded up. Taxing the fare alone gives ₹520 and misses it.
+
+Not included, and not silently zero:
 
 | Excluded | Why | What the caller sees |
 |---|---|---|
-| **GST** | Circular ¶4 says "as per instructions issued from time to time" and prints no rate. `data/tax-rules.json` does not exist. | `assumptions` states tax is not included. Writing a rate from memory would be a fabricated citation. |
-| **Tatkal premium** | No published scheme, and peak/lean boundaries are undefined in the circular. | `season` is a parameter; when unnamed, the peak total is primary and the lean total is returned as `alternate_total_minor`. Neither is invented. |
-| **Convenience fee / IRCTC charges** | Not in this circular. | Not charged. |
-| **Onboard catering, insurance** | Not fares. | Not modelled. |
+| **Convenience fee / IRCTC charges** | Not in this circular, and IRCTC does not publish a settled schedule | Not charged, and not claimed to be the whole price |
+| **Onboard catering, insurance, blankets** | Not fares | Not modelled |
+| **Any class the scheme excludes** | 1A and FC are outside Tatkal | `total_minor is None` with the reason, never a guessed premium |
 
-To start pricing tax, add `data/tax-rules.json` shaped
-`{"source": "...", "ac": <rate>, "non_ac": <rate>}`. `fare.default_tax()` picks
-it up; no code change. Until then every quote is a lower bound on the real
-total, and says so.
+The season boundaries have not been re-printed in a 2025-dated document we hold.
+The circular still prices the two seasons, so the split is real, but the dates
+carry the 2014-15 edition's provenance in the data file and are labelled as
+such. A quote states which season it used.
 
 ---
 
@@ -172,8 +199,14 @@ hand-verified cells, page 12 `329/329`, page 18 `75/75`.
 
 ## 8. Tests
 
-`tests/test_fare.py` (36) covers slab arithmetic, minimum distance, the part-km
-rule, the tri-state superfast note, gap refusal and tax-absent behaviour.
+`tests/test_fare.py` covers slab arithmetic, minimum distance, the part-km rule,
+the tri-state superfast note, gap refusal, tax-absent behaviour and the round-up.
+`tests/test_tatkal.py` covers the printed percentages, floors and ceilings, the
+3E→3A inheritance, the 1A refusal, the peak/lean uniformity claim, and the
+premium inside the tax base (the ₹525 ticket is reproduced in one test).
+`tests/test_season.py` covers every printed season boundary, the 1 Aug-31 Aug
+window, that a class printed once ignores the season, and that First Class is
+taxed.
 `tests/test_rail_india.py::TestFare` covers the provider end: prices without a
 network call, parts add up to the total, source cited, Vande Bharat and `EC`
 refused, unpriced journey → warning, and "prices only the named class".

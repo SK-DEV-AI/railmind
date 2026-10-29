@@ -21,21 +21,25 @@ Say this without hedging, because every line below was run.
 2. See, for each train, the real departure and arrival times, how many days it
    runs, every stop with distance, and how long it actually takes.
 3. See a **price in rupees for the class you named**, computed locally from the
-   railway's own published fare table, with the base fare, reservation charge and
-   any minimum-distance rule broken out, plus the circular it came from. The
-   timetable carries no class list for any train, so the price stands with a
-   stated caveat; where a class list is known and the train lacks your class, no
-   price is shown and the card names the classes it does carry.
-4. See a **delay-risk score** from a model trained on real running data
+   railway's own published fare table, with the base fare, reservation charge, GST
+   at the notified rate, the Rs 5 round-up and any minimum-distance rule broken
+   out, plus the circular it came from. Under the Tatkal quota the printed Tatkal
+   premium is included too, and it is taxed with the fare. The timetable carries
+   no class list for any train, so the price stands with a stated caveat; where a
+   class list is known and the train lacks your class, no price is shown and the
+   card names the classes it does carry.
+4. See the season the price used. AC 2-Tier and AC First Class are printed twice,
+   peak and lean, so the journey date picks the column and the quote says which.
+5. See a **delay-risk score** from a model trained on real running data
    (ROC-AUC 0.778), not a vibe.
-5. Get one ranked shortlist with the reasoning shown (duration, price, delay,
+6. Get one ranked shortlist with the reasoning shown (duration, price, delay,
    comfort, changes), answered in tens of milliseconds, which is what a Tatkal
    rush actually needs.
-6. Get a **one-tap path to IRCTC** with a step-by-step handoff that says which
+7. Get a **one-tap path to IRCTC** with a step-by-step handoff that says which
    steps are yours (login, captcha, Aadhaar OTP, payment).
-7. Run the whole thing offline: no vendor call is needed to answer a search or a
+8. Run the whole thing offline: no vendor call is needed to answer a search or a
    price.
-8. **Ask for a named service.** Say "vande bharat" or "rajdhani or shatabdi" and
+9. **Ask for a named service.** Say "vande bharat" or "rajdhani or shatabdi" and
    the shortlist is those trains, matched on the name in the local timetable, so
    it costs no request. If none runs that corridor the whole day comes back with
    the mismatch written on each card, because an empty list would hide real
@@ -48,10 +52,11 @@ Say this without hedging, because every line below was run.
 2. **See seat availability or PNR.** No free, legal machine source exists; it is a
    paid vendor gate (`403 PLAN_UPGRADE_REQUIRED`) and IRCTC's own endpoint is
    captcha-walled. The card tells you to check on IRCTC.
-3. **Get a final all-inclusive total.** GST and the Tatkal premium are not in the
-   quote, because the circular prints no rate for either; the quote says exactly
-   that. What you get is the railway's basic fare + reservation + superfast, which
-   is a lower bound.
+3. **Get a final all-inclusive total.** The quote is the railway's own arithmetic:
+   basic fare, reservation, superfast, GST, the printed Tatkal premium, and the
+   Rs 5 round-up. What it cannot add is IRCTC's convenience fee, which is not in
+   any published schedule, and a superfast supplement for a train whose timetable
+   carries no superfast flag (stated as the printed upper bound instead).
 4. **Know about today's cancellations, diversions, specials or platform
    changes.** Not modelled; needs a source we do not have.
 5. **Prefill the IRCTC page from a link.** Measured: IRCTC reads no journey
@@ -77,7 +82,7 @@ over an honest path to the booking page, and we never claim more than we did.**
 | Full station directory, 13,010 codes and names | **verified working** | 1 request, stored in SQLite |
 | Train schedules: every stop, lat/lon, arrival, departure, day number, cumulative distance | **verified working** | 1 request per train, 285 stops for Punjab Mail |
 | Which trains run a corridor | **verified working** | local SQL join, zero requests when seeded |
-| Local fare per class, cited and itemised | **working** (2026-10-27) | `fare/` from Commercial Circular 24 of 2025, no network call; see `docs/FARES.md` |
+| Local fare per class, cited and itemised, including GST, the Tatkal premium and the Rs 5 round-up | **working** (2026-10-29) | `fare/` from Commercial Circular 24 of 2025 plus the two CBIC notifications and the Tatkal scheme page, no network call; see `docs/FARES.md` |
 | Rank and present trains by real duration | **working** | real data, no invented scores |
 | Open IRCTC's booking page for the chosen journey | **verified working** | plain link, opens in 200 with no bot block |
 | Tell the human exactly which steps need them | **working** | 5 steps tagged human/captcha/aadhaar/payment |

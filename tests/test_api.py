@@ -321,3 +321,43 @@ def test_handoff_refuses_a_tatkal_party_over_the_four_passenger_cap(client):
     assert problem["code"] == "not_supported"
     assert problem["title"] == "Refused by a booking rule"
     assert "4 passengers" in problem["detail"]
+
+
+# -- the intent_id half of the contract ---------------------------------------
+#
+# `/search` accepts exactly one of `intent` or `intent_id`. The id was declared
+# in openapi.yaml, accepted by the model, and then never resolved, so a caller
+# that did exactly what the contract said was told to call `/intent` first, after
+# it had. These two tests are the reason that cannot come back.
+
+
+def test_a_search_by_intent_id_resolves_the_intent_it_was_given(client):
+    parsed = client.post("/intent", json={"text": "mumbai to delhi tomorrow"}).json()
+    intent_id = parsed["intent"]["intent_id"]
+
+    response = client.post("/search", json={"intent_id": intent_id})
+
+    assert response.status_code == 200, response.text
+    quay = response.json()
+    assert quay["itineraries"], "an intent that parsed must still find trains"
+    assert quay["meta"]["deadline_ms"] == 1800, "defaults apply when the id is used"
+
+
+def test_an_intent_id_this_process_never_parsed_is_a_404_not_a_guess(client):
+    response = client.post("/search", json={"intent_id": "int_does_not_exist"})
+
+    assert response.status_code == 404
+    problem = response.json()
+    assert "int_does_not_exist" in problem["detail"]
+    assert problem["retryable"] is False
+
+
+def test_giving_both_an_intent_and_an_intent_id_is_refused(client):
+    parsed = client.post("/intent", json={"text": "mumbai to delhi tomorrow"}).json()
+
+    response = client.post(
+        "/search", json={"intent": parsed["intent"], "intent_id": parsed["intent"]["intent_id"]}
+    )
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "invalid_query"
