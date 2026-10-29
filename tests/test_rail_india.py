@@ -14,10 +14,12 @@ The three findings that forced design decisions are each pinned by a test:
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import datetime as dt
 import json
 import pathlib
+import time
 
 import pytest
 
@@ -53,9 +55,14 @@ class FakeTransport:
     def __init__(self, routes: dict[str, dict] | None = None) -> None:
         self.routes = routes or {}
         self.calls: list[tuple[str, dict]] = []
+        #: Added to every response, so a test can model a link too slow for the
+        #: 1800 ms deadline without touching the network.
+        self.delay_s = 0.0
 
     async def __call__(self, host, path, *, params=None, headers=None, deadline_s=None):
         self.calls.append((path, dict(params or {})))
+        if self.delay_s:
+            await asyncio.sleep(self.delay_s)
         for key, payload in self.routes.items():
             if path.startswith(key):
                 return response(payload)
@@ -207,6 +214,27 @@ class TestSeededSearch:
         assert len(first) == len(second) == 2
         assert len(transport.calls) == 1
         assert transport.calls[0][0].startswith("/v1/trains/between/CSMT/ADI")
+
+    async def test_a_deadline_cancel_still_fills_the_cache(self, provider, transport):
+        # A cold corridor on a link too slow for the deadline. The search must give
+        # up, and the vendor request must NOT give up with it: cancelling it would
+        # store nothing, so the retry would spend another request and fail the same
+        # way, ten times in a row, against a hundred-a-month quota.
+        transport.routes["/v1/trains/between/CSMT/ADI"] = load("between_CSMT_NDLS.json")
+        transport.delay_s = 0.25
+        query = make_query("CSMT", "ADI")
+
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(provider.search(query), 0.05)
+
+        await asyncio.sleep(0.4)
+        started = time.perf_counter()
+        again = await provider.search(query)
+        elapsed = time.perf_counter() - started
+
+        assert len(again) == 2
+        assert elapsed < 0.15, f"the retry still hit the network: {elapsed * 1000:.0f} ms"
+        assert len(transport.calls) == 1
 
     async def test_the_departure_window_filters_the_day(self, provider):
         # Morning means morning: the 06:40 and 07:00 trains are not an answer to

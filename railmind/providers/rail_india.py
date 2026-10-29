@@ -25,6 +25,7 @@ Deliberate limits, stated rather than hidden:
 
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from collections.abc import Sequence
 
@@ -64,6 +65,13 @@ from railmind.providers.railradar import RailRadarClient
 from railmind.risk.predict import PunctualityModel
 
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30), "IST")
+
+#: How many cancelled-but-still-fetching vendor lookups may be alive at once. See
+#: `_vendor_between`: a fetch outlives the deadline that cancelled it, because
+#: cancelling it too would re-spend the vendor quota on every retry and never fill
+#: the cache. The cap keeps a burst of unknown corridors from piling up.
+MAX_WARMING_FETCHES = 8
+
 ATTRIBUTION = (
     "Timetable and live data from RailRadar (railradar.in). "
     "RailRadar is not affiliated with IRCTC or NTES."
@@ -211,6 +219,9 @@ class RailIndiaProvider(BaseProvider):
         self.cache = cache or RouteCache()
         self.seat_availability = seat_availability
         self._model = risk_model
+        #: Vendor fetches whose caller gave up on the deadline. They keep running so
+        #: the cache gets filled anyway; see `_vendor_between`.
+        self._warming: set[asyncio.Task] = set()
         super().__init__()
 
     # -- search ---------------------------------------------------------------
@@ -330,10 +341,38 @@ class RailIndiaProvider(BaseProvider):
             destination=f"IN:{destination_code}",
             service_date=dt.datetime.now(dt.UTC).date(),
         )
-        result = await self.cache.get_or_load(
-            key, lambda: self.client.trains_between(origin_code, destination_code)
+        load = asyncio.create_task(
+            self.cache.get_or_load(
+                key, lambda: self.client.trains_between(origin_code, destination_code)
+            )
         )
+        if len(self._warming) >= MAX_WARMING_FETCHES:
+            # At the cap, an ordinary cancel is the honest outcome: the caller is
+            # gone, and piling up more background fetches would be worse than
+            # spending the request again later.
+            return list((await load).value)
+        try:
+            # The deadline cancels this coroutine, not the fetch. Left alone, a
+            # timed-out search would spend a request against a 100-a-month quota,
+            # store nothing, and spend another on the retry -- and on a link too
+            # slow to answer in 1.8 s, every retry would fail the same way forever.
+            result = await asyncio.shield(load)
+        except asyncio.CancelledError:
+            self._warming.add(load)
+            load.add_done_callback(self._warming_done)
+            raise
         return list(result.value)
+
+    def _warming_done(self, task: asyncio.Task) -> None:
+        """Retire a fetch that outlived its caller, and read its failure if any.
+
+        The exception is retrieved rather than acted on: whatever went wrong, the
+        next search for this corridor asks again and reports it then. Swallowing it
+        silently would also leave asyncio warning about a never-retrieved exception.
+        """
+        self._warming.discard(task)
+        if not task.cancelled():
+            task.exception()
 
     def _options_from_vendor(self, rows: list[dict]) -> list[TripOption]:
         """Convert `trains/between` rows into `TripOption` using local stations."""

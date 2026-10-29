@@ -69,6 +69,15 @@ Say this without hedging, because every line below was run.
    approximated from the Mail/Express table. Filtering by brand does work (item 8
    above): you can ask for only Vande Bharats, you just do not get a price for
    them.
+8. **Answer instantly for a corridor the local timetable does not hold.** Coverage
+   is measured, not assumed: of 200 random pairs of served stations, 2 had a direct
+   train locally; of the 1,560 ordered pairs among the 40 busiest stations, 694
+   (44%) did. Anything else falls back to one vendor request, which on a slow link
+   does not finish inside the 1.8 s deadline, so the first search returns nothing
+   and says the provider was dropped. The fetch is kept alive after that cancel, so
+   the retry is local and fast; the fix that matters is filling the timetable.
+   A retired station code (BCT, renamed Mumbai Central MMCT) matches no train at
+   all; the name "mumbai central" resolves to MMCT correctly.
 
 In one line for the report: **we decide, from real data, in a second, and hand
 over an honest path to the booking page, and we never claim more than we did.**
