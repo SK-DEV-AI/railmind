@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "RailMind Companion",
+  "version": "0.1.0",
+  "description": "Pre-fills IRCTC journey fields from a RailMind shortlist and shows fare/risk beside IRCTC's numbers. Never books, never pays.",
+  "icons": {
+    "16": "src/icons/icon16.png",
+    "48": "src/icons/icon48.png",
+    "128": "src/icons/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "*://*.irctc.co.in/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.irctc.co.in/*"],
+      "js": ["src/lib/selectors.js", "src/lib/api.js", "src/content.js"],
+      "css": ["src/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "RailMind Companion"
+  }
+}

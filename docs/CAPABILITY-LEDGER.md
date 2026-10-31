@@ -71,18 +71,21 @@ Say this without hedging, because every line below was run.
    above): you can ask for only Vande Bharats, you just do not get a price for
    them.
 8. **Answer instantly for a corridor the local timetable does not hold.** Coverage
-   is measured, not assumed. Two numbers, and the second is the one that matters:
-   of 200 random pairs of served stations, 2 had a direct train locally, because
-   most of the 13,010 codes are halts that connect to nothing; of the 2,162 ordered
-   pairs among a hand-picked 47-station long-distance shortlist, **1,571 (72.7%)**
-   answer from the local table with no request at all. The rest are real gaps: an
-   earlier 44% figure for "the 40 busiest stations" was wrong, because busiest-by-
-   stop-count puts the suburban lines of Mumbai and Kolkata on that list and no
-   long-distance train runs SDAH to KYN. Anything unanswered falls back to one
-   vendor request, which on a slow link does not finish inside the 1.8 s deadline,
-   so the first search returns nothing and says the provider was dropped. The fetch
-   is kept alive after that cancel, so the retry is local and fast; the fix that
-   matters is filling the timetable.
+   is measured, not assumed, and the method is written down so it can be re-run:
+   **2,134 of 2,970 ordered pairs (71.9%)** among a documented 55-station
+   long-distance set answer from the local table with no request at all; before
+   retired codes resolved it was 2,048 (69.0%). See `docs/COVERAGE.md` and
+   `docs/major-stations.txt`. Two earlier figures are retired: 44.5% for "the 40
+   busiest stations" measured suburban topology (ranking by stop count puts KYN,
+   MSB and TBM on the list, and no long-distance train runs SDAH to KYN), and 71.6%
+   came from a 47-code list nobody wrote down. What the missing 28% is: a few
+   hundred pairs from the 63 trains the crawl did not finish, some pairs with no
+   direct train at all (a real answer, not a gap), and code renames that change the
+   name too (`MGS` to `DDU`), which the alias rule cannot infer. Anything unanswered
+   falls back to one vendor request, which on a slow link does not finish inside the
+   1.8 s deadline, so the first search returns nothing and says the provider was
+   dropped. The fetch is kept alive after that cancel, so the retry is local and
+   fast; the fix that matters is filling the timetable.
 9. **Retired station codes are followed, not ignored.** The station directory keeps
    both `BCT` (zero trains) and `MMCT` (52) for Mumbai Central, and asking for `BCT`
    used to return "no trains on that route", which reads as a fact about the
@@ -141,11 +144,18 @@ over an honest path to the booking page, and we never claim more than we did.**
 
 **A complete timetable.** railpull produces it out of NTES, the government enquiry
 service, for free, one train at a time. That is a decision about politeness and a
-night of wall-clock time, not budget. It has been done: the local database holds
+night of wall-clock time, not budget, and it is done: the local database holds
 **10,861 trains, 213,105 stops and 13,010 stations**, imported from the crawl in
-`data/raw` by `scripts/import_railpull.py`. We have not verified that 10,861 is the
-whole mail/express/passenger roster rather than a large partial crawl, so treat the
-count as "what we hold", not "what exists".
+`data/raw` by `scripts/import_railpull.py`.
+
+How complete is that? The crawl reports phase DONE: 10,870 numbers discovered,
+10,861 schedules on disk, 9 failed with `empty-or-error`, 54 remaining or
+discontinued. Public counts of "passenger trains per day" are not comparable to a
+count of distinct train numbers (a weekly train is not a daily service), but our
+8,803 non-suburban numbers already exceed the 6,611 non-EMU daily services a 2016
+figure reported, so the set is not demonstrably short. Treat 10,861 as "what NTES
+serves", not as "everything that runs", and know that the 63 outstanding numbers are
+one resumable crawl away, free.
 
 The database is **not committed** (`data/*.db` and `data/raw/` are ignored, 21.5 MB
 of SQLite plus 23 MB of crawl): it rebuilds from the crawl, which is kept on the dev
@@ -227,3 +237,62 @@ built, from real data, and the method and limits are in `docs/DELAY-MODEL.md`.
 What this buys: the recommendation now responds to reliability. On the demo
 corridor 22105 leads 12127 because it is meaningfully less likely to be late,
 which is a fact from data rather than a preference in the weights.
+
+## 8. Surfaces beyond the HTTP API (2026-10-31)
+
+Two client surfaces were researched to buildable depth. Neither adds a booking
+capability and neither changes the legal position in section 2: they are ways to
+reach the same decision engine faster.
+
+### 8.1 Browser extension — built, in `extension/`
+
+A loadable Manifest V3 extension, 573 lines, no build step, no dependencies. It does
+exactly one thing: when the user is on IRCTC's own booking page and clicks the
+RailMind panel, it types the journey fields we already decided (origin, destination,
+date, class, quota) into IRCTC's own form. The user still logs in, still reviews,
+still clicks Search, still pays.
+
+What was measured against the live site rather than assumed:
+
+- IRCTC is Angular + PrimeNG. Assigning `.value` to the autocomplete or dropdown
+  does **not** update the form control, so Search stays disabled and every naive
+  extension fails silently. The working path is per-character keyboard events plus a
+  real click on the suggestion, for those two fields only; the date calendar does
+  accept a value plus `input`/`change`/`blur`. Recorded in `src/content.js`.
+- The link cannot carry the journey: IRCTC ignores journey query parameters and
+  navigates the SPA to `/nget/booking/train-list` with no query string. This is the
+  same finding as `docs/IRCTC-DEEPLINK.md`, reached again from the other side, which
+  is why the handoff's step one is "type these three fields" and not a promise.
+- No `submit()`, no Search-button click, no login, no credential field, no
+  availability read anywhere in the code. A `grep` for those verbs returns only the
+  disclaimer string. Availability is not obtainable, so claiming it is the one fatal
+  error, and the code has no way to.
+- The local backend sends no CORS headers (`OPTIONS /intent` returns 405), so the
+  service worker calls it under its declared host permissions. A hosted backend needs
+  CORS before a store listing ships.
+
+**The legal position, stated the same way the rest of this file states it:** IRCTC's
+ToS clause C bans "automation software and/or Scripting Software" without limiting it
+to booking, and enforcement is live. A fill-only extension does not make that clause
+disappear; it makes the intent defensible and the blast radius one form. It is a
+convenience on top of the decision product, not the product, and the product must
+work with it switched off.
+
+### 8.2 WhatsApp — specified, not built
+
+Cost, from Meta's own rate card read through its JSON pricing endpoint (not blogs):
+per-message billing since 1 Jul 2025, India INR, **utility and service ₹0.1150**, **marketing ₹0.8631**.
+The first 1,000 service messages per business number per month are free. So 10,000
+booking-request conversations a month, at two messages each and staying inside the
+24-hour customer-service window, is **₹2,185 a month**, about 22 paise a
+conversation. Push Tatkal alarms to those same users as marketing templates and it
+becomes ₹8,631 a month; a mis-categorised reply costs ₹17,262. The window design is
+therefore the product, not a detail.
+
+What the bot may say is narrower than what it may do: text in, ranked shortlist out,
+the IRCTC link, and never "booked", "confirmed", "seats left", "we filled the form",
+"we will pay". It has no field for a password, captcha or card, and it forwards the
+backend's degraded-data notes rather than smoothing them over. Residual risk: ToS
+clause A forbids creating a hyperlink to IRCTC without written permission, which a
+strict reading covers, and IRCTC itself runs a WhatsApp bot (reported, unverified).
+That is the one item a lawyer should eyeball, and it is cheap to ask.

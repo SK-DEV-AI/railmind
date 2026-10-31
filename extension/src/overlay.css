@@ -1,0 +1,38 @@
+/* RailMind Companion overlay */
+#rm-panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 320px;
+  max-height: 80vh;
+  overflow: auto;
+  z-index: 2147483647;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  padding: 12px;
+}
+#rm-panel * { box-sizing: border-box; }
+#rm-panel .rm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+#rm-panel .rm-title { font-weight: 700; font-size: 14px; }
+#rm-panel .rm-close { cursor:pointer; border:none; background:transparent; font-size:16px; line-height:1; }
+#rm-panel .rm-card { border:1px solid #e1e4e8; border-radius:8px; padding:8px; margin:8px 0; background:#f6f8fa; }
+#rm-panel .rm-row { display:flex; justify-content:space-between; gap:8px; margin:2px 0; }
+#rm-panel .rm-label { color:#57606a; }
+#rm-panel .rm-value { font-weight:600; }
+#rm-panel .rm-btn { display:block; width:100%; margin:6px 0; padding:8px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:600; }
+#rm-panel .rm-btn-primary { background:#0969da; color:#fff; }
+#rm-panel .rm-btn-secondary { background:#f6f8fa; color:#1a1a1a; border:1px solid #d0d7de; }
+#rm-panel .rm-btn-danger { background:#fff; color:#cf222e; border:1px solid #cf222e; }
+#rm-panel .rm-note { font-size:11px; color:#57606a; margin-top:6px; }
+#rm-panel .rm-badge { display:inline-block; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; }
+#rm-panel .rm-low { background:#dafbe1; color:#1a7f37; }
+#rm-panel .rm-medium { background:#fff8c5; color:#9a6700; }
+#rm-panel .rm-high { background:#ffebe9; color:#cf222e; }
+#rm-panel .rm-unknown { background:#eaeef2; color:#57606a; }
+#rm-panel .rm-hidden { display:none; }
+#rm-panel .rm-status { font-size:11px; color:#57606a; margin-bottom:6px; }
