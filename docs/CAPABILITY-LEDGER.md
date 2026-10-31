@@ -1,6 +1,7 @@
 # CAPABILITY-LEDGER.md — what we can do, what we cannot, and what it costs
 
-Honest matrix as of **2026-10-24**, fares section revised **2026-10-27**. "Verified"
+Honest matrix as of **2026-10-24**, fares section revised **2026-10-27**, timetable
+coverage and station-code section revised **2026-10-31**. "Verified"
 means we ran it, not that a blog said so. Costs are the real published or quoted
 numbers, not guesses.
 
@@ -70,14 +71,26 @@ Say this without hedging, because every line below was run.
    above): you can ask for only Vande Bharats, you just do not get a price for
    them.
 8. **Answer instantly for a corridor the local timetable does not hold.** Coverage
-   is measured, not assumed: of 200 random pairs of served stations, 2 had a direct
-   train locally; of the 1,560 ordered pairs among the 40 busiest stations, 694
-   (44%) did. Anything else falls back to one vendor request, which on a slow link
-   does not finish inside the 1.8 s deadline, so the first search returns nothing
-   and says the provider was dropped. The fetch is kept alive after that cancel, so
-   the retry is local and fast; the fix that matters is filling the timetable.
-   A retired station code (BCT, renamed Mumbai Central MMCT) matches no train at
-   all; the name "mumbai central" resolves to MMCT correctly.
+   is measured, not assumed. Two numbers, and the second is the one that matters:
+   of 200 random pairs of served stations, 2 had a direct train locally, because
+   most of the 13,010 codes are halts that connect to nothing; of the 2,162 ordered
+   pairs among a hand-picked 47-station long-distance shortlist, **1,571 (72.7%)**
+   answer from the local table with no request at all. The rest are real gaps: an
+   earlier 44% figure for "the 40 busiest stations" was wrong, because busiest-by-
+   stop-count puts the suburban lines of Mumbai and Kolkata on that list and no
+   long-distance train runs SDAH to KYN. Anything unanswered falls back to one
+   vendor request, which on a slow link does not finish inside the 1.8 s deadline,
+   so the first search returns nothing and says the provider was dropped. The fetch
+   is kept alive after that cancel, so the retry is local and fast; the fix that
+   matters is filling the timetable.
+9. **Retired station codes are followed, not ignored.** The station directory keeps
+   both `BCT` (zero trains) and `MMCT` (52) for Mumbai Central, and asking for `BCT`
+   used to return "no trains on that route", which reads as a fact about the
+   railway rather than a stale code. A code no train uses now resolves to the code
+   that stands for the same place, so `BCT` to `ADI` returns the same 9 trains as
+   `MMCT` to `ADI`, and a typed code is resolved the same way. The rule is derived
+   from the data (same normalised name, target served, busiest namesake wins a
+   tie), not from a hand-written list, so a refresh cannot silently break it.
 
 In one line for the report: **we decide, from real data, in a second, and hand
 over an honest path to the booking page, and we never claim more than we did.**
@@ -126,13 +139,19 @@ over an honest path to the booking page, and we never claim more than we did.**
 
 ## 4. The one thing that is expensive in *time*, not money
 
-**A complete 9,324-train timetable.** railpull can produce it from NTES for free,
-but the README says "a few hours for the full roster", and it crawls a public
-government service through an unofficial client. That is a decision about politeness
-and time, not budget.
+**A complete timetable.** railpull produces it out of NTES, the government enquiry
+service, for free, one train at a time. That is a decision about politeness and a
+night of wall-clock time, not budget. It has been done: the local database holds
+**10,861 trains, 213,105 stops and 13,010 stations**, imported from the crawl in
+`data/raw` by `scripts/import_railpull.py`. We have not verified that 10,861 is the
+whole mail/express/passenger roster rather than a large partial crawl, so treat the
+count as "what we hold", not "what exists".
 
-Today: 5 seeded trains, 681 stops, 3 corridors, all real. Seeding another corridor is
-1 request for the list plus 1 per train. A 10-train corridor costs about 5 minutes.
+The database is **not committed** (`data/*.db` and `data/raw/` are ignored, 21.5 MB
+of SQLite plus 23 MB of crawl): it rebuilds from the crawl, which is kept on the dev
+machine. A fresh clone therefore starts with the 5 recorded-fixture trains and 3
+corridors, which is what the test suite uses; the full roster is one import away.
+Seeding another corridor from the vendor is 1 request for the list plus 1 per train.
 
 ## 5. What this means for the pitch
 

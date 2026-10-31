@@ -69,6 +69,12 @@ CREATE INDEX IF NOT EXISTS idx_stops_train ON stops (train_number);
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
+def _name_key(name: str) -> str:
+    """A station name reduced to what two spellings of one place have in common."""
+    kept = [ch.lower() if ch.isalnum() else " " for ch in (name or "")]
+    return " ".join("".join(kept).split())
+
+
 @dataclass(frozen=True, slots=True)
 class TripOption:
     """One train that runs a requested origin to destination on the seeded data."""
@@ -452,7 +458,14 @@ class TimetableRepo:
     # -- queries --
 
     def trains_between(self, origin_code: str, destination_code: str) -> list[TripOption]:
-        """Seeded trains that stop at both stations, origin first, in order."""
+        """Seeded trains that stop at both stations, origin first, in order.
+
+        Legacy codes are resolved first: a caller asking for `BCT` gets the trains
+        that use `MMCT`, because they are the same station and the alternative is an
+        empty answer that reads like "this route does not exist".
+        """
+        origin = self.resolve_code(origin_code)
+        destination = self.resolve_code(destination_code)
         query = """
             SELECT t.number, t.name, t.type, t.run_days, t.classes,
                    a.station_code AS origin_code, sa.name AS origin_name,
@@ -482,7 +495,7 @@ class TimetableRepo:
               AND b.arrival IS NOT NULL AND b.arrival <> ''
             ORDER BY a.departure
         """
-        rows = self._conn.execute(query, (origin_code.upper(), destination_code.upper())).fetchall()
+        rows = self._conn.execute(query, (origin, destination)).fetchall()
 
         options: list[TripOption] = []
         for row in rows:
@@ -532,10 +545,73 @@ class TimetableRepo:
         self._conn.commit()
 
     def station(self, code: str) -> StationRow | None:
+        """The station for a code, following a legacy code to the one trains use."""
+        wanted = self.resolve_code(code)
         row = self._conn.execute(
-            "SELECT code, name, lat, lon FROM stations WHERE code = ?", (code.upper(),)
+            "SELECT code, name, lat, lon FROM stations WHERE code = ?", (wanted,)
         ).fetchone()
+        if row is None and wanted != code.strip().upper():
+            row = self._conn.execute(
+                "SELECT code, name, lat, lon FROM stations WHERE code = ?",
+                (code.strip().upper(),),
+            ).fetchone()
         return StationRow(row["code"], row["name"], row["lat"], row["lon"]) if row else None
+
+    # -- legacy station codes --
+
+    def station_aliases(self) -> dict[str, str]:
+        """Map station codes no train uses onto the code that stands for the same place.
+
+        Indian Railways reissued station codes (BCT became MMCT), and the station
+        directory we ingest keeps both rows. The old code then answers "no trains"
+        to every query, which is not a data problem a user can see: it looks like
+        the route does not exist. `BCT -> ADI` returned nothing while `MMCT -> ADI`
+        returned nine trains.
+
+        The rule is deliberately timid, because guessing here is worse than missing:
+        two codes alias only when their names match after normalising case and
+        punctuation AND the target is served by trains. A served code is never
+        remapped, so an alias cannot chain and cannot hide a working code.
+
+        Where several served stations share a name (Mumbai Central is both the
+        mainline terminus MMCT and the suburban stop BCL), the unserved code points
+        at the busiest one. That is the same crude popularity signal the intent
+        parser uses, and it beats the alternative: no answer at all for a station
+        that plainly exists.
+        """
+        return self._cached("station_aliases", self._build_aliases)
+
+    def _build_aliases(self) -> dict[str, str]:
+        rows = self._conn.execute(
+            "SELECT s.code, s.name, "
+            "(SELECT COUNT(*) FROM stops p WHERE p.station_code = s.code) AS n "
+            "FROM stations s"
+        ).fetchall()
+        by_name: dict[str, list[tuple[str, int]]] = {}
+        for row in rows:
+            key = _name_key(str(row["name"] or ""))
+            if not key:
+                continue
+            by_name.setdefault(key, []).append((str(row["code"]).upper(), int(row["n"])))
+
+        aliases: dict[str, str] = {}
+        for group in by_name.values():
+            if len(group) < 2:
+                continue
+            served = [(code, count) for code, count in group if count > 0]
+            if not served:
+                continue
+            # Busiest wins a tie; the group is a name, not a place we can verify.
+            target = max(served, key=lambda item: (item[1], item[0]))[0]
+            for code, count in group:
+                if count == 0:
+                    aliases[code] = target
+        return aliases
+
+    def resolve_code(self, code: str) -> str:
+        """The code trains actually stop at, given a code a user typed."""
+        cleaned = (code or "").strip().upper()
+        return self.station_aliases().get(cleaned, cleaned)
 
     def search_stations(self, text: str, limit: int = 10) -> list[StationRow]:
         """Prefix/substring match on code or name, for resolving 'Mumbai' to codes."""

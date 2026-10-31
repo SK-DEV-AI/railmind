@@ -526,12 +526,20 @@ def _station_rank(row: StationRow, attempt: str, traffic: dict[str, int]) -> tup
 
 
 def _explicit_codes(text: str, repo: TimetableRepo) -> list[Stop]:
-    """Station codes typed directly, in the order they appear."""
+    """Station codes typed directly, in the order they appear.
+
+    A typed code is looked up as a code, and a retired code (BCT) resolves to the one
+    trains use (MMCT) rather than being dropped, because the person who typed it named
+    a station that exists. Two spellings of the same place collapse to one stop.
+    """
     stops: list[Stop] = []
+    seen: set[str] = set()
     for token in re.findall(r"\b[A-Za-z]{2,5}\b", text):
         row = repo.station(token.upper())
-        if row is not None and row.code.upper() == token.upper():
-            stops.append(_stop(row))
+        if row is None or row.code.upper() in seen:
+            continue
+        seen.add(row.code.upper())
+        stops.append(_stop(row))
     return stops
 
 
