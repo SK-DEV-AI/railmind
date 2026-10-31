@@ -127,6 +127,75 @@ def test_a_single_stop_record_is_skipped():
     assert importer.to_vendor_payload(record(stops=record()["stops"][:1])) is None
 
 
+def test_a_spliced_route_keeps_its_first_clean_run_and_says_so():
+    """Real railpull records can carry two schedules glued together.
+
+    `22159` is the live example: CSMT->MAS, then a second run that starts at CSMT
+    again. Importing all 64 stops invents journeys such as MAS->CSMT on a train
+    that never makes one, and lists the same train more than once for a real pair.
+    The honest reading is that the first run is a whole train and the rest is damage.
+    """
+    first = record()["stops"]
+    second = [dict(stop, seq=stop["seq"] + 3) for stop in first]
+    counts: dict[str, int] = {"spliced": 0}
+
+    payload = importer.to_vendor_payload(record(stops=first + second), counts=counts)
+
+    assert payload is not None
+    assert [stop["station"]["code"] for stop in payload["route"]] == ["CSMT", "DR", "PUNE"]
+    assert payload["train"]["source"] == {"code": "CSMT"}
+    assert payload["train"]["destination"] == {"code": "PUNE"}
+    assert counts["spliced"] == 1
+
+
+def test_a_route_that_revisits_another_station_is_kept_in_full():
+    """Detours, reversals and circular specials are real; do not trim them.
+
+    `11013` reverses through SBC, `17029` detours via HG, `00913` is a circular
+    tourist special. Only a restart at the route's own origin is damage.
+    """
+    stops = [
+        {"seq": 1, "code": "PRTN", "day": 1, "arr": "", "dep": "10:00"},
+        {"seq": 2, "code": "BH", "day": 2, "arr": "11:00", "dep": "11:10"},
+        {"seq": 3, "code": "ST", "day": 2, "arr": "13:00", "dep": "13:10"},
+        {"seq": 4, "code": "KOAA", "day": 9, "arr": "09:00", "dep": "09:30"},
+        {"seq": 5, "code": "ST", "day": 11, "arr": "12:00", "dep": "12:10"},
+        {"seq": 6, "code": "BH", "day": 11, "arr": "14:00", "dep": "14:10"},
+        {"seq": 7, "code": "PRTN", "day": 11, "arr": "15:00", "dep": ""},
+    ]
+    counts: dict[str, int] = {"spliced": 0}
+
+    payload = importer.to_vendor_payload(record(number="00913", stops=stops), counts=counts)
+
+    assert payload is not None
+    assert len(payload["route"]) == 7
+    assert counts["spliced"] == 0
+    # The leg that a distance-based trim would have deleted is still there.
+    assert payload["route"][5]["station"]["code"] == "BH"
+
+
+def test_a_spliced_record_is_imported_once_and_not_duplicated(tmp_path, capsys):
+    out = tmp_path / "out"
+    out.mkdir()
+    base = record(number="22159")
+    spliced = base["stops"] + [dict(stop, seq=stop["seq"] + 3) for stop in base["stops"]]
+    (out / "schedules.jsonl").write_text(json.dumps(record(number="22159", stops=spliced)) + "\n")
+
+    database = tmp_path / "timetable.db"
+    assert importer.main(["--input", str(out), "--db", str(database)]) == 0
+    printed = capsys.readouterr().out
+    assert "trimmed 1 spliced" in printed
+
+    repo = TimetableRepo(database)
+    try:
+        trains = repo.trains_between("CSMT", "PUNE")
+        assert [train.train_number for train in trains] == ["22159"]
+        # The phantom reverse leg must not exist.
+        assert repo.trains_between("PUNE", "CSMT") == []
+    finally:
+        repo.close()
+
+
 def test_import_writes_rows_and_is_idempotent(tmp_path, capsys):
     out = tmp_path / "out"
     out.mkdir()

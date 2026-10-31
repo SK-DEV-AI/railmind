@@ -49,7 +49,7 @@ usable departure at the origin and a usable arrival at the destination, and requ
 destination to come later in the sequence. A pair that a stop geometry says is
 reachable but that no timetable entry serves counts as unanswered.
 
-Result on the shipped database (13,010 stations, 10,861 trains, 213,105 stops):
+Result on the shipped database (13,010 stations, 10,861 trains, 212,656 stops):
 **2,134/2,970 = 71.9%.**
 
 ## 3. Why this number and not the older ones
@@ -91,3 +91,27 @@ python scripts/import_railpull.py     # from a railpull crawl in data/raw
 ```
 
 The number above was measured on that full import.
+
+### The splice repair, and why this number did not move
+
+18 of the 10,861 crawled records carried two schedules glued into one: `22159` runs
+CSMT→MAS and then starts again at CSMT and runs to PUNE, 64 stops in all. Imported
+as-is, that train appeared two and three times on one CSMT→PUNE search, and its
+phantom half made journeys look served that no train makes (MAS→CSMT on that train).
+The importer now cuts a record where the route re-departs its own origin
+(`trimmed 18 spliced schedules to their first run`), and 449 phantom stops went with
+them: 213,105 stops became 212,656.
+
+This metric did not change (2,134 before and after): the phantom halves added no answers
+over this set, they only repeated one. The user-visible fix is that a search no longer
+lists the same train three times, and no exact-duplicate stop remains in the database.
+
+The first attempt at the rule cut a record at *any* repeated station, which also cut
+legitimate loops and cost exactly one real pair (`KOAA`→`ST`, served by the circular
+tourist special `00913`). That is how the exception below was found, and the test suite
+now pins both sides of it.
+
+The rule deliberately does **not** trim a route that revisits some other station.
+Indian trains really do that: `11013` reverses through SBC, `17029` detours via HG,
+and `00913` is a circular tourist special that ends where it started. 30 records keep
+their repeated stations, with different times at each call, which is correct.

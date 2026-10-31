@@ -93,7 +93,7 @@ site works, the cards tell the truth, and nobody pretends.
 ## Reproducing it
 
 ```bash
-cd ~/session-root/repos/railmind
+cd railmind
 mkdir -p data/raw
 curl -L -o data/raw/rstgcn.zip \
   https://raw.githubusercontent.com/KoyenaChowdhury/RSTGCN/main/Indian-Railway-Network-and-Delays.zip

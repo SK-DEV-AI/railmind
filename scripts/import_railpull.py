@@ -48,8 +48,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from railmind.data.timetable import DEFAULT_DB, TimetableRepo
 
-#: Where a railpull checkout keeps its exported tables, relative to that checkout.
-DEFAULT_INPUT = Path.home() / "session-root" / "repos" / "railpull" / "data" / "out"
+#: Where a railpull crawl keeps its exported tables. Point `--input` at your own
+#: checkout of `shwetankg07/railpull`, at its `data/out` directory.
+DEFAULT_INPUT = Path("data/raw/railpull-out")
 
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
@@ -83,12 +84,49 @@ def normalise_time(value: object) -> str | None:
     return f"{hour:02d}:{minute:02d}"
 
 
-def to_vendor_payload(record: dict) -> dict | None:
+def trim_at_restart(stops: list[dict]) -> list[dict]:
+    """The stops up to the point where the route starts over at its own origin.
+
+    A record that returns to its first station and then repeats the beginning is two
+    schedules spliced into one. Real example: `22159` carries CSMT->MAS, then begins
+    again at CSMT and runs to PUNE, 64 stops in all. Importing that invents journeys
+    (MAS->CSMT on a train that never makes one) and lists one train two or three
+    times for a pair it really serves. Keeping the first run preserves a whole real
+    train.
+
+    A route that revisits some *other* station is left alone, because Indian trains
+    genuinely do that: `11013` reverses through SBC and `17029` detours via HG, and
+    `00913` is a circular tourist special. Trimming those would delete real journeys.
+    """
+    codes = [str(stop.get("code") or "").strip().upper() for stop in stops]
+    first = next((code for code in codes if code), "")
+    if not first:
+        return stops
+    second = next((code for code in codes[1:] if code), "")
+    for index in range(1, len(stops)):
+        if codes[index] != first:
+            continue
+        # A live example of the difference: `00913` ends back at its own origin,
+        # which closes a loop. `22159` restarts at CSMT and then runs the SAME next
+        # station again, which means the schedule was duplicated, not looped.
+        following = next((code for code in codes[index + 1 :] if code), "")
+        if following and second and following == second:
+            return stops[:index]
+    return stops
+
+
+def to_vendor_payload(record: dict, *, counts: dict | None = None) -> dict | None:
     """One railpull record in the shape `upsert_schedule` already understands."""
     number = str(record.get("number") or "").strip()
     stops = record.get("stops") or []
     if not number or len(stops) < 2:
         return None
+
+    trimmed = trim_at_restart(stops)
+    if len(trimmed) < len(stops):
+        if counts is not None:
+            counts["spliced"] = counts.get("spliced", 0) + 1
+        stops = trimmed
 
     route = []
     for stop in stops:
@@ -194,14 +232,14 @@ def main(argv: list[str] | None = None) -> int:
         records = records[: args.limit]
 
     fetched_at = dt.datetime.fromtimestamp(schedules.stat().st_mtime, tz=dt.UTC)
-    counts = {"new": 0, "changed": 0, "same": 0, "skipped": 0, "failed": 0}
+    counts = {"new": 0, "changed": 0, "same": 0, "skipped": 0, "failed": 0, "spliced": 0}
     unknown_days: list[str] = []
 
     if args.dry_run:
         # A dry run must not even create the database file, so nothing is opened.
-        outcomes = [to_vendor_payload(record) for record in records]
+        outcomes = [to_vendor_payload(record, counts=counts) for record in records]
         readable = sum(1 for payload in outcomes if payload and payload["train"]["runDays"])
-        print(f"records: {len(records)}  would import: {readable}")
+        print(f"records: {len(records)}  would import: {readable}  spliced: {counts['spliced']}")
         print("dry run: nothing written")
         return 0
 
@@ -209,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         for record in records:
-            payload = to_vendor_payload(record)
+            payload = to_vendor_payload(record, counts=counts)
             if payload is None:
                 counts["skipped"] += 1
                 continue
@@ -235,6 +273,9 @@ def main(argv: list[str] | None = None) -> int:
         repo.close()
 
     print(f"records: {len(records)}  {counts}")
+    if counts["spliced"]:
+        # Say it out loud: kept the clean prefix of a record whose route repeated.
+        print(f"trimmed {counts['spliced']} spliced schedules to their first run")
     if unknown_days:
         print(f"skipped {len(unknown_days)} with unreadable run days: {unknown_days[:10]}")
     print(f"timetable now: {report}")

@@ -15,7 +15,7 @@ Say this without hedging, because every line below was run.
 
 1. Type a journey in plain words ("mumbai to pune tomorrow evening, 3AC, need to
    reach by 9") and get back real trains on that corridor, from the full
-   all-India roster: 10,861 trains, 213,105 stops, 13,010 stations. Say
+   all-India roster: 10,861 trains, 212,656 stops, 13,010 stations. Say
    "morning" and the shortlist is the morning: the hours you named are a filter,
    and if nothing leaves inside them the whole day comes back with the mismatch
    written on each card.
@@ -145,8 +145,10 @@ over an honest path to the booking page, and we never claim more than we did.**
 **A complete timetable.** railpull produces it out of NTES, the government enquiry
 service, for free, one train at a time. That is a decision about politeness and a
 night of wall-clock time, not budget, and it is done: the local database holds
-**10,861 trains, 213,105 stops and 13,010 stations**, imported from the crawl in
-`data/raw` by `scripts/import_railpull.py`.
+**10,861 trains, 212,656 stops and 13,010 stations**, imported from the crawl in
+`data/raw` by `scripts/import_railpull.py`. 18 of those records had two schedules
+spliced together; the importer keeps the first run and says how many it trimmed, so
+the same train no longer appears three times on one search (`docs/COVERAGE.md`).
 
 How complete is that? The crawl reports phase DONE: 10,870 numbers discovered,
 10,861 schedules on disk, 9 failed with `empty-or-error`, 54 remaining or

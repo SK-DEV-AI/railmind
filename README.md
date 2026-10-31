@@ -33,15 +33,29 @@ Contract and core complete and tested. No network adapter yet.
 ## What is real today
 
 ```
-$ python3 scripts/rail_query.py CSMT PUNE 2026-10-26 --handoff
-CSMT -> PUNE  2026-10-26 (Mon)
-3 train(s) from the local timetable
+$ python3 scripts/rail_query.py CSMT PUNE 2026-11-15 --limit 3 --handoff
+CSMT -> PUNE  2026-11-15 (Sun)
+18 train(s) from the local timetable
 
- 1. 12127 Pune Intercity SF Express   06:40 -> 10:00 (+0d)   3h20m  190.7 km
-    book yourself: https://www.irctc.co.in/nget/train-search?fromStation=CSMT&toStation=PUNE&date=20261026
- 2. 22105 Indrayani SF Express        05:40 -> 09:05 (+0d)   3h25m  190.7 km
- 3. 11007 Deccan Express              07:00 -> 11:05 (+0d)   4h05m  190.7 km
+ 1. 22225 SUR VANDE BHARAT                         16:05 -> 19:10 (+0d)   3h05m  192.0 km
+    book yourself: https://www.irctc.co.in/nget/train-search?fromStation=CSMT&toStation=PUNE&date=20261115
+    steps: human, human, captcha, aadhaar, payment
+ 2. 12123 DECCAN QUEEN                             17:10 -> 20:25 (+0d)   3h15m  192.0 km
+    book yourself: https://www.irctc.co.in/nget/train-search?fromStation=CSMT&toStation=PUNE&date=20261115
+    steps: human, human, captcha, aadhaar, payment
+ 3. 22107 CSMT LATUR EXP                           21:00 -> 00:30 (+1d)   3h30m  192.0 km
+    book yourself: https://www.irctc.co.in/nget/train-search?fromStation=CSMT&toStation=PUNE&date=20261115
+    steps: human, human, captcha, aadhaar, payment
+
+warnings on the first option:
+  - No fare available for this train, so price did not affect its ranking.
+  - Seat availability unknown: check the class and quota on the booking page.
 ```
+
+The handoff refuses to build a link for a day that has gone (the CLI prints the
+reason and exits 2), because a stale booking link is worse than no link. The
+transcript above is pasted from a real run against this timetable, not written
+by hand.
 
 Three vendor walls, each turned into design rather than a lie:
 
@@ -78,7 +92,8 @@ scripts/generate-clients.sh  validate + regenerate both typed clients
 scripts/railradar_probe.py   IPv6-first probe with a hard monthly budget ledger
 scripts/seed_timetable.py    rebuild data/timetable.db from fixtures, no network
 scripts/rail_query.py        ask the real agent from a shell
-tests/                      188 tests, no network, no sleeps
+extension/                   MV3 browser extension: fills IRCTC's form, never submits
+tests/                       499 tests, no network, no sleeps
 ```
 
 ## Verify everything

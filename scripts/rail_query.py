@@ -6,9 +6,9 @@ timetable rows, an optional real fare, and a real IRCTC handoff link.
 
 Examples
 --------
-    python3 scripts/rail_query.py CSMT PUNE 2026-10-26
-    python3 scripts/rail_query.py CSMT PUNE 2026-10-26 --price --handoff
-    python3 scripts/rail_query.py CSMT NDLS 2026-10-26 --limit 3
+    python3 scripts/rail_query.py CSMT PUNE 2026-11-15
+    python3 scripts/rail_query.py CSMT PUNE 2026-11-15 --price --handoff
+    python3 scripts/rail_query.py CSMT NDLS 2026-11-15 --limit 3
 
 `--price` costs one data request per finalist, so it is opt-in. A plain search
 costs zero requests when the corridor is seeded.
@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from railmind.core.errors import ProviderError
+from railmind.core.ids import IdError
 from railmind.core.types import Query, format_inr
 from railmind.engine.ranking import rank
 from railmind.providers.rail_india import DEFAULT_CLASS_ORDER, _stop
@@ -139,7 +140,12 @@ def main() -> int:
         print(f"FAIL not a date: {args.date}", file=sys.stderr)
         return 2
 
-    return asyncio.run(run(args))
+    try:
+        return asyncio.run(run(args))
+    except IdError as exc:
+        # A date the agent cannot turn into an id is a user mistake, not a crash.
+        print(f"FAIL {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

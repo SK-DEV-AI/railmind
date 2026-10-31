@@ -5,9 +5,10 @@ This is the check that killed the prefill claim on 2026-10-24: the page loads, t
 form renders, and the fields are empty. It is kept in the repo so the claim can be
 re-tested in one command instead of trusted.
 
-Why the executable path is pinned: the Playwright that `uv` installs expects chromium
-build 1248, and this machine already has 1228 in the cache. Using `executable_path`
-avoids a download and works offline.
+Why the executable path is resolved rather than taken from Playwright: the Playwright
+that `uv` installs may expect a different chromium build than the one already in the
+cache. Pointing `executable_path` at a build that exists avoids a download and works
+offline. Set `RAILMIND_CHROMIUM` to override; otherwise the newest cached build wins.
 
 Nothing here logs in, searches, books or pays. It opens a page and reads the form.
 
@@ -21,12 +22,24 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-CHROMIUM = Path.home() / ".cache/ms-playwright/chromium-1228/chrome-linux64/chrome"
+CHROMIUM_CACHE = Path.home() / ".cache/ms-playwright"
+
+
+def chromium_executable() -> str | None:
+    """The chromium binary to drive, or None to let Playwright pick its own."""
+    override = os.environ.get("RAILMIND_CHROMIUM")
+    if override:
+        return override
+    builds = sorted(CHROMIUM_CACHE.glob("chromium-*/chrome-linux64/chrome"))
+    return str(builds[-1]) if builds else None
+
+
 URLS = {
     "new-beta-with-params": "https://www.irctc.co.in/eticket/train-search"
     "?fromStation=CSMT&toStation=PUNE&date=20261026",
@@ -49,13 +62,12 @@ READ = """() => {
 
 
 async def check(url: str, shot: Path | None) -> dict:
-    if not CHROMIUM.exists():
-        return {"error": f"chromium not found at {CHROMIUM}"}
+    executable = chromium_executable()
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(
             headless=True,
-            executable_path=str(CHROMIUM),
+            executable_path=executable,
             args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
         )
         context = await browser.new_context(

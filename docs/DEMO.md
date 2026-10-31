@@ -8,7 +8,7 @@ than improvising.
 ## 0. Start the server (30 seconds)
 
 ```bash
-cd ~/session-root/repos/railmind
+cd railmind
 .venv/bin/uvicorn railmind.api.main:app --port 8000
 ```
 
@@ -157,20 +157,20 @@ Say these before they are found:
 ## Rebuilding everything from scratch
 
 ```bash
-cd ~/session-root/repos/railmind
+cd railmind                              # your clone of this repo
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev,api]'
 cp .env.example .env                     # then put the vendor key in it
 .venv/bin/python scripts/seed_timetable.py --fetched-at 2026-10-24T10:05:33+00:00
 
 # optional: the full timetable from NTES (hours, resumable)
-git clone https://github.com/shwetankg07/railpull ~/session-root/repos/railpull
-cd ~/session-root/repos/railpull && python3 -m venv .venv \
+git clone https://github.com/shwetankg07/railpull ~/railpull
+cd ~/railpull && python3 -m venv .venv \
   && .venv/bin/pip install -r requirements.txt \
   && .venv/bin/python ntes/crawl.py && .venv/bin/python transform/export.py
-cd ~/session-root/repos/railmind && .venv/bin/python scripts/import_railpull.py
+cd - && .venv/bin/python scripts/import_railpull.py --input ~/railpull/data/out
 
 # optional: the punctuality model (needs numpy + scikit-learn)
 .venv/bin/python scripts/build_delay_model.py
 
-./scripts/check.sh    # contract, spec, generated clients, lint, format, 349 tests
+./scripts/check.sh    # contract, spec, generated clients, lint, format, the suite
 ```

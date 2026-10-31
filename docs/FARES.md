@@ -5,8 +5,9 @@ published fare table. This page says which document, which rule, and what a quot
 deliberately refuses to guess.
 
 Source of every number: **Commercial Circular 24 of 2025**, effective
-**2025-12-26** (`$JCODE_SCRATCH_DIR/CC24_2025.pdf`), transcribed by
-`scripts/extract_fare_table.py` and checked against the page images by hand.
+**2025-12-26**, transcribed by `scripts/extract_fare_table.py` and checked
+against the page images by hand. Put the PDF at `data/raw/CC24_2025.pdf` to
+re-run the extractor; it is not committed, because it is Railway Board material.
 Nothing here is from memory, and nothing is from a vendor.
 
 ---
@@ -179,11 +180,11 @@ class, which is a `None`, not a wrong price.
 ## 7. Re-running the extractor
 
 ```bash
-cd ~/session-root/repos/railmind
+cd railmind
 .venv/bin/python scripts/extract_fare_table.py \
-  --pdf "$JCODE_SCRATCH_DIR/CC24_2025.pdf" --pages 10-11 --report      # no writes
+  --pdf data/raw/CC24_2025.pdf --pages 10-11 --report      # no writes
 .venv/bin/python scripts/extract_fare_table.py \
-  --pdf "$JCODE_SCRATCH_DIR/CC24_2025.pdf" --out data/fare-table.json   # all planned pages
+  --pdf data/raw/CC24_2025.pdf --out data/fare-table.json   # all planned pages
 ```
 
 Reads are done twice (two segmentation passes) plus an isolated crop re-read for

@@ -4,8 +4,7 @@ STATUS (2026-10-26): measured against 120 slabs of page 10 that were read by
 hand (`data/fare-truth-p10.json`), it now emits **no wrong fares**: 288 of 360
 hand-read values reproduce exactly and the other 72 are reported missing rather
 than guessed. Coverage is the remaining gap, not correctness, and it is not yet
-good enough to price tickets from. See
-`~/session-root/railway-ai-booking/RESEARCH-FARE-AND-FREE-PATHS.md` and the
+good enough to price tickets from. See `docs/FARES.md` for the method and the
 handoff. Do not wire its output into the product until coverage and the
 cross-document check are green.
 

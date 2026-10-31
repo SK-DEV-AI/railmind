@@ -98,5 +98,5 @@ python3 scripts/railradar_probe.py /v1/trains/12951 --out tests/fixtures/railrad
 python3 scripts/seed_timetable.py --sample CSMT PUNE
 
 # ask the real agent
-python3 scripts/rail_query.py CSMT PUNE 2026-10-26 --handoff
+python3 scripts/rail_query.py CSMT PUNE 2026-11-15 --handoff
 ```
