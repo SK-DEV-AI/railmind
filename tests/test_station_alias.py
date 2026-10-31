@@ -102,7 +102,7 @@ def test_an_unknown_code_is_passed_through_untouched(repo):
 
 
 def test_aliases_are_cached_and_follow_new_data(repo):
-    """Same invalidation rule as the other derived lookups: the stop count."""
+    """Same invalidation rule as the other derived lookups: the data stamp."""
     repo.upsert_stations({"BCT": "Mumbai Central"})
     first = repo.station_aliases()
 
@@ -112,3 +112,14 @@ def test_aliases_are_cached_and_follow_new_data(repo):
     assert first == {}
     assert second == {"BCT": "MMCT"}
     assert repo._derived["station_aliases"][1] == second
+
+
+def test_a_rename_over_the_same_rows_still_invalidates(repo):
+    """A station-directory refresh changes names, not row counts. It must not be cached."""
+    repo.upsert_stations({"BCT": "Mumbai Central"})
+    repo.upsert_schedule(schedule("12951"))
+    assert repo.station_aliases() == {"BCT": "MMCT"}
+
+    repo.upsert_stations({"BCT": "Bombay Central"})
+
+    assert repo.station_aliases() == {}

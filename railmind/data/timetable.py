@@ -183,9 +183,10 @@ class TimetableRepo:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         # Derived lookups that are O(stops) and are asked for on every intent parse.
-        # Keyed by the total stop count, which changes whenever a schedule is written,
-        # so the cache cannot go stale without invalidating itself.
-        self._derived: dict[str, tuple[int, object]] = {}
+        # Keyed by the data stamp (see `_data_stamp`), which changes whenever a
+        # schedule or a station row is written, so the cache cannot go stale without
+        # invalidating itself.
+        self._derived: dict[str, tuple[object, object]] = {}
         # `check_same_thread=False` because the ASGI server may call this from a
         # different thread than the one that opened it: FastAPI runs async
         # handlers on the event loop and the test client runs them in its own
@@ -305,6 +306,7 @@ class TimetableRepo:
         for code, name in stations.items():
             self._merge_station(code, name, None, None, source)
         self._conn.commit()
+        self._derived.clear()
         return len(stations)
 
     def _merge_station(
@@ -625,20 +627,32 @@ class TimetableRepo:
         return [StationRow(r["code"], r["name"], r["lat"], r["lon"]) for r in rows]
 
     def _cached(self, name: str, build):
-        """Memoise an O(stops) lookup until the number of stops changes.
+        """Memoise an O(stops) lookup until the data it reads changes.
 
         With the full NTES timetable this table holds ~185,000 stops, and a station
         lookup that scans them costs milliseconds per call. `/intent` asks for traffic
         and served codes on every parse, so caching is the difference between a
         15 ms parse and a 150 ms one.
+
+        The stamp is the stop count plus the station count, and every write to this
+        repository clears the cache outright. Two signals, because the alias map is
+        built from station names as well as stops, and a rename over the same rows
+        changes no count at all.
         """
-        stamp = int(self._conn.execute("SELECT COUNT(*) AS n FROM stops").fetchone()["n"])
+        stamp = self._data_stamp()
         cached = self._derived.get(name)
         if cached is not None and cached[0] == stamp:
             return cached[1]
         value = build()
         self._derived[name] = (stamp, value)
         return value
+
+    def _data_stamp(self) -> tuple[int, int]:
+        row = self._conn.execute(
+            "SELECT (SELECT COUNT(*) FROM stops) AS stops, "
+            "(SELECT COUNT(*) FROM stations) AS stations"
+        ).fetchone()
+        return (int(row["stops"]), int(row["stations"]))
 
     def stop_count(self, train_number: str) -> int:
         """How many stops we hold for a train. One of the model's input features."""
