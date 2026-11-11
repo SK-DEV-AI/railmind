@@ -73,9 +73,40 @@ Not all of it is a data gap, and the difference matters:
   advertised (9 failed with `empty-or-error`, 54 remaining/discontinued). Re-running the
   resumable crawl is ~2 minutes and needs no key, and the import path is a single write
   path, so it cannot drift.
-- **Not a gap, a fact about the railway.** Ranchi→Puri has no direct train. A large part
-  of the missing 28% is pairs where the honest answer is "no direct train, here is a
-  change at X", which is a routing problem, not a data problem.
+- **Not a gap, a fact about the railway.** Measured: all 836 misses are pairs where no
+  train in the database calls at both stations in that order at all, so the direct answer
+  is "there is no direct train". 832 of those 836 are reachable with **one change of
+  train** through one of the same 55 stations, which makes 2,966 of 2,970 ordered pairs
+  reachable (99.9%). Ranchi→Puri is the shape of it: no direct train, a change at X.
+  That is a routing problem, not a data problem, and it is the one remaining capability
+  this repository does not have.
+
+### Measured: the 836 misses
+
+Not assumed, measured on the shipped database (2026-11-11):
+
+```python
+misses = [(o, d) for o, d in pairs if not repo.trains_between(o, d)]   # 836
+# geometry: does ANY train call at both, in order, ignoring the usability rule?
+# rejected by the departure/arrival rule:  0
+# no train visits both in order:         836
+# misses where only the reverse is served: 10
+```
+
+Zero of the misses come from our own query being strict about a usable departure and
+arrival. Every one of them is an absent direct train. One change of train closes 832 of
+them:
+
+```python
+one_change = [(o, d) for o, d in misses
+              if any(m not in (o, d) and served(o, m) and served(m, d) for m in codes)]
+# 832 of 836; 2,966 of 2,970 ordered pairs reachable with one change
+```
+
+The gap is not evenly spread. Direct destinations out of 54, worst first: `BCT` 13,
+`MAQ` 14, `HYB` 21, `SDAH` 22, `SHM` 26, `CSMT` 28, `KOAA` 28, `MB` 29. A traveller in
+Mangaluru or on the Kolkata side of the country is the one this number fails.
+
 - **Not a gap, a code we cannot infer.** Clicking a code rename that changes the *name*
   too (Mughal Sarai → DDU) is invisible to the alias rule, which matches on normalised
   name. `MGS`→`DDU` therefore still returns nothing. Known, not fixed.
@@ -113,5 +144,20 @@ now pins both sides of it.
 
 The rule deliberately does **not** trim a route that revisits some other station.
 Indian trains really do that: `11013` reverses through SBC, `17029` detours via HG,
-and `00913` is a circular tourist special that ends where it started. 30 records keep
-their repeated stations, with different times at each call, which is correct.
+and `00913` is a circular tourist special that ends where it started. Records with a
+repeated station keep it, with different times at each call, which is correct.
+
+Checked afterwards (2026-11-11) that nothing hides behind the exception. Two fingerprints
+would betray a splice restarting somewhere other than the origin, and neither exists in
+the shipped database:
+
+```
+records with any repeated station:                      48
+records that replay their own opening stretch (>=3):     0
+identical (station, arrival, departure, day) repeats:     0
+```
+
+The first is the definition of the damage: two glued schedules begin again with the same
+stations in the same order. The second catches a merge that repeats a call verbatim. A
+record that repeats a station with a genuinely different time is a reversal or a loop, and
+that is a real train.
