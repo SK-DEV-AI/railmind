@@ -86,7 +86,7 @@ Not all of it is a data gap, and the difference matters:
 Not assumed, measured on the shipped database (2026-11-11):
 
 ```python
-misses = [(o, d) for o, d in pairs if not repo.trains_between(o, d)]   # 836
+misses = [(o, d) for o, d in pairs if not repo.trains_between(o, d)]  # 836
 # geometry: does ANY train call at both, in order, ignoring the usability rule?
 # rejected by the departure/arrival rule:  0
 # no train visits both in order:         836
@@ -98,8 +98,11 @@ arrival. Every one of them is an absent direct train. One change of train closes
 them:
 
 ```python
-one_change = [(o, d) for o, d in misses
-              if any(m not in (o, d) and served(o, m) and served(m, d) for m in codes)]
+one_change = [
+    (o, d)
+    for o, d in misses
+    if any(m not in (o, d) and served(o, m) and served(m, d) for m in codes)
+]
 # 832 of 836; 2,966 of 2,970 ordered pairs reachable with one change
 ```
 
